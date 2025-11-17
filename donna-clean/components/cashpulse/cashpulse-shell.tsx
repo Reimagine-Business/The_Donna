@@ -369,16 +369,14 @@ const buildCashpulseStats = (
     cashOutflow,
     netCashFlow: cashInflow - cashOutflow,
       cashBreakdown: ["Cash", "Bank"].map((method) => ({
-      method,
-      value: rangeEntries.reduce(
-          (sum, entry) =>
-            sum +
-            (entry.payment_method === method && (isCashInflow(entry) || isCashOutflow(entry))
-              ? entry.amount
-              : 0),
-        0,
-      ),
-    })),
+        method,
+        value: rangeEntries.reduce((sum, entry) => {
+          if (entry.payment_method !== method) return sum;
+          if (isCashInflow(entry)) return sum + entry.amount;
+          if (isCashOutflow(entry)) return sum - entry.amount;
+          return sum;
+        }, 0),
+      })),
     pendingCollections: {
       count: pendingCollectionsEntries.length,
       total: pendingCollectionsEntries.reduce((sum, entry) => sum + entry.amount, 0),
@@ -447,7 +445,9 @@ function ChannelCard({ method, value }: ChannelCardProps) {
     <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-black/30">
       <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Channel</p>
       <p className="mt-2 text-lg font-semibold text-white">{method}</p>
-      <p className="mt-3 text-2xl font-semibold text-[#a78bfa]">{value}</p>
+      <p className={cn("mt-3 text-2xl font-semibold", value.startsWith("-") ? "text-rose-300" : "text-[#a78bfa]")}>
+        {value}
+      </p>
     </div>
   );
 }
