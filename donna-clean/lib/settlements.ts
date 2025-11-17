@@ -1,7 +1,5 @@
 import type { SupabaseClient } from "@supabase/supabase-js";
 
-import type { SupabaseClient } from "@supabase/supabase-js";
-
 import { Entry } from "@/lib/entries";
 
 type SettleParams = {

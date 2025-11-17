@@ -2,27 +2,15 @@
 
 import { useEffect, useMemo, useState } from "react";
 import { format, subDays } from "date-fns";
-import {
-  Area,
-  AreaChart,
-  Bar,
-  BarChart,
-  CartesianGrid,
-  Legend,
-  Line,
-  LineChart,
-  ResponsiveContainer,
-  Tooltip,
-  XAxis,
-  YAxis,
-} from "recharts";
-import { ArrowDownRight, ArrowUpRight, Banknote, Activity } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Activity } from "lucide-react";
 
 import { createClient } from "@/lib/supabase/client";
 import { Entry, normalizeEntry } from "@/lib/entries";
 import { cn } from "@/lib/utils";
 import { SettleEntryDialog } from "@/components/settlement/settle-entry-dialog";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Download } from "lucide-react";
 
 type CashpulseShellProps = {
   initialEntries: Entry[];
@@ -39,22 +27,6 @@ const numberFormatter = new Intl.NumberFormat("en-IN", {
   minimumFractionDigits: 0,
 });
 
-const getDateRange = (days: number): string[] => {
-  const today = new Date();
-  const dates: string[] = [];
-  for (let i = days - 1; i >= 0; i--) {
-    dates.push(format(subDays(today, i), "yyyy-MM-dd"));
-  }
-  return dates;
-};
-
-const getEffectiveCashDate = (entry: Entry): string => {
-  if ((entry.entry_type === "Credit" || entry.entry_type === "Advance") && entry.settled) {
-    return (entry.settled_at ?? entry.updated_at ?? entry.entry_date).slice(0, 10);
-  }
-  return entry.entry_date;
-};
-
 const isCashInflow = (entry: Entry) =>
   entry.entry_type === "Cash Inflow" ||
   (entry.entry_type === "Credit" && entry.settled) ||
@@ -62,41 +34,26 @@ const isCashInflow = (entry: Entry) =>
 
 const isCashOutflow = (entry: Entry) => entry.entry_type === "Cash Outflow";
 
-const isCashImpacting = (entry: Entry) => isCashInflow(entry) || isCashOutflow(entry);
+const formatDisplayDate = (date: string) => format(new Date(date), "dd MMM");
 
-const formatLabel = (date: string) => format(new Date(date), "dd MMM");
+const isWithinRange = (date: string, start: string, end: string) =>
+  date >= start && date <= end;
 
-type CashTooltipProps = {
-  active?: boolean;
-  payload?: {
-    dataKey: string;
-    value: number;
-    name: string;
-  }[];
-  label?: string;
-};
-
-const CashTooltip = ({ active, payload, label }: CashTooltipProps) => {
-  if (!active || !payload?.length) return null;
-  return (
-    <div className="rounded-lg border border-white/10 bg-slate-900/90 px-3 py-2 text-xs text-white shadow-lg">
-      <p className="mb-1 font-semibold">{label}</p>
-      {payload.map((item) => (
-        <p key={item.dataKey} className="flex items-center justify-between gap-4">
-          <span className="capitalize text-slate-300">{item.name}</span>
-          <span className="font-semibold text-white">
-            {currencyFormatter.format(item.value ?? 0)}
-          </span>
-        </p>
-      ))}
-    </div>
-  );
+const getCashDate = (entry: Entry) => {
+  if ((entry.entry_type === "Credit" || entry.entry_type === "Advance") && entry.settled) {
+    return (entry.settled_at ?? entry.entry_date).slice(0, 10);
+  }
+  return entry.entry_date;
 };
 
 export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) {
   const supabase = useMemo(() => createClient(), []);
   const [entries, setEntries] = useState<Entry[]>(initialEntries.map(normalizeEntry));
   const [settlementEntry, setSettlementEntry] = useState<Entry | null>(null);
+  const [historyFilters, setHistoryFilters] = useState({
+    start_date: format(subDays(new Date(), 30), "yyyy-MM-dd"),
+    end_date: format(new Date(), "yyyy-MM-dd"),
+  });
 
   useEffect(() => {
     const channel = supabase
@@ -140,155 +97,203 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     };
   }, [supabase, userId]);
 
-  const stats = useMemo(() => buildCashpulseStats(entries), [entries]);
+  const stats = useMemo(
+    () => buildCashpulseStats(entries, historyFilters),
+    [entries, historyFilters],
+  );
+  const historyLabel = `${format(new Date(historyFilters.start_date), "dd MMM yyyy")} – ${format(
+    new Date(historyFilters.end_date),
+    "dd MMM yyyy",
+  )}`;
+
+  const handleExportHistory = () => {
+    if (!stats.history.length) return;
+    const headers = [
+      "Date",
+      "Entry Type",
+      "Category",
+      "Amount",
+      "Payment Method",
+      "Notes",
+    ];
+    const rows = stats.history.map((entry) => [
+      entry.entry_date,
+      entry.entry_type,
+      entry.category,
+      entry.amount.toString(),
+      entry.payment_method,
+      entry.notes?.replace(/"/g, '""') ?? "",
+    ]);
+    const csvContent = [headers, ...rows]
+      .map((line) => line.map((cell) => `"${cell}"`).join(","))
+      .join("\n");
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
+    const url = URL.createObjectURL(blob);
+    const link = document.createElement("a");
+    link.href = url;
+    link.download = `cashpulse-settlement-history-${historyFilters.end_date}.csv`;
+    link.click();
+    URL.revokeObjectURL(url);
+  };
+
   return (
     <div className="flex flex-col gap-8 text-white">
-      <header className="space-y-2">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Donna · Cashpulse</p>
-        <h1 className="text-3xl font-semibold">Real-time cash flow</h1>
-        <p className="text-sm text-slate-400">
-          Live signal across every inflow/outflow so you never fly blind.
-        </p>
-      </header>
+      <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Donna · Cashpulse</p>
+          <h1 className="text-4xl font-semibold">Cashpulse</h1>
+          <p className="text-sm text-slate-400">Accrual basis for {historyLabel}</p>
+        </div>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <div>
+            <p className="text-xs uppercase text-slate-400">From</p>
+            <Input
+              type="date"
+              value={historyFilters.start_date}
+              max={historyFilters.end_date}
+              onChange={(event) =>
+                setHistoryFilters((prev) => ({ ...prev, start_date: event.target.value }))
+              }
+              className="border-white/10 bg-slate-950/80 text-white"
+            />
+          </div>
+          <div>
+            <p className="text-xs uppercase text-slate-400">To</p>
+            <Input
+              type="date"
+              value={historyFilters.end_date}
+              min={historyFilters.start_date}
+              onChange={(event) =>
+                setHistoryFilters((prev) => ({ ...prev, end_date: event.target.value }))
+              }
+              className="border-white/10 bg-slate-950/80 text-white"
+            />
+          </div>
+          <Button
+            type="button"
+            variant="ghost"
+            className="text-slate-300 hover:text-white"
+            onClick={() =>
+              setHistoryFilters({
+                start_date: format(subDays(new Date(), 30), "yyyy-MM-dd"),
+                end_date: format(new Date(), "yyyy-MM-dd"),
+              })
+            }
+          >
+            Last 30 days
+          </Button>
+        </div>
+      </div>
 
       <section className="grid gap-4 md:grid-cols-3">
         <StatCard
           title="Total Cash Inflow"
           value={currencyFormatter.format(stats.cashInflow)}
-          subtitle="Includes settled credit & advance"
+          subtitle={historyLabel}
           variant="positive"
         />
         <StatCard
           title="Total Cash Outflow"
           value={currencyFormatter.format(stats.cashOutflow)}
-          subtitle="Pure operating spend"
+          subtitle={historyLabel}
           variant="negative"
         />
         <StatCard
           title="Net Cash Flow"
           value={currencyFormatter.format(stats.netCashFlow)}
-          subtitle="Inflow minus outflow"
+          subtitle={historyLabel}
           variant="neutral"
         />
       </section>
 
-      <section className="grid gap-6 lg:grid-cols-[2fr,1fr]">
-        <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-5">
-          <div className="mb-4 flex items-center justify-between">
-            <div>
-              <p className="text-xs uppercase text-slate-400">Daily trend</p>
-              <h2 className="text-lg font-semibold">Inflow vs Outflow (30 days)</h2>
-            </div>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <LineChart data={stats.lineData}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis
-                  dataKey="label"
-                  stroke="#94a3b8"
-                  fontSize={12}
-                  tickLine={false}
-                  axisLine={false}
-                />
-                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} axisLine={false} />
-                <Tooltip content={<CashTooltip />} />
-                <Legend />
-                <Line
-                  type="monotone"
-                  dataKey="inflow"
-                  stroke="#34d399"
-                  strokeWidth={2}
-                  dot={false}
-                  name="Inflow"
-                />
-                <Line
-                  type="monotone"
-                  dataKey="outflow"
-                  stroke="#f87171"
-                  strokeWidth={2}
-                  dot={false}
-                  name="Outflow"
-                />
-              </LineChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-          <div className="mb-4 flex items-center gap-3">
-            <Banknote className="h-5 w-5 text-[#a78bfa]" />
-            <div>
-              <p className="text-xs uppercase text-slate-400">Channels</p>
-              <h2 className="text-lg font-semibold">Cash vs Bank</h2>
-            </div>
-          </div>
-          <div className="h-64">
-            <ResponsiveContainer>
-              <BarChart data={stats.cashVsBank}>
-                <CartesianGrid strokeDasharray="3 3" stroke="#1e293b" />
-                <XAxis dataKey="method" stroke="#94a3b8" />
-                <YAxis stroke="#94a3b8" />
-                <Tooltip
-                  content={<CashTooltip />}
-                  formatter={(value: number) => currencyFormatter.format(value ?? 0)}
-                />
-                <Bar dataKey="value" fill="#a78bfa" radius={[12, 12, 0, 0]} />
-              </BarChart>
-            </ResponsiveContainer>
-          </div>
-        </div>
-      </section>
-
-      <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-5">
-        <div className="mb-4 flex items-center gap-3">
-          <Activity className="h-5 w-5 text-emerald-300" />
-          <div>
-            <p className="text-xs uppercase text-slate-400">Stability</p>
-            <h2 className="text-lg font-semibold">Running cash balance</h2>
-          </div>
-        </div>
-        <div className="h-72">
-          <ResponsiveContainer>
-            <AreaChart data={stats.balanceData}>
-              <defs>
-                <linearGradient id="balanceFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#a78bfa" stopOpacity={0.8} />
-                  <stop offset="95%" stopColor="#a78bfa" stopOpacity={0} />
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-              <XAxis dataKey="label" stroke="#94a3b8" />
-              <YAxis stroke="#94a3b8" />
-              <Tooltip content={<CashTooltip />} />
-              <Area
-                type="monotone"
-                dataKey="balance"
-                stroke="#a78bfa"
-                strokeWidth={2}
-                fill="url(#balanceFill)"
-                name="Balance"
-              />
-            </AreaChart>
-          </ResponsiveContainer>
-        </div>
-      </section>
-
-      <section className="grid gap-6 md:grid-cols-2">
+      <section className="grid gap-6 md:grid-cols-3">
         <PendingCard
           title="Pending Collections"
-          description="Credit entries awaiting cash"
+          description="Credit sales awaiting payment."
           info={stats.pendingCollections}
           accent="emerald"
           onSettle={setSettlementEntry}
         />
         <PendingCard
           title="Pending Bills"
-          description="Advance entries yet to settle"
+          description="Credit purchases awaiting payment."
           info={stats.pendingBills}
           accent="rose"
           onSettle={setSettlementEntry}
         />
+        <PendingCard
+          title="Advances"
+          description="Advance payments to be settled."
+          info={stats.pendingAdvances}
+          accent="purple"
+          onSettle={setSettlementEntry}
+        />
       </section>
+
+      <section className="rounded-3xl border border-white/10 bg-slate-900/40 p-6 shadow-2xl shadow-black/40">
+        <div className="mb-4 flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Settlement History</p>
+            <h2 className="text-2xl font-semibold text-white">Cash vs profit reconciled</h2>
+          </div>
+          <Button
+            type="button"
+            variant="outline"
+            className="border-[#a78bfa]/50 text-[#a78bfa]"
+            disabled={!stats.history.length}
+            onClick={handleExportHistory}
+          >
+            <Download className="mr-2 h-4 w-4" />
+            Export CSV
+          </Button>
+        </div>
+        <div className="overflow-x-auto">
+          <table className="min-w-full text-sm">
+            <thead>
+              <tr className="text-left text-xs uppercase tracking-widest text-slate-400">
+                <th className="px-3 py-2">Date</th>
+                <th className="px-3 py-2">Entry Type</th>
+                <th className="px-3 py-2">Category</th>
+                <th className="px-3 py-2">Amount</th>
+                <th className="px-3 py-2">Payment Method</th>
+                <th className="px-3 py-2">Notes</th>
+                <th className="px-3 py-2 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {stats.history.length === 0 ? (
+                <tr>
+                  <td colSpan={7} className="px-3 py-8 text-center text-slate-500">
+                    No settlements in this range.
+                  </td>
+                </tr>
+              ) : (
+                stats.history.map((entry) => (
+                  <tr
+                    key={entry.id}
+                    className="border-t border-white/5 bg-white/5 text-slate-100 transition hover:bg-white/10"
+                  >
+                    <td className="px-3 py-3 font-medium">
+                      {format(new Date(entry.settled_at ?? entry.entry_date), "dd MMM yyyy")}
+                    </td>
+                    <td className="px-3 py-3">{entry.entry_type}</td>
+                    <td className="px-3 py-3">{entry.category}</td>
+                    <td className="px-3 py-3 font-semibold text-white">
+                      {currencyFormatter.format(entry.amount)}
+                    </td>
+                    <td className="px-3 py-3">{entry.payment_method}</td>
+                    <td className="px-3 py-3 max-w-[220px] truncate">{entry.notes ?? "—"}</td>
+                    <td className="px-3 py-3 text-right text-xs uppercase tracking-[0.2em] text-emerald-300">
+                      Settled
+                    </td>
+                  </tr>
+                ))
+              )}
+            </tbody>
+          </table>
+        </div>
+      </section>
+
       <SettleEntryDialog entry={settlementEntry} onClose={() => setSettlementEntry(null)} />
     </div>
   );
@@ -298,11 +303,10 @@ type CashpulseStats = {
   cashInflow: number;
   cashOutflow: number;
   netCashFlow: number;
-  cashVsBank: { method: string; value: number }[];
-  lineData: { date: string; label: string; inflow: number; outflow: number }[];
-  balanceData: { date: string; label: string; balance: number }[];
   pendingCollections: PendingList;
   pendingBills: PendingList;
+  pendingAdvances: PendingList;
+  history: Entry[];
 };
 
 type PendingList = {
@@ -311,78 +315,48 @@ type PendingList = {
   entries: Entry[];
 };
 
-const buildCashpulseStats = (entries: Entry[]): CashpulseStats => {
-  const last30Days = getDateRange(30);
+const buildCashpulseStats = (
+  entries: Entry[],
+  filters: { start_date: string; end_date: string },
+): CashpulseStats => {
+  const rangeEntries = entries.filter((entry) =>
+    isWithinRange(getCashDate(entry), filters.start_date, filters.end_date),
+  );
 
-  const cashInflow = entries.reduce(
+  const cashInflow = rangeEntries.reduce(
     (sum, entry) => sum + (isCashInflow(entry) ? entry.amount : 0),
     0,
   );
-  const cashOutflow = entries.reduce(
+  const cashOutflow = rangeEntries.reduce(
     (sum, entry) => sum + (isCashOutflow(entry) ? entry.amount : 0),
     0,
   );
 
-  const lineData = last30Days.map((date) => {
-    const inflow = entries.reduce((sum, entry) => {
-      if (isCashInflow(entry) && getEffectiveCashDate(entry) === date) {
-        return sum + entry.amount;
-      }
-      return sum;
-    }, 0);
-
-    const outflow = entries.reduce((sum, entry) => {
-      if (isCashOutflow(entry) && getEffectiveCashDate(entry) === date) {
-        return sum + entry.amount;
-      }
-      return sum;
-    }, 0);
-
-    return {
-      date,
-      label: formatLabel(date),
-      inflow,
-      outflow,
-    };
-  });
-
-  let running = 0;
-  const balanceData = lineData.map((day) => {
-    running += day.inflow - day.outflow;
-    return {
-      ...day,
-      balance: running,
-    };
-  });
-
-  const cashVsBankMap: Record<string, number> = {
-    Cash: 0,
-    Bank: 0,
-  };
-
-  entries.forEach((entry) => {
-    if (isCashImpacting(entry)) {
-      cashVsBankMap[entry.payment_method] += entry.amount;
-    }
-  });
-
-  const pendingCollectionsEntries = entries.filter(
-    (entry) => entry.entry_type === "Credit" && !entry.settled,
-  );
-  const pendingBillsEntries = entries.filter(
+  const pendingCredit = entries.filter((entry) => entry.entry_type === "Credit" && !entry.settled);
+  const pendingCollectionsEntries = pendingCredit.filter((entry) => entry.category === "Sales");
+  const pendingBillsEntries = pendingCredit.filter((entry) => entry.category !== "Sales");
+  const pendingAdvancesEntries = entries.filter(
     (entry) => entry.entry_type === "Advance" && !entry.settled,
   );
+
+  const history = entries
+    .filter(
+      (entry) =>
+        (entry.entry_type === "Credit" || entry.entry_type === "Advance") && entry.settled,
+    )
+    .filter((entry) =>
+      isWithinRange(entry.settled_at ?? entry.entry_date, filters.start_date, filters.end_date),
+    )
+    .sort(
+      (a, b) =>
+        new Date(b.settled_at ?? b.entry_date).getTime() -
+        new Date(a.settled_at ?? a.entry_date).getTime(),
+    );
 
   return {
     cashInflow,
     cashOutflow,
     netCashFlow: cashInflow - cashOutflow,
-    cashVsBank: Object.entries(cashVsBankMap).map(([method, value]) => ({
-      method,
-      value,
-    })),
-    lineData,
-    balanceData,
     pendingCollections: {
       count: pendingCollectionsEntries.length,
       total: pendingCollectionsEntries.reduce((sum, entry) => sum + entry.amount, 0),
@@ -393,6 +367,12 @@ const buildCashpulseStats = (entries: Entry[]): CashpulseStats => {
       total: pendingBillsEntries.reduce((sum, entry) => sum + entry.amount, 0),
       entries: pendingBillsEntries,
     },
+    pendingAdvances: {
+      count: pendingAdvancesEntries.length,
+      total: pendingAdvancesEntries.reduce((sum, entry) => sum + entry.amount, 0),
+      entries: pendingAdvancesEntries,
+    },
+    history,
   };
 };
 
@@ -439,12 +419,18 @@ type PendingCardProps = {
   title: string;
   description: string;
   info: PendingList;
-  accent: "emerald" | "rose";
+  accent: "emerald" | "rose" | "purple";
   onSettle: (entry: Entry) => void;
 };
 
+const accentText: Record<PendingCardProps["accent"], string> = {
+  emerald: "text-emerald-300",
+  rose: "text-rose-300",
+  purple: "text-[#a78bfa]",
+};
+
 function PendingCard({ title, description, info, accent, onSettle }: PendingCardProps) {
-  const accentColor = accent === "emerald" ? "text-emerald-300" : "text-rose-300";
+  const accentColor = accentText[accent];
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-5">
       <p className={cn("text-xs uppercase tracking-widest", accentColor)}>{title}</p>
@@ -457,9 +443,9 @@ function PendingCard({ title, description, info, accent, onSettle }: PendingCard
         {currencyFormatter.format(info.total)}
       </p>
       <div className="mt-4 space-y-3">
-          {info.entries.length === 0 && (
-            <p className="text-sm text-slate-500">All settled. You&apos;re in control.</p>
-          )}
+        {info.entries.length === 0 && (
+          <p className="text-sm text-slate-500">All settled. You&apos;re in control.</p>
+        )}
         {info.entries.slice(0, 3).map((entry) => (
           <div
             key={entry.id}
@@ -470,7 +456,9 @@ function PendingCard({ title, description, info, accent, onSettle }: PendingCard
                 ₹{entry.amount.toLocaleString("en-IN")}{" "}
                 <span className="text-xs uppercase text-slate-400">{entry.category}</span>
               </p>
-              <p className="text-xs text-slate-500">{formatLabel(entry.entry_date)}</p>
+                <p className="text-xs text-slate-500">
+                  {formatDisplayDate(entry.entry_date)}
+                </p>
             </div>
             <Button
               variant="outline"
