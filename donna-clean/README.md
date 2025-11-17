@@ -98,6 +98,12 @@ If you wish to just develop locally and not deploy to Vercel, [follow the steps 
 
 > Check out [the docs for Local Development](https://supabase.com/docs/guides/getting-started/local-development) to also run Supabase locally.
 
+## Daily entries schema & storage
+
+Run the SQL in `supabase/entries-table.sql` inside your project to provision the `entries` table with the correct RLS and updated-at trigger.
+
+Create a public Supabase Storage bucket named `receipts` (or update the code to use your preferred bucket name) so receipt uploads succeed. Grant authenticated users the ability to read/write inside that bucket.
+
 ## Feedback and issues
 
 Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
