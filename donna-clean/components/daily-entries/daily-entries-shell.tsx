@@ -41,10 +41,39 @@ export type Entry = {
 
 type EntryRecord = Omit<Entry, "amount"> & { amount: number | string };
 
-const normalizeEntry = (entry: EntryRecord): Entry => ({
-  ...entry,
-  amount: Number(entry.amount),
-});
+type SupabaseEntry = Partial<EntryRecord> & {
+  amount?: number | string | null;
+};
+
+const ensureOption = <T extends readonly string[]>(
+  value: unknown,
+  options: T,
+  fallback: T[number],
+): T[number] => {
+  return options.includes(value as T[number]) ? (value as T[number]) : fallback;
+};
+
+const normalizeEntry = (entry: SupabaseEntry): Entry => {
+  const amount = typeof entry.amount === "number" ? entry.amount : Number(entry.amount ?? 0);
+  const fallbackDate = format(new Date(), "yyyy-MM-dd");
+  const safeId =
+    typeof entry.id === "string" && entry.id.length > 0
+      ? entry.id
+      : globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`;
+  return {
+    id: safeId,
+    user_id: entry.user_id ?? "",
+    entry_type: ensureOption(entry.entry_type, ENTRY_TYPES, ENTRY_TYPES[0]),
+    category: ensureOption(entry.category, CATEGORIES, CATEGORIES[0]),
+    payment_method: ensureOption(entry.payment_method, PAYMENT_METHODS, PAYMENT_METHODS[0]),
+    amount: Number.isFinite(amount) ? amount : 0,
+    entry_date: entry.entry_date ?? fallbackDate,
+    notes: entry.notes ?? null,
+    image_url: entry.image_url ?? null,
+    created_at: entry.created_at ?? new Date().toISOString(),
+    updated_at: entry.updated_at ?? new Date().toISOString(),
+  };
+};
 
 type DailyEntriesShellProps = {
   initialEntries: Entry[];
