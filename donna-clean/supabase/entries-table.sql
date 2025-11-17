@@ -10,6 +10,8 @@ create table if not exists public.entries (
   entry_date date not null default current_date,
   notes text,
   image_url text,
+  settled boolean not null default false,
+  settled_at timestamptz,
   created_at timestamptz not null default timezone('utc', now()),
   updated_at timestamptz not null default timezone('utc', now())
 );

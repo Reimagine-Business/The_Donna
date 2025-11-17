@@ -18,6 +18,9 @@ export function SiteHeader() {
             <Link className="hover:underline" href="/daily-entries">
               Daily entries
             </Link>
+              <Link className="hover:underline" href="/cashpulse">
+                Cashpulse
+              </Link>
           </div>
         </div>
         <div className="flex items-center gap-3">

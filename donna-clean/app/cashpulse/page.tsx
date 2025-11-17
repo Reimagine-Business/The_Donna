@@ -1,11 +1,13 @@
 import { redirect } from "next/navigation";
-import { createClient } from "@/lib/supabase/server";
+
 import { SiteHeader } from "@/components/site-header";
-import { DailyEntriesShell } from "@/components/daily-entries/daily-entries-shell";
+import { createClient } from "@/lib/supabase/server";
+import { CashpulseShell } from "@/components/cashpulse/cashpulse-shell";
 import { normalizeEntry, type Entry } from "@/lib/entries";
 
-export default async function DailyEntriesPage() {
+export default async function CashpulsePage() {
   const supabase = await createClient();
+
   const {
     data: { user },
   } = await supabase.auth.getUser();
@@ -30,7 +32,7 @@ export default async function DailyEntriesPage() {
         <SiteHeader />
         <section className="px-4 pb-12 md:px-8">
           <div className="mx-auto w-full max-w-6xl">
-            <DailyEntriesShell initialEntries={entries} userId={user.id} />
+            <CashpulseShell initialEntries={entries} userId={user.id} />
           </div>
         </section>
       </div>

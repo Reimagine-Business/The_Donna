@@ -104,6 +104,10 @@ Run the SQL in `supabase/entries-table.sql` inside your project to provision the
 
 Create a public Supabase Storage bucket named `receipts` (or update the code to use your preferred bucket name) so receipt uploads succeed. Grant authenticated users the ability to read/write inside that bucket.
 
+## Cashpulse dashboard
+
+The `/cashpulse` route reads from the same `entries` table and expects the `settled` + `settled_at` columns defined in the SQL above. Run `npm install` to ensure `recharts` is installed for the visualization layer.
+
 ## Feedback and issues
 
 Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).
