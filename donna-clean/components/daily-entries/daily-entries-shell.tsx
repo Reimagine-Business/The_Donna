@@ -20,6 +20,7 @@ import {
   normalizeEntry,
 } from "@/lib/entries";
 import { SettleEntryDialog } from "@/components/settlement/settle-entry-dialog";
+import { addEntry as addEntryAction } from "@/app/daily-entries/actions";
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
@@ -196,7 +197,7 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
         uploadedUrl = await uploadReceipt();
       }
 
-      const payload = {
+        const payload = {
         entry_type: formValues.entry_type,
         category: formValues.category,
         payment_method: formValues.payment_method,
@@ -211,13 +212,9 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
       if (editingEntryId) {
         const { error } = await supabase.from("entries").update(payload).eq("id", editingEntryId);
         if (error) throw error;
-      } else {
-        const { error } = await supabase.from("entries").insert({
-          ...payload,
-          user_id: userId,
-        });
-        if (error) throw error;
-      }
+        } else {
+          await addEntryAction(payload);
+        }
 
       resetForm();
     } catch (error) {
