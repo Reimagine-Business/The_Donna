@@ -206,6 +206,16 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
         />
       </section>
 
+      <section className="grid gap-4 md:grid-cols-2">
+        {stats.cashBreakdown.map((channel) => (
+          <ChannelCard
+            key={channel.method}
+            method={channel.method}
+            value={currencyFormatter.format(channel.value)}
+          />
+        ))}
+      </section>
+
       <section className="grid gap-6 md:grid-cols-3">
         <PendingCard
           title="Pending Collections"
@@ -303,6 +313,7 @@ type CashpulseStats = {
   cashInflow: number;
   cashOutflow: number;
   netCashFlow: number;
+  cashBreakdown: { method: string; value: number }[];
   pendingCollections: PendingList;
   pendingBills: PendingList;
   pendingAdvances: PendingList;
@@ -357,6 +368,17 @@ const buildCashpulseStats = (
     cashInflow,
     cashOutflow,
     netCashFlow: cashInflow - cashOutflow,
+      cashBreakdown: ["Cash", "Bank"].map((method) => ({
+      method,
+      value: rangeEntries.reduce(
+          (sum, entry) =>
+            sum +
+            (entry.payment_method === method && (isCashInflow(entry) || isCashOutflow(entry))
+              ? entry.amount
+              : 0),
+        0,
+      ),
+    })),
     pendingCollections: {
       count: pendingCollectionsEntries.length,
       total: pendingCollectionsEntries.reduce((sum, entry) => sum + entry.amount, 0),
@@ -411,6 +433,21 @@ function StatCard({ title, value, subtitle, variant }: StatCardProps) {
       </div>
       <p className="text-3xl font-semibold text-white">{value}</p>
       <p className="mt-2 text-xs text-white/70">{subtitle}</p>
+    </div>
+  );
+}
+
+type ChannelCardProps = {
+  method: string;
+  value: string;
+};
+
+function ChannelCard({ method, value }: ChannelCardProps) {
+  return (
+    <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-black/30">
+      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Channel</p>
+      <p className="mt-2 text-lg font-semibold text-white">{method}</p>
+      <p className="mt-3 text-2xl font-semibold text-[#a78bfa]">{value}</p>
     </div>
   );
 }

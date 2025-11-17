@@ -16,20 +16,44 @@ export async function settleEntry({
   settlementDate,
 }: SettleParams) {
   const isCredit = entry.entry_type === "Credit";
-  const newEntryType = isCredit ? "Cash Inflow" : "Cash Outflow";
+  const isAdvance = entry.entry_type === "Advance";
+  if (!isCredit && !isAdvance) {
+    throw new Error("Only Credit and Advance entries can be settled.");
+  }
 
-  const { error: insertError } = await supabase.from("entries").insert({
-    user_id: entry.user_id,
-    entry_type: newEntryType,
-    category: entry.category,
-    payment_method: entry.payment_method,
-    amount,
-    entry_date: settlementDate,
-    notes: `Settlement of ${entry.entry_type.toLowerCase()} ${entry.id}`,
-  });
+  let settlementEntryType: Entry["entry_type"] | null = null;
+  const settlementCategory: Entry["category"] = entry.category;
 
-  if (insertError) {
-    throw insertError;
+  if (isCredit) {
+    if (entry.category === "Sales") {
+      settlementEntryType = "Cash Inflow";
+    } else {
+      settlementEntryType = "Cash Outflow";
+    }
+  } else if (isAdvance) {
+    if (entry.category === "Sales") {
+      settlementEntryType = "Cash Outflow";
+    } else if (entry.category === "Assets") {
+      settlementEntryType = null;
+    } else {
+      settlementEntryType = "Cash Outflow";
+    }
+  }
+
+  if (settlementEntryType) {
+    const { error: insertError } = await supabase.from("entries").insert({
+      user_id: entry.user_id,
+      entry_type: settlementEntryType,
+      category: settlementCategory,
+      payment_method: entry.payment_method,
+      amount,
+      entry_date: settlementDate,
+      notes: `Settlement of ${entry.entry_type.toLowerCase()} ${entry.id}`,
+    });
+
+    if (insertError) {
+      throw insertError;
+    }
   }
 
   const { error: updateError } = await supabase

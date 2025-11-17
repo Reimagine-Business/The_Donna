@@ -55,6 +55,13 @@ type FiltersState = {
   search: string;
 };
 
+const ENTRY_TYPE_CATEGORY_OPTIONS: Record<EntryType, CategoryType[]> = {
+  "Cash Inflow": ["Sales"],
+  "Cash Outflow": ["COGS", "Opex", "Assets"],
+  Credit: ["Sales", "COGS", "Opex"],
+  Advance: ["Sales", "COGS", "Opex", "Assets"],
+};
+
 const today = format(new Date(), "yyyy-MM-dd");
 const defaultStart = format(subDays(new Date(), 30), "yyyy-MM-dd");
 
@@ -136,7 +143,18 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
     name: K,
     value: EntryFormState[K],
   ) => {
-    setFormValues((prev) => ({ ...prev, [name]: value }));
+    setFormValues((prev) => {
+      if (name === "entry_type") {
+        const allowed = ENTRY_TYPE_CATEGORY_OPTIONS[value as EntryType];
+        const nextCategory = allowed.includes(prev.category) ? prev.category : allowed[0];
+        return {
+          ...prev,
+          entry_type: value as EntryType,
+          category: nextCategory,
+        };
+      }
+      return { ...prev, [name]: value };
+    });
   };
 
   const handleAmountBlur = () => {
@@ -187,6 +205,13 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
       const numericAmount = Number(formValues.amount.replace(/,/g, ""));
       if (!numericAmount || Number.isNaN(numericAmount)) {
         setFormError("Enter a valid amount.");
+        setIsSubmitting(false);
+        return;
+      }
+
+      const allowedCategories = ENTRY_TYPE_CATEGORY_OPTIONS[formValues.entry_type];
+      if (!allowedCategories.includes(formValues.category)) {
+        setFormError("Selected category is not valid for this entry type.");
         setIsSubmitting(false);
         return;
       }
@@ -339,14 +364,14 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
             </div>
             <div className="space-y-2">
               <Label className="text-sm uppercase text-slate-400">Category</Label>
-                <select
-                  value={formValues.category}
-                  onChange={(event) =>
-                    handleInputChange("category", event.target.value as CategoryType)
-                  }
+              <select
+                value={formValues.category}
+                onChange={(event) =>
+                  handleInputChange("category", event.target.value as CategoryType)
+                }
                 className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
               >
-                {CATEGORIES.map((category) => (
+                {ENTRY_TYPE_CATEGORY_OPTIONS[formValues.entry_type].map((category) => (
                   <option key={category} value={category}>
                     {category}
                   </option>
