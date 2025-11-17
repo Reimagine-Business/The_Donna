@@ -2,16 +2,6 @@
 
 import { useMemo, useState, useEffect } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
-import {
-  ResponsiveContainer,
-  BarChart,
-  Bar,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  Tooltip,
-  Legend,
-} from "recharts";
 
 import { createClient } from "@/lib/supabase/client";
 import { Entry, normalizeEntry } from "@/lib/entries";
@@ -91,175 +81,178 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
   const stats = useMemo(() => buildProfitStats(entries, filters), [entries, filters]);
 
+  const rangeLabel = `${format(new Date(filters.start_date), "dd MMM")} — ${format(
+    new Date(filters.end_date),
+    "dd MMM",
+  )}`;
+
+  const plRows = [
+    { label: "Sales", value: stats.sales, variant: "positive" as RowVariant },
+    { label: "Cost of Goods Sold", value: stats.cogs, variant: "negative" as RowVariant },
+    { label: "Gross Profit", value: stats.grossProfit, variant: "neutral" as RowVariant },
+    { label: "Operating Expenses", value: stats.opex, variant: "negative" as RowVariant },
+    { label: "Net Profit", value: stats.netProfit, variant: "positive" as RowVariant },
+  ];
+
   return (
     <div className="flex flex-col gap-8 text-white">
-      <header className="space-y-2">
-        <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Donna · Profit Lens</p>
-        <h1 className="text-3xl font-semibold">Monthly profit & loss</h1>
-        <p className="text-sm text-slate-400">
-          See how sales convert into margins across every cost bucket.
-        </p>
-      </header>
-
-      <section className="grid gap-4 md:grid-cols-3">
-        <SummaryCard label="Sales" value={currencyFormatter.format(stats.sales)} variant="positive" />
-        <SummaryCard label="COGS" value={currencyFormatter.format(stats.cogs)} variant="negative" />
-        <SummaryCard label="Gross Profit" value={currencyFormatter.format(stats.grossProfit)} variant="neutral" />
-        <SummaryCard label="Opex" value={currencyFormatter.format(stats.opex)} variant="negative" />
-        <SummaryCard
-          label="Net Profit"
-          value={currencyFormatter.format(stats.netProfit)}
-          variant="highlight"
-        />
-        <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-4">
-          <p className="text-xs uppercase tracking-widest text-slate-400">Margins</p>
-          <div className="mt-4 space-y-3 text-white">
-            <div>
-              <p className="text-sm text-slate-400">Gross Margin</p>
-              <p className="text-2xl font-semibold">{percentageFormatter(stats.grossMargin)}</p>
-            </div>
-            <div>
-              <p className="text-sm text-slate-400">Net Margin</p>
-              <p className="text-2xl font-semibold">{percentageFormatter(stats.netMargin)}</p>
-            </div>
+      <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
+        <div>
+          <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Donna · Profit Lens</p>
+          <h1 className="text-4xl font-semibold">Profit Lens</h1>
+          <p className="text-sm text-slate-400">Accrual basis for {rangeLabel}</p>
+        </div>
+        <div className="flex flex-wrap gap-3 text-sm">
+          <div>
+            <p className="text-xs uppercase text-slate-400">From</p>
+            <input
+              type="date"
+              value={filters.start_date}
+              max={filters.end_date}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  start_date: event.target.value,
+                }))
+              }
+              className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+            />
           </div>
+          <div>
+            <p className="text-xs uppercase text-slate-400">To</p>
+            <input
+              type="date"
+              value={filters.end_date}
+              min={filters.start_date}
+              onChange={(event) =>
+                setFilters((prev) => ({
+                  ...prev,
+                  end_date: event.target.value,
+                }))
+              }
+              className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+            />
+          </div>
+          <button
+            type="button"
+            onClick={() =>
+              setFilters({
+                start_date: currentStart,
+                end_date: currentEnd,
+              })
+            }
+            className="mt-4 rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-300 transition hover:border-[#a78bfa]/60 hover:text-white"
+          >
+            Current month
+          </button>
+        </div>
+      </div>
+
+      <section className="rounded-3xl border border-white/10 bg-slate-900/40 p-6 shadow-2xl shadow-black/40">
+        <div className="space-y-4">
+          {plRows.map((row, index) => (
+            <div
+              key={row.label}
+              className={cn(
+                "flex flex-col gap-2 rounded-2xl border border-white/5 bg-slate-950/30 p-4 md:flex-row md:items-center md:justify-between",
+                index === plRows.length - 1 ? "shadow-[0_0_25px_rgba(167,139,250,0.2)]" : "",
+              )}
+            >
+              <p className="text-sm uppercase tracking-[0.3em] text-slate-400">{row.label}</p>
+                <p className={cn("text-3xl font-semibold", rowColor(row.variant))}>
+                {currencyFormatter.format(row.value)}
+              </p>
+            </div>
+          ))}
         </div>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-5">
-        <div className="mb-4 flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
-          <div>
-            <p className="text-xs uppercase text-slate-400">Period</p>
-            <h2 className="text-lg font-semibold">Date range</h2>
-          </div>
-          <div className="flex flex-wrap gap-3 text-sm">
-            <div>
-              <p className="text-xs uppercase text-slate-400">From</p>
-              <input
-                type="date"
-                value={filters.start_date}
-                max={filters.end_date}
-                onChange={(event) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    start_date: event.target.value,
-                  }))
-                }
-                className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
-              />
-            </div>
-            <div>
-              <p className="text-xs uppercase text-slate-400">To</p>
-              <input
-                type="date"
-                value={filters.end_date}
-                min={filters.start_date}
-                onChange={(event) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    end_date: event.target.value,
-                  }))
-                }
-                className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
-              />
-            </div>
-            <button
-              type="button"
-              onClick={() =>
-                setFilters({
-                  start_date: currentStart,
-                  end_date: currentEnd,
-                })
-              }
-              className="mt-4 rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-300 transition hover:border-[#a78bfa]/60 hover:text-white"
-            >
-              Reset to current month
-            </button>
-          </div>
-        </div>
+      <section className="grid gap-4 md:grid-cols-2">
+        <MetricCard
+          title="Gross Margin"
+          value={percentageFormatter(stats.grossMargin)}
+          subtitle="Gross profit ÷ sales"
+        />
+        <MetricCard
+          title="Net Profit Margin"
+          value={percentageFormatter(stats.netMargin)}
+          subtitle="Net profit ÷ sales"
+        />
+      </section>
 
-        <div className="grid gap-5 lg:grid-cols-[2fr,1fr]">
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-            <p className="text-xs uppercase text-slate-400">Expense breakdown</p>
-            <h3 className="text-lg font-semibold">Top 5 spend buckets</h3>
-            <div className="mt-5 h-72">
-              {stats.topExpenses.length === 0 ? (
-                <p className="text-sm text-slate-400">No expenses recorded in this range.</p>
-              ) : (
-                <ResponsiveContainer>
-                  <BarChart data={stats.topExpenses} layout="vertical" margin={{ left: 80 }}>
-                    <CartesianGrid strokeDasharray="3 3" stroke="#1f2937" />
-                    <XAxis type="number" stroke="#94a3b8" />
-                    <YAxis dataKey="name" type="category" stroke="#94a3b8" />
-                    <Tooltip
-                      formatter={(value: number) => currencyFormatter.format(value ?? 0)}
-                      contentStyle={{
-                        backgroundColor: "#0f172a",
-                        borderRadius: "0.75rem",
-                        border: "1px solid rgba(255,255,255,0.1)",
-                      }}
-                    />
-                    <Legend />
-                    <Bar dataKey="value" fill="#a78bfa" radius={[0, 12, 12, 0]} />
-                  </BarChart>
-                </ResponsiveContainer>
-              )}
-            </div>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5">
-            <p className="text-xs uppercase text-slate-400">Total sales</p>
-            <h3 className="mt-3 text-4xl font-semibold text-white">
-              {currencyFormatter.format(stats.sales)}
-            </h3>
-            <p className="mt-2 text-sm text-slate-400">
-              Includes both cash inflow and credit sales within this range.
-            </p>
-            <div className="mt-6 space-y-3 text-sm text-slate-300">
-              <div className="flex justify-between">
-                <span>COGS</span>
-                <span className="text-rose-300">{currencyFormatter.format(stats.cogs)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Opex</span>
-                <span className="text-rose-300">{currencyFormatter.format(stats.opex)}</span>
-              </div>
-              <div className="flex justify-between">
-                <span>Net profit</span>
-                <span className="text-[#a78bfa]">{currencyFormatter.format(stats.netProfit)}</span>
-              </div>
-            </div>
+      <section className="space-y-4">
+        <div className="flex flex-col gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Top Expense Breakdown</p>
+            <h2 className="text-2xl font-semibold text-white">Where cash is leaving</h2>
           </div>
         </div>
+        <div className="grid gap-4 md:grid-cols-2">
+          <BreakdownCard
+            title="Cost of Goods Sold"
+            value={currencyFormatter.format(stats.cogs)}
+            description="Direct inputs tied to sales"
+          />
+          <BreakdownCard
+            title="Other Expenses"
+            value={currencyFormatter.format(stats.opex)}
+            description="Operating and overhead costs"
+          />
+        </div>
+      </section>
+
+      <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#a78bfa]/30 to-[#a78bfa]/10 p-6 text-white shadow-[0_0_35px_rgba(167,139,250,0.25)]">
+        <p className="text-xs uppercase tracking-[0.3em] text-white/80">Total Sales</p>
+        <p className="mt-4 text-4xl font-semibold">{currencyFormatter.format(stats.sales)}</p>
+        <p className="mt-2 text-sm text-white/70">
+          Includes cash inflows and credit sales captured this period.
+        </p>
       </section>
     </div>
   );
 }
 
-type SummaryVariant = "positive" | "negative" | "neutral" | "highlight";
+type RowVariant = "positive" | "negative" | "neutral";
 
-const summaryColors: Record<SummaryVariant, string> = {
-  positive: "from-emerald-500/30 to-emerald-500/5 border-emerald-500/40",
-  negative: "from-rose-500/30 to-rose-500/5 border-rose-500/40",
-  neutral: "from-white/20 to-white/5 border-white/20",
-  highlight: "from-[#a78bfa]/40 to-[#a78bfa]/10 border-[#a78bfa]/50",
+const rowColor = (variant: RowVariant) => {
+  switch (variant) {
+    case "positive":
+      return "text-emerald-300";
+    case "negative":
+      return "text-rose-300";
+    default:
+      return "text-white";
+  }
 };
 
-type SummaryCardProps = {
-  label: string;
+type MetricCardProps = {
+  title: string;
   value: string;
-  variant: SummaryVariant;
+  subtitle: string;
 };
 
-function SummaryCard({ label, value, variant }: SummaryCardProps) {
+function MetricCard({ title, value, subtitle }: MetricCardProps) {
   return (
-    <div
-      className={cn(
-        "rounded-2xl border bg-gradient-to-br p-5 shadow-xl shadow-black/40",
-        summaryColors[variant],
-      )}
-    >
-      <p className="text-xs uppercase tracking-[0.3em] text-white/70">{label}</p>
-      <p className="mt-3 text-3xl font-semibold">{value}</p>
+    <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-black/40">
+      <p className="text-xs uppercase tracking-[0.3em] text-slate-400">{title}</p>
+      <p className="mt-3 text-3xl font-semibold text-white">{value}</p>
+      <p className="mt-2 text-sm text-slate-400">{subtitle}</p>
+    </div>
+  );
+}
+
+type BreakdownCardProps = {
+  title: string;
+  value: string;
+  description: string;
+};
+
+function BreakdownCard({ title, value, description }: BreakdownCardProps) {
+  return (
+    <div className="rounded-2xl border border-[#a78bfa]/30 bg-gradient-to-br from-[#a78bfa]/20 to-transparent p-5 shadow-lg shadow-[#a78bfa]/20">
+      <p className="text-xs uppercase tracking-[0.3em] text-[#c4b5fd]">{title}</p>
+      <p className="mt-3 text-3xl font-semibold text-white">{value}</p>
+      <p className="mt-2 text-sm text-[#c4b5fd]">{description}</p>
     </div>
   );
 }
@@ -272,7 +265,6 @@ type ProfitStats = {
   netProfit: number;
   grossMargin: number;
   netMargin: number;
-  topExpenses: { name: string; value: number }[];
 };
 
 const buildProfitStats = (entries: Entry[], filters: FiltersState): ProfitStats => {
@@ -305,21 +297,6 @@ const buildProfitStats = (entries: Entry[], filters: FiltersState): ProfitStats 
   const grossProfit = sales - cogs;
   const netProfit = grossProfit - opex;
 
-  const expenseMap: Record<string, number> = {};
-  filtered.forEach((entry) => {
-    if (
-      (entry.category === "COGS" || entry.category === "Opex") &&
-      (entry.entry_type === "Cash Outflow" || isCredit(entry))
-    ) {
-      expenseMap[entry.category] = (expenseMap[entry.category] ?? 0) + entry.amount;
-    }
-  });
-
-  const topExpenses = Object.entries(expenseMap)
-    .map(([name, value]) => ({ name, value }))
-    .sort((a, b) => b.value - a.value)
-    .slice(0, 5);
-
   return {
     sales,
     cogs,
@@ -328,6 +305,5 @@ const buildProfitStats = (entries: Entry[], filters: FiltersState): ProfitStats 
     netProfit,
     grossMargin: sales > 0 ? grossProfit / sales : NaN,
     netMargin: sales > 0 ? netProfit / sales : NaN,
-    topExpenses,
   };
 };
