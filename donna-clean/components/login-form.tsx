@@ -13,9 +13,9 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
-import { useMemo, useState } from "react";
+import { useState } from "react";
 import { Loader2 } from "lucide-react";
-import { createClientComponentClient } from "@supabase/ssr";
+import { createClient } from "@/lib/supabase/client";
 
 export function LoginForm({
   className,
@@ -24,32 +24,32 @@ export function LoginForm({
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState<string | null>(null);
-    const [isLoading, setIsLoading] = useState(false);
-    const router = useRouter();
-    const supabase = useMemo(() => createClientComponentClient(), []);
+  const [isLoading, setIsLoading] = useState(false);
+  const router = useRouter();
 
-    const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-      e.preventDefault();
-      console.log("Login submitted");
-      setIsLoading(true);
-      setError(null);
+  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    console.log("Login submitted");
+    setIsLoading(true);
+    setError(null);
 
-      try {
-        const { error } = await supabase.auth.signInWithPassword({
-          email,
-          password,
-        });
-        if (error) {
-          setError("Invalid credentials");
-          return;
-        }
-        router.push("/dashboard");
-      } catch (error: unknown) {
-        setError(error instanceof Error ? error.message : "An error occurred");
-      } finally {
-        setIsLoading(false);
+    try {
+      const supabase = createClient();
+      const { error } = await supabase.auth.signInWithPassword({
+        email,
+        password,
+      });
+      if (error) {
+        setError("Invalid credentials");
+        return;
       }
-    };
+      router.push("/dashboard");
+    } catch (error: unknown) {
+      setError(error instanceof Error ? error.message : "An error occurred");
+    } finally {
+      setIsLoading(false);
+    }
+  };
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
