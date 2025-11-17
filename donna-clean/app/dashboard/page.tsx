@@ -16,7 +16,9 @@ type Profile = {
 };
 
 export default async function DashboardPage() {
-  const supabase = createClient();
+  let sessionError: string | null = null;
+
+  const supabase = await createClient();
 
   const {
     data: { user },
@@ -45,6 +47,9 @@ export default async function DashboardPage() {
     if (data) {
       profile = data;
     } else {
+      if (error && error.code !== "PGRST116") {
+        throw error;
+      }
       const defaultBusinessName =
         metadata.business_name ??
         user.email?.split("@")[0] ??
@@ -69,6 +74,7 @@ export default async function DashboardPage() {
     }
   } catch (error) {
     console.error("Dashboard profile fetch failed", error);
+    sessionError = "Session error";
   }
 
   return (
@@ -76,15 +82,29 @@ export default async function DashboardPage() {
       <div className="flex-1 w-full flex flex-col gap-12 items-center">
         <SiteHeader />
         <section className="w-full max-w-4xl p-5 flex flex-col gap-8">
-          <div>
-            <p className="text-sm uppercase text-muted-foreground">
-              Welcome back
-            </p>
-              <h1 className="text-3xl font-semibold tracking-tight">
-                {profile?.business_name || "Not set"}
-              </h1>
-              <p className="text-muted-foreground">{user.email ?? "No email"}</p>
-          </div>
+            {sessionError ? (
+              <Card className="border-red-500/40 bg-red-500/10">
+                <CardHeader>
+                  <CardTitle>Session error</CardTitle>
+                  <CardDescription>
+                    We couldn&apos;t load your profile. Please refresh and try
+                    again.
+                  </CardDescription>
+                </CardHeader>
+              </Card>
+            ) : (
+              <div>
+                <p className="text-sm uppercase text-muted-foreground">
+                  Welcome back
+                </p>
+                <h1 className="text-3xl font-semibold tracking-tight">
+                  {profile?.business_name || "Not set"}
+                </h1>
+                <p className="text-muted-foreground">
+                  {user.email ?? "No email"}
+                </p>
+              </div>
+            )}
 
           <div className="grid gap-6 md:grid-cols-2">
             <Card>
