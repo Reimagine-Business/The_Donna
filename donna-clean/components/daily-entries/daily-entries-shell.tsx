@@ -14,6 +14,10 @@ const ENTRY_TYPES = ["Cash Inflow", "Cash Outflow", "Credit", "Advance"] as cons
 const CATEGORIES = ["Sales", "COGS", "Opex", "Assets"] as const;
 const PAYMENT_METHODS = ["Cash", "Bank"] as const;
 
+type EntryType = (typeof ENTRY_TYPES)[number];
+type CategoryType = (typeof CATEGORIES)[number];
+type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
   style: "currency",
   currency: "INR",
@@ -28,9 +32,9 @@ const numberFormatter = new Intl.NumberFormat("en-IN", {
 export type Entry = {
   id: string;
   user_id: string;
-  entry_type: (typeof ENTRY_TYPES)[number];
-  category: (typeof CATEGORIES)[number];
-  payment_method: (typeof PAYMENT_METHODS)[number];
+  entry_type: EntryType;
+  category: CategoryType;
+  payment_method: PaymentMethod;
   amount: number;
   entry_date: string;
   notes: string | null;
@@ -45,7 +49,7 @@ type SupabaseEntry = Partial<EntryRecord> & {
   amount?: number | string | null;
 };
 
-const ensureOption = <T extends readonly string[]>(
+const ensureOption = <const T extends readonly string[]>(
   value: unknown,
   options: T,
   fallback: T[number],
@@ -80,8 +84,44 @@ type DailyEntriesShellProps = {
   userId: string;
 };
 
+type EntryFormState = {
+  entry_type: EntryType;
+  category: CategoryType;
+  payment_method: PaymentMethod;
+  amount: string;
+  entry_date: string;
+  notes: string;
+};
+
+type FiltersState = {
+  entry_type: EntryType | "All";
+  category: CategoryType | "All";
+  payment_method: PaymentMethod | "All";
+  start_date: string;
+  end_date: string;
+  search: string;
+};
+
 const today = format(new Date(), "yyyy-MM-dd");
 const defaultStart = format(subDays(new Date(), 30), "yyyy-MM-dd");
+
+const buildInitialFormState = (): EntryFormState => ({
+  entry_type: ENTRY_TYPES[0],
+  category: CATEGORIES[0],
+  payment_method: PAYMENT_METHODS[0],
+  amount: "",
+  entry_date: today,
+  notes: "",
+});
+
+const buildInitialFiltersState = (): FiltersState => ({
+  entry_type: "All",
+  category: "All",
+  payment_method: "All",
+  start_date: defaultStart,
+  end_date: today,
+  search: "",
+});
 
 export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellProps) {
   const supabase = useMemo(() => createClient(), []);
@@ -93,23 +133,8 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
 
-  const [formValues, setFormValues] = useState({
-    entry_type: ENTRY_TYPES[0],
-    category: CATEGORIES[0],
-    payment_method: PAYMENT_METHODS[0],
-    amount: "",
-    entry_date: today,
-    notes: "",
-  });
-
-  const [filters, setFilters] = useState({
-    entry_type: "All",
-    category: "All",
-    payment_method: "All",
-    start_date: defaultStart,
-    end_date: today,
-    search: "",
-  });
+  const [formValues, setFormValues] = useState<EntryFormState>(buildInitialFormState);
+  const [filters, setFilters] = useState<FiltersState>(buildInitialFiltersState);
 
   useEffect(() => {
     const channel = supabase
@@ -153,7 +178,10 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
     };
   }, [supabase, userId]);
 
-  const handleInputChange = (name: string, value: string) => {
+  const handleInputChange = <K extends keyof EntryFormState>(
+    name: K,
+    value: EntryFormState[K],
+  ) => {
     setFormValues((prev) => ({ ...prev, [name]: value }));
   };
 
@@ -166,14 +194,7 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
   };
 
   const resetForm = () => {
-    setFormValues({
-      entry_type: ENTRY_TYPES[0],
-      category: CATEGORIES[0],
-      payment_method: PAYMENT_METHODS[0],
-      amount: "",
-      entry_date: today,
-      notes: "",
-    });
+    setFormValues(buildInitialFormState());
     setEditingEntryId(null);
     setReceiptFile(null);
     setReceiptPreview(null);
@@ -252,14 +273,14 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
 
   const handleEdit = (entry: Entry) => {
     setEditingEntryId(entry.id);
-    setFormValues({
-      entry_type: entry.entry_type,
-      category: entry.category,
-      payment_method: entry.payment_method,
-      amount: numberFormatter.format(entry.amount),
-      entry_date: entry.entry_date,
-      notes: entry.notes ?? "",
-    });
+      setFormValues({
+        entry_type: entry.entry_type,
+        category: entry.category,
+        payment_method: entry.payment_method,
+        amount: numberFormatter.format(entry.amount),
+        entry_date: entry.entry_date,
+        notes: entry.notes ?? "",
+      });
     setExistingImageUrl(entry.image_url);
     setReceiptPreview(entry.image_url);
     setReceiptFile(null);
@@ -345,12 +366,14 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
 
       <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-2xl shadow-black/40">
         <form onSubmit={handleSubmit} className="space-y-6">
-          <div className="grid gap-5 md:grid-cols-2">
+            <div className="grid gap-5 md:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-sm uppercase text-slate-400">Entry Type</Label>
-              <select
-                value={formValues.entry_type}
-                onChange={(event) => handleInputChange("entry_type", event.target.value)}
+                <select
+                  value={formValues.entry_type}
+                  onChange={(event) =>
+                    handleInputChange("entry_type", event.target.value as EntryType)
+                  }
                 className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
               >
                 {ENTRY_TYPES.map((type) => (
@@ -362,9 +385,11 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
             </div>
             <div className="space-y-2">
               <Label className="text-sm uppercase text-slate-400">Category</Label>
-              <select
-                value={formValues.category}
-                onChange={(event) => handleInputChange("category", event.target.value)}
+                <select
+                  value={formValues.category}
+                  onChange={(event) =>
+                    handleInputChange("category", event.target.value as CategoryType)
+                  }
                 className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
               >
                 {CATEGORIES.map((category) => (
@@ -376,9 +401,11 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
             </div>
             <div className="space-y-2">
               <Label className="text-sm uppercase text-slate-400">Payment Method</Label>
-              <select
-                value={formValues.payment_method}
-                onChange={(event) => handleInputChange("payment_method", event.target.value)}
+                <select
+                  value={formValues.payment_method}
+                  onChange={(event) =>
+                    handleInputChange("payment_method", event.target.value as PaymentMethod)
+                  }
                 className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
               >
                 {PAYMENT_METHODS.map((method) => (
@@ -535,7 +562,10 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
               <select
                 value={filters.entry_type}
                 onChange={(event) =>
-                  setFilters((prev) => ({ ...prev, entry_type: event.target.value }))
+                  setFilters((prev) => ({
+                    ...prev,
+                    entry_type: event.target.value as FiltersState["entry_type"],
+                  }))
                 }
                 className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm"
               >
@@ -550,7 +580,10 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
               <select
                 value={filters.category}
                 onChange={(event) =>
-                  setFilters((prev) => ({ ...prev, category: event.target.value }))
+                  setFilters((prev) => ({
+                    ...prev,
+                    category: event.target.value as FiltersState["category"],
+                  }))
                 }
                 className="w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm"
               >
@@ -566,16 +599,7 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
               type="button"
               variant="ghost"
               className="text-slate-300 hover:text-white"
-              onClick={() =>
-                setFilters({
-                  entry_type: "All",
-                  category: "All",
-                  payment_method: "All",
-                  start_date: defaultStart,
-                  end_date: today,
-                  search: "",
-                })
-              }
+              onClick={() => setFilters(buildInitialFiltersState())}
             >
               Reset
             </Button>
@@ -598,7 +622,10 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
             <select
               value={filters.payment_method}
               onChange={(event) =>
-                setFilters((prev) => ({ ...prev, payment_method: event.target.value }))
+                setFilters((prev) => ({
+                  ...prev,
+                  payment_method: event.target.value as FiltersState["payment_method"],
+                }))
               }
               className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm"
             >
