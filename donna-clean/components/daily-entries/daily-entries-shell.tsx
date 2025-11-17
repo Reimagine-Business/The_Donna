@@ -206,6 +206,8 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
         image_url: uploadedUrl,
       };
 
+      console.log("Saving entry payload", payload);
+
       if (editingEntryId) {
         const { error } = await supabase.from("entries").update(payload).eq("id", editingEntryId);
         if (error) throw error;
