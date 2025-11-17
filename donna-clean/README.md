@@ -108,6 +108,10 @@ Create a public Supabase Storage bucket named `receipts` (or update the code to 
 
 The `/cashpulse` route reads from the same `entries` table and expects the `settled` + `settled_at` columns defined in the SQL above. Run `npm install` to ensure `recharts` is installed for the visualization layer.
 
+## Profit Lens
+
+The `/profit-lens` page shares the entries dataset and visualizes monthly profitability. Update the `settled` flag when you settle credits/advances so the cash flow and profit analytics stay accurate.
+
 ## Feedback and issues
 
 Please file feedback and issues over on the [Supabase GitHub org](https://github.com/supabase/supabase/issues/new/choose).

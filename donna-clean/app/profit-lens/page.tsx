@@ -1,0 +1,41 @@
+import { redirect } from "next/navigation";
+
+import { createClient } from "@/lib/supabase/server";
+import { SiteHeader } from "@/components/site-header";
+import { ProfitLensShell } from "@/components/profit-lens/profit-lens-shell";
+import { normalizeEntry, type Entry } from "@/lib/entries";
+
+export default async function ProfitLensPage() {
+  const supabase = await createClient();
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  const { data } = await supabase
+    .from("entries")
+    .select(
+      "id, user_id, entry_type, category, payment_method, amount, entry_date, notes, image_url, settled, settled_at, created_at, updated_at",
+    )
+    .eq("user_id", user.id)
+    .order("entry_date", { ascending: false });
+
+  const entries: Entry[] = data?.map((entry) => normalizeEntry(entry)) ?? [];
+
+  return (
+    <main className="min-h-screen bg-slate-950 text-white">
+      <div className="flex flex-col gap-10">
+        <SiteHeader />
+        <section className="px-4 pb-12 md:px-8">
+          <div className="mx-auto w-full max-w-6xl">
+            <ProfitLensShell initialEntries={entries} userId={user.id} />
+          </div>
+        </section>
+      </div>
+    </main>
+  );
+}

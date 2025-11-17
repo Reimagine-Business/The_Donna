@@ -21,6 +21,9 @@ export function SiteHeader() {
               <Link className="hover:underline" href="/cashpulse">
                 Cashpulse
               </Link>
+              <Link className="hover:underline" href="/profit-lens">
+                Profit Lens
+              </Link>
           </div>
         </div>
         <div className="flex items-center gap-3">
