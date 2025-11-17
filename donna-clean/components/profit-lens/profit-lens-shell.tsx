@@ -272,23 +272,22 @@ const buildProfitStats = (entries: Entry[], filters: FiltersState): ProfitStats 
     (entry) => entry.entry_date >= filters.start_date && entry.entry_date <= filters.end_date,
   );
 
-  const isCredit = (entry: Entry) => entry.entry_type === "Credit";
   const sales = filtered.reduce((sum, entry) => {
-    if (entry.category === "Sales" && (entry.entry_type === "Cash Inflow" || isCredit(entry))) {
+    if (entry.entry_type === "Cash Inflow" && entry.category === "Sales") {
       return sum + entry.amount;
     }
     return sum;
   }, 0);
 
   const cogs = filtered.reduce((sum, entry) => {
-    if (entry.category === "COGS" && (entry.entry_type === "Cash Outflow" || isCredit(entry))) {
+    if (entry.entry_type === "Cash Outflow" && entry.category === "COGS") {
       return sum + entry.amount;
     }
     return sum;
   }, 0);
 
   const opex = filtered.reduce((sum, entry) => {
-    if (entry.category === "Opex" && (entry.entry_type === "Cash Outflow" || isCredit(entry))) {
+    if (entry.entry_type === "Cash Outflow" && entry.category === "Opex") {
       return sum + entry.amount;
     }
     return sum;

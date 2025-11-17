@@ -27,10 +27,7 @@ const numberFormatter = new Intl.NumberFormat("en-IN", {
   minimumFractionDigits: 0,
 });
 
-const isCashInflow = (entry: Entry) =>
-  entry.entry_type === "Cash Inflow" ||
-  (entry.entry_type === "Credit" && entry.settled) ||
-  (entry.entry_type === "Advance" && entry.settled);
+const isCashInflow = (entry: Entry) => entry.entry_type === "Cash Inflow";
 
 const isCashOutflow = (entry: Entry) => entry.entry_type === "Cash Outflow";
 
