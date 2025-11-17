@@ -10,6 +10,11 @@ import {
 } from "@/components/ui/card";
 import { createClient } from "@/lib/supabase/server";
 
+type Profile = {
+  business_name: string | null;
+  role: string | null;
+};
+
 export default async function DashboardPage() {
   const supabase = createClient();
 
@@ -21,11 +26,50 @@ export default async function DashboardPage() {
     redirect("/auth/login");
   }
 
-  const { data: profile } = await supabase
-    .from("profiles")
-    .select("business_name, role")
-    .eq("id", user.id)
-    .maybeSingle();
+  const metadata =
+    (user.user_metadata as Record<string, string | null>) ?? {};
+
+  let profile: Profile | null = null;
+
+  try {
+    const { data, error } = await supabase
+      .from("profiles")
+      .select("business_name, role")
+      .eq("id", user.id)
+      .maybeSingle();
+
+    if (error && error.code !== "PGRST116") {
+      throw error;
+    }
+
+    if (data) {
+      profile = data;
+    } else {
+      const defaultBusinessName =
+        metadata.business_name ??
+        user.email?.split("@")[0] ??
+        "Not set";
+      const defaultRole = metadata.role ?? "owner";
+
+      const { data: createdProfile, error: createError } = await supabase
+        .from("profiles")
+        .insert({
+          id: user.id,
+          business_name: defaultBusinessName,
+          role: defaultRole,
+        })
+        .select("business_name, role")
+        .single();
+
+      if (createError) {
+        throw createError;
+      }
+
+      profile = createdProfile;
+    }
+  } catch (error) {
+    console.error("Dashboard profile fetch failed", error);
+  }
 
   return (
     <main className="min-h-screen flex flex-col items-center">
@@ -36,10 +80,10 @@ export default async function DashboardPage() {
             <p className="text-sm uppercase text-muted-foreground">
               Welcome back
             </p>
-            <h1 className="text-3xl font-semibold tracking-tight">
-              {profile?.business_name || "Business name not set"}
-            </h1>
-            <p className="text-muted-foreground">{user.email}</p>
+              <h1 className="text-3xl font-semibold tracking-tight">
+                {profile?.business_name || "Not set"}
+              </h1>
+              <p className="text-muted-foreground">{user.email ?? "No email"}</p>
           </div>
 
           <div className="grid gap-6 md:grid-cols-2">
@@ -51,17 +95,19 @@ export default async function DashboardPage() {
               <CardContent className="space-y-2 text-sm">
                 <div>
                   <p className="text-muted-foreground">Business name</p>
-                  <p className="font-medium">
-                    {profile?.business_name || "Not provided"}
-                  </p>
+                    <p className="font-medium">
+                      {profile?.business_name || "Not set"}
+                    </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Role</p>
-                  <p className="font-medium">{profile?.role || "Not provided"}</p>
+                    <p className="font-medium">
+                      {profile?.role || "Not set"}
+                    </p>
                 </div>
                 <div>
                   <p className="text-muted-foreground">Email</p>
-                  <p className="font-medium">{user.email}</p>
+                    <p className="font-medium">{user.email ?? "Not set"}</p>
                 </div>
               </CardContent>
             </Card>
