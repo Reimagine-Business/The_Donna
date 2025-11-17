@@ -91,10 +91,11 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     };
   }, [supabase, userId]);
 
-  const stats = useMemo(
-    () => buildCashpulseStats(entries, historyFilters),
-    [entries, historyFilters],
-  );
+  const [stats, setStats] = useState(() => buildCashpulseStats(initialEntries, historyFilters));
+
+  useEffect(() => {
+    setStats(buildCashpulseStats(entries, historyFilters));
+  }, [entries, historyFilters]);
   const historyLabel = `${format(new Date(historyFilters.start_date), "dd MMM yyyy")} – ${format(
     new Date(historyFilters.end_date),
     "dd MMM yyyy",

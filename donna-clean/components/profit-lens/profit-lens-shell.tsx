@@ -80,7 +80,11 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     };
   }, [supabase, userId]);
 
-  const stats = useMemo(() => buildProfitStats(entries, filters), [entries, filters]);
+  const [stats, setStats] = useState(() => buildProfitStats(initialEntries, filters));
+
+  useEffect(() => {
+    setStats(buildProfitStats(entries, filters));
+  }, [entries, filters]);
 
   const rangeLabel = `${format(new Date(filters.start_date), "dd MMM")} — ${format(
     new Date(filters.end_date),
