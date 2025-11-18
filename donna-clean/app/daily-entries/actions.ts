@@ -27,27 +27,25 @@ export async function addEntry(data: AddEntryInput) {
     redirect("/auth/login");
   }
 
-    // Then continue with your queries using this supabase client
+  const amount = Number(data.amount);
 
-    const amount = Number(data.amount);
+  if (!Number.isFinite(amount)) {
+    return { error: "Amount must be a valid number." };
+  }
 
-    if (Number.isNaN(amount)) {
-      return { error: "Amount must be a valid number." };
-    }
+  const shouldTrackRemaining = data.entry_type === "Credit" || data.entry_type === "Advance";
 
-    console.log("Inserting with user_id:", user.id);
-
-      const payload = {
-        user_id: user.id,
-        entry_type: data.entry_type,
-        category: data.category,
-        payment_method: data.payment_method,
-        amount,
-        remaining_amount: amount,
-        entry_date: data.entry_date,
-        notes: data.notes,
-        image_url: data.image_url,
-      };
+  const payload = {
+    user_id: user.id,
+    entry_type: data.entry_type,
+    category: data.category,
+    payment_method: data.payment_method,
+    amount,
+    remaining_amount: shouldTrackRemaining ? amount : null,
+    entry_date: data.entry_date,
+    notes: data.notes,
+    image_url: data.image_url,
+  };
 
   const { error } = await supabase.from("entries").insert(payload);
 
