@@ -6,7 +6,7 @@ import { ArrowDownRight, ArrowUpRight, Activity } from "lucide-react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { createBrowserClient } from "@/lib/supabase/client";
-import { Entry, normalizeEntry, type PaymentMethod } from "@/lib/entries";
+import { Entry, normalizeEntry } from "@/lib/entries";
 import { cn } from "@/lib/utils";
 import { SettleEntryDialog } from "@/components/settlement/settle-entry-dialog";
 import { Button } from "@/components/ui/button";
@@ -32,13 +32,6 @@ const formatDisplayDate = (date: string) => format(new Date(date), "dd MMM");
 
 const isWithinRange = (date: string, start: string, end: string) =>
   date >= start && date <= end;
-
-const getCashDate = (entry: Entry) => {
-  if ((entry.entry_type === "Credit" || entry.entry_type === "Advance") && entry.settled) {
-    return (entry.settled_at ?? entry.entry_date).slice(0, 10);
-  }
-  return entry.entry_date;
-};
 
 const ENTRY_SELECT =
   "id, user_id, entry_type, category, payment_method, amount, entry_date, notes, image_url, settled, settled_at, created_at, updated_at";
@@ -388,83 +381,36 @@ type PendingList = {
   entries: Entry[];
 };
 
-type CashChannel = Exclude<PaymentMethod, "None">;
-
 const buildCashpulseStats = (
   entries: Entry[],
   filters: { start_date: string; end_date: string },
 ): CashpulseStats => {
-  const rangeEntries = entries.filter((entry) =>
-    isWithinRange(getCashDate(entry), filters.start_date, filters.end_date),
-  );
+  const rangeEntries = entries.filter((entry) => {
+    const entryDate = entry.entry_date.slice(0, 10);
+    return isWithinRange(entryDate, filters.start_date, filters.end_date);
+  });
 
   let cashInflow = 0;
   let cashOutflow = 0;
-  const cashBreakdownMap: Record<CashChannel, number> = {
+  const cashBreakdownMap: Record<string, number> = {
     Cash: 0,
     Bank: 0,
   };
 
-  const isCashMovement = (method: PaymentMethod): method is CashChannel => method !== "None";
-
-  const applyInflow = (entry: Entry) => {
-    if (!isCashMovement(entry.payment_method)) {
-      return;
-    }
-    cashInflow += entry.amount;
-    cashBreakdownMap[entry.payment_method] =
-      (cashBreakdownMap[entry.payment_method] ?? 0) + entry.amount;
-  };
-
-  const applyOutflow = (entry: Entry) => {
-    if (!isCashMovement(entry.payment_method)) {
-      return;
-    }
-    cashOutflow += entry.amount;
-    cashBreakdownMap[entry.payment_method] =
-      (cashBreakdownMap[entry.payment_method] ?? 0) - entry.amount;
-  };
-
   rangeEntries.forEach((entry) => {
-    switch (entry.entry_type) {
-      case "Cash Inflow":
-        applyInflow(entry);
-        break;
-      case "Cash Outflow":
-        applyOutflow(entry);
-        break;
-      case "Advance":
-        if (entry.category === "Sales") {
-          applyInflow(entry);
-        } else if (entry.category === "COGS" || entry.category === "Opex" || entry.category === "Assets") {
-          applyOutflow(entry);
-        }
-        break;
-      default:
-        break;
+    if (entry.entry_type === "Cash Inflow") {
+      cashInflow += entry.amount;
+      cashBreakdownMap[entry.payment_method] =
+        (cashBreakdownMap[entry.payment_method] ?? 0) + entry.amount;
+      return;
+    }
+
+    if (entry.entry_type === "Cash Outflow") {
+      cashOutflow += entry.amount;
+      cashBreakdownMap[entry.payment_method] =
+        (cashBreakdownMap[entry.payment_method] ?? 0) - entry.amount;
     }
   });
-
-  const pendingCredit = entries.filter((entry) => entry.entry_type === "Credit" && !entry.settled);
-  const pendingCollectionsEntries = pendingCredit.filter((entry) => entry.category === "Sales");
-  const pendingBillsEntries = pendingCredit.filter((entry) => entry.category !== "Sales");
-  const pendingAdvancesEntries = entries.filter(
-    (entry) => entry.entry_type === "Advance" && !entry.settled,
-  );
-
-  const history = entries
-    .filter(
-      (entry) =>
-        (entry.entry_type === "Credit" || entry.entry_type === "Advance") && entry.settled,
-    )
-    .filter((entry) =>
-      isWithinRange(entry.settled_at ?? entry.entry_date, filters.start_date, filters.end_date),
-    )
-    .sort(
-      (a, b) =>
-        new Date(b.settled_at ?? b.entry_date).getTime() -
-        new Date(a.settled_at ?? a.entry_date).getTime(),
-    );
 
   return {
     cashInflow,
@@ -474,22 +420,10 @@ const buildCashpulseStats = (
       method,
       value,
     })),
-    pendingCollections: {
-      count: pendingCollectionsEntries.length,
-      total: pendingCollectionsEntries.reduce((sum, entry) => sum + entry.amount, 0),
-      entries: pendingCollectionsEntries,
-    },
-    pendingBills: {
-      count: pendingBillsEntries.length,
-      total: pendingBillsEntries.reduce((sum, entry) => sum + entry.amount, 0),
-      entries: pendingBillsEntries,
-    },
-    pendingAdvances: {
-      count: pendingAdvancesEntries.length,
-      total: pendingAdvancesEntries.reduce((sum, entry) => sum + entry.amount, 0),
-      entries: pendingAdvancesEntries,
-    },
-    history,
+    pendingCollections: { count: 0, total: 0, entries: [] },
+    pendingBills: { count: 0, total: 0, entries: [] },
+    pendingAdvances: { count: 0, total: 0, entries: [] },
+    history: [],
   };
 };
 
