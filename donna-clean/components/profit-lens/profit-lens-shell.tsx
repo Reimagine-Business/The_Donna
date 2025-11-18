@@ -109,50 +109,52 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     let channel: RealtimeChannel | null = null;
 
     const setupRealtime = async () => {
-      const targetUserId = realtimeUserId ?? userId;
+      const {
+        data: { user },
+        error,
+      } = await supabase.auth.getUser();
+      if (!isMounted) return;
+      if (error) {
+        console.error("Failed to fetch auth user for realtime (Profit Lens)", error);
+        return;
+      }
+      if (!user?.id) {
+        console.error("Cannot subscribe to realtime (Profit Lens): missing user");
+        return;
+      }
 
-        if (!targetUserId) {
-          const { data, error } = await supabase.auth.getUser();
-          if (!isMounted) return;
-          if (error) {
-            console.error("Failed to fetch auth user for realtime (Profit Lens)", error);
-            return;
-          }
-          if (data?.user?.id) {
-            setRealtimeUserId(data.user.id);
-          }
-          return;
-        }
+      setRealtimeUserId((prev) => (prev === user.id ? prev : user.id));
+      console.log("SUBSCRIBING with user ID:", user.id);
 
-        channel = supabase
-          .channel("public:entries")
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "entries",
-              filter: `user_id=eq.${targetUserId}`,
-            },
-            async (payload) => {
-              console.log("REAL-TIME: payload received", payload);
-              const latestEntries = await refetchEntries();
-              if (!latestEntries) {
-                return;
-              }
-              console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
-              const updatedStats = recalcKpis(latestEntries);
-              console.log(
-                "REAL-TIME: KPIs recalculated → inflow:",
-                updatedStats.netProfit,
-                "sales:",
-                updatedStats.sales,
-              );
-            },
-          )
-          .subscribe();
-        console.log("REAL-TIME SUBSCRIBED TO public:entries");
-        console.log("SUBSCRIPTION CREATED FOR USER:", targetUserId);
+      channel = supabase
+        .channel("public:entries")
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "entries",
+            filter: `user_id=eq.${user.id}`,
+          },
+          async (payload) => {
+            console.log("REAL-TIME: payload received", payload);
+            const latestEntries = await refetchEntries();
+            if (!latestEntries) {
+              return;
+            }
+            console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
+            const updatedStats = recalcKpis(latestEntries);
+            console.log(
+              "REAL-TIME: KPIs recalculated → inflow:",
+              updatedStats.netProfit,
+              "sales:",
+              updatedStats.sales,
+            );
+          },
+        )
+        .subscribe();
+      console.log("REAL-TIME SUBSCRIBED TO public:entries");
+      console.log("SUBSCRIPTION CREATED FOR USER:", user.id);
     };
 
     void setupRealtime();
