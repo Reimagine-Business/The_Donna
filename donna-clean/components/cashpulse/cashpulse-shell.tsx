@@ -130,15 +130,19 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
       if (!isMounted) return;
       if (error) {
         console.error("Failed to fetch auth user for realtime (Cashpulse)", error);
-        return;
       }
-      if (!user?.id) {
+      let resolvedUserId = user?.id ?? null;
+      if (!resolvedUserId && userId) {
+        resolvedUserId = userId;
+        console.warn("Realtime subscription falling back to provided userId (Cashpulse)", userId);
+      }
+      if (!resolvedUserId) {
         console.error("Cannot subscribe to realtime (Cashpulse): missing user");
         return;
       }
 
-      setRealtimeUserId((prev) => (prev === user.id ? prev : user.id));
-      console.log("SUBSCRIBING with user ID:", user.id);
+      setRealtimeUserId((prev) => (prev === resolvedUserId ? prev : resolvedUserId));
+      console.log("SUBSCRIBING with user ID:", resolvedUserId);
 
       channel = supabase
         .channel("public:entries")
@@ -148,7 +152,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
             event: "*",
             schema: "public",
             table: "entries",
-            filter: `user_id=eq.${user.id}`,
+            filter: `user_id=eq.${resolvedUserId}`,
           },
           async (payload) => {
             console.log("REAL-TIME: payload received", payload);
@@ -174,7 +178,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
         )
         .subscribe();
       console.log("REAL-TIME SUBSCRIBED TO public:entries");
-      console.log("SUBSCRIPTION CREATED FOR USER:", user.id);
+      console.log("SUBSCRIPTION CREATED FOR USER:", resolvedUserId);
     };
 
     void setupRealtime();
