@@ -33,6 +33,8 @@ export async function addEntry(data: AddEntryInput) {
     return { error: "Amount must be a valid number." };
   }
 
+  console.log("Inserting with user_id:", user.id);
+
   const payload = {
     user_id: userId,
     entry_type: data.entry_type,
@@ -44,14 +46,18 @@ export async function addEntry(data: AddEntryInput) {
     image_url: data.image_url,
   };
 
-  console.log("Saving entry with user_id:", userId, payload);
-
   const { error } = await supabase.from("entries").insert(payload);
 
   if (error) {
     console.error("Failed to insert entry", error);
     return { error: error.message };
   }
+
+  await supabase
+    .from("entries")
+    .select("id, user_id")
+    .order("created_at", { ascending: false })
+    .limit(1);
 
   revalidatePath("/daily-entries");
   revalidatePath("/cashpulse");
