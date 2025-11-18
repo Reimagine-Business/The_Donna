@@ -19,22 +19,22 @@ export async function addEntry(data: AddEntryInput) {
   const supabase = await createClient();
   const {
     data: { user },
-    error: userError,
   } = await supabase.auth.getUser();
 
-  if (userError || !user) {
-    throw new Error("User not authenticated");
+  if (!user) {
+    throw new Error("Unauthorized");
   }
 
-  const userId = user.id;
   const amount = Number(data.amount);
 
   if (Number.isNaN(amount)) {
     return { error: "Amount must be a valid number." };
   }
 
+  console.log("Inserting with user_id:", user.id);
+
   const payload = {
-    user_id: userId,
+    user_id: user.id,
     entry_type: data.entry_type,
     category: data.category,
     payment_method: data.payment_method,
@@ -44,14 +44,18 @@ export async function addEntry(data: AddEntryInput) {
     image_url: data.image_url,
   };
 
-  console.log("Saving entry with user_id:", userId, payload);
-
   const { error } = await supabase.from("entries").insert(payload);
 
   if (error) {
     console.error("Failed to insert entry", error);
     return { error: error.message };
   }
+
+  await supabase
+    .from("entries")
+    .select("id, user_id")
+    .order("created_at", { ascending: false })
+    .limit(1);
 
   revalidatePath("/daily-entries");
   revalidatePath("/cashpulse");
