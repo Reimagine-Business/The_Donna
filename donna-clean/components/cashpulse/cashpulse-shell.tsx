@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { format, subDays } from "date-fns";
 import { ArrowDownRight, ArrowUpRight, Activity } from "lucide-react";
 
@@ -39,6 +39,9 @@ const getCashDate = (entry: Entry) => {
   return entry.entry_date;
 };
 
+const ENTRY_SELECT =
+  "id, user_id, entry_type, category, payment_method, amount, entry_date, notes, image_url, settled, settled_at, created_at, updated_at";
+
 export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) {
   const supabase = useMemo(() => createClient(), []);
   const [entries, setEntries] = useState<Entry[]>(initialEntries.map(normalizeEntry));
@@ -47,6 +50,22 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     start_date: format(subDays(new Date(), 30), "yyyy-MM-dd"),
     end_date: format(new Date(), "yyyy-MM-dd"),
   });
+
+  const refetchEntries = useCallback(async () => {
+    const { data, error } = await supabase
+      .from("entries")
+      .select(ENTRY_SELECT)
+      .eq("user_id", userId)
+      .order("entry_date", { ascending: false });
+
+    if (error) {
+      console.error("Failed to refetch entries for Cashpulse", error);
+      return;
+    }
+
+    const nextEntries = data?.map((entry) => normalizeEntry(entry)) ?? [];
+    setEntries(nextEntries);
+  }, [supabase, userId]);
 
   useEffect(() => {
     const channel = supabase
@@ -60,36 +79,16 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
           filter: `user_id=eq.${userId}`,
         },
         (payload) => {
-          console.log("Real-time event (cashpulse):", payload);
-          setEntries((prev) => {
-            switch (payload.eventType) {
-              case "INSERT": {
-                const newEntry = normalizeEntry(payload.new);
-                if (prev.some((e) => e.id === newEntry.id)) {
-                  return prev.map((entry) => (entry.id === newEntry.id ? newEntry : entry));
-                }
-                return [newEntry, ...prev];
-              }
-              case "UPDATE": {
-                const updated = normalizeEntry(payload.new);
-                return prev.map((entry) => (entry.id === updated.id ? updated : entry));
-              }
-              case "DELETE": {
-                const deletedId = (payload.old as Entry).id;
-                return prev.filter((entry) => entry.id !== deletedId);
-              }
-              default:
-                return prev;
-            }
-          });
+          console.log("REAL-TIME EVENT RECEIVED – recalculating KPIs", payload);
+          void refetchEntries();
         },
       )
       .subscribe();
 
-    return () => {
-      supabase.removeChannel(channel);
-    };
-  }, [supabase, userId]);
+      return () => {
+        supabase.removeChannel(channel);
+      };
+    }, [refetchEntries, supabase, userId]);
 
   const [stats, setStats] = useState(() => buildCashpulseStats(initialEntries, historyFilters));
 
