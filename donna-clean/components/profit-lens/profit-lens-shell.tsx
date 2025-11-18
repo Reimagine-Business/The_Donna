@@ -55,7 +55,6 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
   const [grossMargin, setGrossMargin] = useState(initialStats.grossMargin);
   const [netMargin, setNetMargin] = useState(initialStats.netMargin);
   const skipNextRecalc = useRef(false);
-  const [realtimeUserId, setRealtimeUserId] = useState<string | null>(userId ?? null);
 
   useEffect(() => {
     console.log("Profit Lens is now CLIENT — real-time will work");
@@ -77,17 +76,11 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
   );
 
   const refetchEntries = useCallback(async () => {
-    const targetUserId = realtimeUserId ?? userId;
-    if (!targetUserId) {
-      console.error("Cannot refetch entries for Profit Lens: missing user id");
-      return undefined;
-    }
-
     try {
       const { data, error } = await supabase
         .from("entries")
         .select(ENTRY_SELECT)
-        .eq("user_id", targetUserId)
+        .eq("user_id", userId)
         .order("entry_date", { ascending: false });
 
       if (error) {
@@ -102,74 +95,46 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
       console.error("Failed to refetch entries for Profit Lens", error);
       return undefined;
     }
-  }, [realtimeUserId, supabase, userId]);
+  }, [supabase, userId]);
 
   useEffect(() => {
-    let isMounted = true;
     let channel: RealtimeChannel | null = null;
 
-    const setupRealtime = async () => {
-        const {
-          data: { user },
-          error,
-        } = await supabase.auth.getUser();
-        if (!isMounted) return;
-        if (error) {
-          console.error("Failed to fetch auth user for realtime (Profit Lens)", error);
-        }
-        let resolvedUserId = user?.id ?? null;
-        if (!resolvedUserId && userId) {
-          resolvedUserId = userId;
-          console.warn("Realtime subscription falling back to provided userId (Profit Lens)", userId);
-        }
-        if (!resolvedUserId) {
-          console.error("Cannot subscribe to realtime (Profit Lens): missing user");
-          return;
-        }
-
-        setRealtimeUserId((prev) => (prev === resolvedUserId ? prev : resolvedUserId));
-        console.log("SUBSCRIBING with user ID:", resolvedUserId);
-
-        channel = supabase
-          .channel("public:entries")
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "entries",
-              filter: `user_id=eq.${resolvedUserId}`,
-            },
-            async (payload) => {
-              console.log("REAL-TIME: payload received", payload);
-              const latestEntries = await refetchEntries();
-              if (!latestEntries) {
-                return;
-              }
-              console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
-              const updatedStats = recalcKpis(latestEntries);
-              console.log(
-                "REAL-TIME: KPIs recalculated → inflow:",
-                updatedStats.netProfit,
-                "sales:",
-                updatedStats.sales,
-              );
-            },
-          )
-          .subscribe();
-        console.log("REAL-TIME SUBSCRIBED TO public:entries");
-        console.log("SUBSCRIPTION CREATED FOR USER:", resolvedUserId);
-    };
-
-    void setupRealtime();
+    channel = supabase
+      .channel("public:entries")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "entries",
+          filter: `user_id=eq.${userId}`,
+        },
+        async (payload) => {
+          console.log("REAL-TIME: payload received", payload);
+          const latestEntries = await refetchEntries();
+          if (!latestEntries) {
+            return;
+          }
+          console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
+          const updatedStats = recalcKpis(latestEntries);
+          console.log(
+            "REAL-TIME: KPIs recalculated → net profit:",
+            updatedStats.netProfit,
+            "sales:",
+            updatedStats.sales,
+          );
+        },
+      )
+      .subscribe();
+    console.log("REAL-TIME SUBSCRIBED TO public:entries for user:", userId);
 
     return () => {
-      isMounted = false;
       if (channel) {
         supabase.removeChannel(channel);
       }
     };
-  }, [realtimeUserId, recalcKpis, refetchEntries, supabase, userId]);
+  }, [recalcKpis, refetchEntries, supabase, userId]);
 
   useEffect(() => {
     if (skipNextRecalc.current) {

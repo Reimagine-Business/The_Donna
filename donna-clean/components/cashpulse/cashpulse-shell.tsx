@@ -68,7 +68,6 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
   const [history, setHistory] = useState(initialStats.history);
 
   const skipNextRecalc = useRef(false);
-  const [realtimeUserId, setRealtimeUserId] = useState<string | null>(userId ?? null);
 
   useEffect(() => {
     console.log("Cashpulse is now CLIENT — real-time will work");
@@ -91,17 +90,11 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
   );
 
   const refetchEntries = useCallback(async () => {
-    const targetUserId = realtimeUserId ?? userId;
-    if (!targetUserId) {
-      console.error("Cannot refetch entries: missing user id");
-      return undefined;
-    }
-
     try {
       const { data, error } = await supabase
         .from("entries")
         .select(ENTRY_SELECT)
-        .eq("user_id", targetUserId)
+        .eq("user_id", userId)
         .order("entry_date", { ascending: false });
 
       if (error) {
@@ -116,80 +109,52 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
       console.error("Failed to refetch entries for Cashpulse", error);
       return undefined;
     }
-  }, [realtimeUserId, supabase, userId]);
+  }, [supabase, userId]);
 
   useEffect(() => {
-    let isMounted = true;
     let channel: RealtimeChannel | null = null;
 
-    const setupRealtime = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-      if (!isMounted) return;
-      if (error) {
-        console.error("Failed to fetch auth user for realtime (Cashpulse)", error);
-      }
-      let resolvedUserId = user?.id ?? null;
-      if (!resolvedUserId && userId) {
-        resolvedUserId = userId;
-        console.warn("Realtime subscription falling back to provided userId (Cashpulse)", userId);
-      }
-      if (!resolvedUserId) {
-        console.error("Cannot subscribe to realtime (Cashpulse): missing user");
-        return;
-      }
-
-      setRealtimeUserId((prev) => (prev === resolvedUserId ? prev : resolvedUserId));
-      console.log("SUBSCRIBING with user ID:", resolvedUserId);
-
-      channel = supabase
-        .channel("public:entries")
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "entries",
-            filter: `user_id=eq.${resolvedUserId}`,
-          },
-          async (payload) => {
-            console.log("REAL-TIME: payload received", payload);
-            const latestEntries = await refetchEntries();
-            if (!latestEntries) {
-              return;
-            }
-            console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
-            const updatedStats = recalcKpis(latestEntries);
-            const realtimeSales = updatedStats.cashBreakdown
-              .filter(
-                (channelBreakdown) =>
-                  channelBreakdown.method === "Cash" || channelBreakdown.method === "Bank",
-              )
-              .reduce((sum, channelBreakdown) => sum + channelBreakdown.value, 0);
-            console.log(
-              "REAL-TIME: KPIs recalculated → inflow:",
-              updatedStats.cashInflow,
-              "sales:",
-              realtimeSales,
-            );
-          },
-        )
-        .subscribe();
-      console.log("REAL-TIME SUBSCRIBED TO public:entries");
-      console.log("SUBSCRIPTION CREATED FOR USER:", resolvedUserId);
-    };
-
-    void setupRealtime();
+    channel = supabase
+      .channel("public:entries")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "entries",
+          filter: `user_id=eq.${userId}`,
+        },
+        async (payload) => {
+          console.log("REAL-TIME: payload received", payload);
+          const latestEntries = await refetchEntries();
+          if (!latestEntries) {
+            return;
+          }
+          console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
+          const updatedStats = recalcKpis(latestEntries);
+          const realtimeSales = updatedStats.cashBreakdown
+            .filter(
+              (channelBreakdown) =>
+                channelBreakdown.method === "Cash" || channelBreakdown.method === "Bank",
+            )
+            .reduce((sum, channelBreakdown) => sum + channelBreakdown.value, 0);
+          console.log(
+            "REAL-TIME: KPIs recalculated → inflow:",
+            updatedStats.cashInflow,
+            "sales:",
+            realtimeSales,
+          );
+        },
+      )
+      .subscribe();
+    console.log("REAL-TIME SUBSCRIBED TO public:entries for user:", userId);
 
     return () => {
-      isMounted = false;
       if (channel) {
         supabase.removeChannel(channel);
       }
     };
-  }, [realtimeUserId, recalcKpis, refetchEntries, supabase, userId]);
+  }, [recalcKpis, refetchEntries, supabase, userId]);
 
   useEffect(() => {
     if (skipNextRecalc.current) {
