@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format, subDays } from "date-fns";
 import { ArrowDownRight, ArrowUpRight, Activity } from "lucide-react";
 
@@ -39,6 +39,9 @@ const getCashDate = (entry: Entry) => {
   return entry.entry_date;
 };
 
+const ENTRY_SELECT =
+  "id, user_id, entry_type, category, payment_method, amount, entry_date, notes, image_url, settled, settled_at, created_at, updated_at";
+
 export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) {
   const supabase = useMemo(() => createClient(), []);
   const [entries, setEntries] = useState<Entry[]>(initialEntries.map(normalizeEntry));
@@ -48,54 +51,100 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     end_date: format(new Date(), "yyyy-MM-dd"),
   });
 
+  const [stats, setStats] = useState(() => buildCashpulseStats(initialEntries, historyFilters));
+  const skipNextRecalc = useRef(false);
+  const [realtimeUserId, setRealtimeUserId] = useState<string | null>(userId ?? null);
+
+    const recalcKpis = useCallback(
+      (nextEntries: Entry[], nextFilters = historyFilters) => {
+        const updatedStats = buildCashpulseStats(nextEntries, nextFilters);
+        setStats(updatedStats);
+        const salesTotal = updatedStats.cashBreakdown
+          .filter((channel) => channel.method === "Cash" || channel.method === "Bank")
+          .reduce((sum, channel) => sum + channel.value, 0);
+        console.log("KPIs recalc: inflow", updatedStats.cashInflow, "sales", salesTotal);
+      },
+      [historyFilters],
+    );
+
+  const refetchEntries = useCallback(async () => {
+    const targetUserId = realtimeUserId ?? userId;
+    if (!targetUserId) {
+      console.error("Cannot refetch entries: missing user id");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("entries")
+        .select(ENTRY_SELECT)
+        .eq("user_id", targetUserId)
+        .order("entry_date", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+        const nextEntries = data?.map((entry) => normalizeEntry(entry)) ?? [];
+        console.log("Refetched entries count (cashpulse):", nextEntries.length);
+      skipNextRecalc.current = true;
+      setEntries(nextEntries);
+      recalcKpis(nextEntries);
+    } catch (error) {
+      console.error("Failed to refetch entries for Cashpulse", error);
+    }
+    }, [realtimeUserId, recalcKpis, supabase, userId]);
+
   useEffect(() => {
+    let isMounted = true;
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!isMounted) return;
+      if (error) {
+        console.error("Failed to fetch auth user for realtime (Cashpulse)", error);
+        return;
+      }
+      if (data?.user?.id) {
+        setRealtimeUserId(data.user.id);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!realtimeUserId) return;
+
     const channel = supabase
-      .channel("cashpulse-entries")
+      .channel("entries-realtime")
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "entries",
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${realtimeUserId}`,
         },
         (payload) => {
-          console.log("Real-time event (cashpulse):", payload);
-          setEntries((prev) => {
-            switch (payload.eventType) {
-              case "INSERT": {
-                const newEntry = normalizeEntry(payload.new);
-                if (prev.some((e) => e.id === newEntry.id)) {
-                  return prev.map((entry) => (entry.id === newEntry.id ? newEntry : entry));
-                }
-                return [newEntry, ...prev];
-              }
-              case "UPDATE": {
-                const updated = normalizeEntry(payload.new);
-                return prev.map((entry) => (entry.id === updated.id ? updated : entry));
-              }
-              case "DELETE": {
-                const deletedId = (payload.old as Entry).id;
-                return prev.filter((entry) => entry.id !== deletedId);
-              }
-              default:
-                return prev;
-            }
-          });
+          console.log("REAL-TIME PAYLOAD:", payload);
+          void refetchEntries();
         },
       )
       .subscribe();
+    console.log("SUBSCRIPTION CREATED FOR USER:", realtimeUserId);
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, userId]);
-
-  const [stats, setStats] = useState(() => buildCashpulseStats(initialEntries, historyFilters));
+  }, [realtimeUserId, refetchEntries, supabase]);
 
   useEffect(() => {
-    setStats(buildCashpulseStats(entries, historyFilters));
-  }, [entries, historyFilters]);
+    if (skipNextRecalc.current) {
+      skipNextRecalc.current = false;
+      return;
+    }
+    recalcKpis(entries, historyFilters);
+  }, [entries, historyFilters, recalcKpis]);
   const historyLabel = `${format(new Date(historyFilters.start_date), "dd MMM yyyy")} – ${format(
     new Date(historyFilters.end_date),
     "dd MMM yyyy",

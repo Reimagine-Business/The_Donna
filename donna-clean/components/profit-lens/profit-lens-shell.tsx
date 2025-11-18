@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState, useEffect } from "react";
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format, startOfMonth, endOfMonth } from "date-fns";
 
 import { createClient } from "@/lib/supabase/client";
@@ -29,6 +29,9 @@ type FiltersState = {
   end_date: string;
 };
 
+const ENTRY_SELECT =
+  "id, user_id, entry_type, category, payment_method, amount, entry_date, notes, image_url, settled, settled_at, created_at, updated_at";
+
 export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps) {
   const supabase = useMemo(() => createClient(), []);
   const [entries, setEntries] = useState<Entry[]>(initialEntries.map(normalizeEntry));
@@ -37,54 +40,97 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     end_date: currentEnd,
   });
 
+  const [stats, setStats] = useState(() => buildProfitStats(initialEntries, filters));
+  const skipNextRecalc = useRef(false);
+  const [realtimeUserId, setRealtimeUserId] = useState<string | null>(userId ?? null);
+
+  const recalcKpis = useCallback(
+    (nextEntries: Entry[], nextFilters = filters) => {
+      const nextStats = buildProfitStats(nextEntries, nextFilters);
+      setStats(nextStats);
+      console.log("KPIs recalc: inflow", nextStats.netProfit, "sales", nextStats.sales);
+    },
+    [filters],
+  );
+
+  const refetchEntries = useCallback(async () => {
+    const targetUserId = realtimeUserId ?? userId;
+    if (!targetUserId) {
+      console.error("Cannot refetch entries for Profit Lens: missing user id");
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from("entries")
+        .select(ENTRY_SELECT)
+        .eq("user_id", targetUserId)
+        .order("entry_date", { ascending: false });
+
+      if (error) {
+        throw error;
+      }
+
+      const nextEntries = data?.map((entry) => normalizeEntry(entry)) ?? [];
+      console.log("Refetched entries count (profit lens):", nextEntries.length);
+      skipNextRecalc.current = true;
+      setEntries(nextEntries);
+      recalcKpis(nextEntries);
+    } catch (error) {
+      console.error("Failed to refetch entries for Profit Lens", error);
+    }
+    }, [realtimeUserId, recalcKpis, supabase, userId]);
+
   useEffect(() => {
+    let isMounted = true;
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!isMounted) return;
+      if (error) {
+        console.error("Failed to fetch auth user for realtime (Profit Lens)", error);
+        return;
+      }
+      if (data?.user?.id) {
+        setRealtimeUserId(data.user.id);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!realtimeUserId) return;
+
     const channel = supabase
-      .channel("profit-lens")
+      .channel("entries-realtime")
       .on(
         "postgres_changes",
         {
           event: "*",
           schema: "public",
           table: "entries",
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${realtimeUserId}`,
         },
         (payload) => {
-          console.log("Real-time event (profit-lens):", payload);
-          setEntries((prev) => {
-            switch (payload.eventType) {
-              case "INSERT": {
-                const newEntry = normalizeEntry(payload.new);
-                if (prev.some((entry) => entry.id === newEntry.id)) {
-                  return prev.map((entry) => (entry.id === newEntry.id ? newEntry : entry));
-                }
-                return [newEntry, ...prev];
-              }
-              case "UPDATE": {
-                const updated = normalizeEntry(payload.new);
-                return prev.map((entry) => (entry.id === updated.id ? updated : entry));
-              }
-              case "DELETE": {
-                const deletedId = (payload.old as Entry).id;
-                return prev.filter((entry) => entry.id !== deletedId);
-              }
-              default:
-                return prev;
-            }
-          });
+          console.log("REAL-TIME PAYLOAD:", payload);
+          void refetchEntries();
         },
       )
       .subscribe();
+    console.log("SUBSCRIPTION CREATED FOR USER:", realtimeUserId);
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [supabase, userId]);
-
-  const [stats, setStats] = useState(() => buildProfitStats(initialEntries, filters));
+  }, [realtimeUserId, refetchEntries, supabase]);
 
   useEffect(() => {
-    setStats(buildProfitStats(entries, filters));
-  }, [entries, filters]);
+    if (skipNextRecalc.current) {
+      skipNextRecalc.current = false;
+      return;
+    }
+    recalcKpis(entries, filters);
+  }, [entries, filters, recalcKpis]);
 
   const rangeLabel = `${format(new Date(filters.start_date), "dd MMM")} — ${format(
     new Date(filters.end_date),
@@ -100,7 +146,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
   ];
 
   return (
-    <div className="flex flex-col gap-8 text-white">
+      <div className="flex flex-col gap-8 text-white">
       <div className="flex flex-col gap-4 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Donna · Profit Lens</p>
