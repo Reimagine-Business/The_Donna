@@ -7,6 +7,7 @@ import { normalizeEntry, type Entry } from "@/lib/entries";
 
 export default async function DailyEntriesPage() {
   const cookieStore = await cookies();
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -16,9 +17,14 @@ export default async function DailyEntriesPage() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // The setAll method was called from a Server Component.
+            // This can be ignored if you have no intention of writing cookies from Server Components.
+          }
         },
       },
     },
@@ -30,6 +36,8 @@ export default async function DailyEntriesPage() {
   if (!user) {
     redirect("/auth/login");
   }
+
+  // Then continue with your queries using this supabase client
 
   const { data } = await supabase
     .from("entries")

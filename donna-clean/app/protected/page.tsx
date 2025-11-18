@@ -7,6 +7,7 @@ import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
 
 export default async function ProtectedPage() {
   const cookieStore = await cookies();
+
   const supabase = createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
@@ -16,13 +17,28 @@ export default async function ProtectedPage() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // The setAll method was called from a Server Component.
+            // This can be ignored if you have no intention of writing cookies from Server Components.
+          }
         },
       },
     },
   );
+
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    redirect("/auth/login");
+  }
+
+  // Then continue with your queries using this supabase client
 
   const { data, error } = await supabase.auth.getClaims();
   if (error || !data?.claims) {
