@@ -23,11 +23,13 @@ export async function addEntry(data: AddEntryInput) {
   } = await supabase.auth.getUser();
 
   if (userError || !user) {
-    return { error: "You must be signed in to add entries." };
+    throw new Error("User not authenticated");
   }
 
+  const userId = user.id;
+
   const payload = {
-    user_id: user.id,
+    user_id: userId,
     entry_type: data.entry_type,
     category: data.category,
     payment_method: data.payment_method,
@@ -37,7 +39,7 @@ export async function addEntry(data: AddEntryInput) {
     image_url: data.image_url,
   };
 
-  console.log("Insert payload:", payload);
+  console.log("Saving entry with user_id:", userId);
 
   const { error } = await supabase.from("entries").insert(payload);
 
