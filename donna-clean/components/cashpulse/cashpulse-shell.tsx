@@ -53,17 +53,17 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
   const [realtimeError, setRealtimeError] = useState<string | null>(null);
 
   const refetchEntries = useCallback(
-    async (targetUserId?: string) => {
-      const effectiveUserId = targetUserId ?? userId;
-      if (!effectiveUserId) {
+    async (uid: string) => {
+      if (!uid) {
         console.error("Cannot refetch entries without a user id");
+        setRealtimeError("Not logged in");
         return;
       }
 
       const { data, error } = await supabase
         .from("entries")
         .select(ENTRY_SELECT)
-        .eq("user_id", effectiveUserId)
+        .eq("user_id", uid)
         .order("entry_date", { ascending: false });
 
       if (error) {
@@ -73,8 +73,9 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
 
       const nextEntries = data?.map((entry) => normalizeEntry(entry)) ?? [];
       setEntries(nextEntries);
+      setStats(buildCashpulseStats(nextEntries, historyFilters));
     },
-    [supabase, userId],
+    [historyFilters, supabase],
   );
 
   useEffect(() => {
@@ -111,8 +112,8 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
             filter: `user_id=eq.${user?.id}`,
           },
           (payload) => {
-            console.log("REAL-TIME EVENT RECEIVED – recalculating KPIs", payload);
-            void refetchEntries(user.id);
+              console.log("REAL-TIME EVENT RECEIVED – recalculating KPIs", payload);
+              void refetchEntries(user.id);
           },
         )
         .subscribe();

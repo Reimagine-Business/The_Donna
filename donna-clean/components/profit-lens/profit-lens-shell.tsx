@@ -42,17 +42,17 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
   const [realtimeError, setRealtimeError] = useState<string | null>(null);
 
   const refetchEntries = useCallback(
-    async (targetUserId?: string) => {
-      const effectiveUserId = targetUserId ?? userId;
-      if (!effectiveUserId) {
+    async (uid: string) => {
+      if (!uid) {
         console.error("Cannot refetch entries without a user id");
+        setRealtimeError("Not logged in");
         return;
       }
 
       const { data, error } = await supabase
         .from("entries")
         .select(ENTRY_SELECT)
-        .eq("user_id", effectiveUserId)
+        .eq("user_id", uid)
         .order("entry_date", { ascending: false });
 
       if (error) {
@@ -62,8 +62,9 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
       const nextEntries = data?.map((entry) => normalizeEntry(entry)) ?? [];
       setEntries(nextEntries);
+      setStats(buildProfitStats(nextEntries, filters));
     },
-    [supabase, userId],
+    [filters, supabase],
   );
 
   useEffect(() => {
@@ -99,10 +100,10 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
             table: "entries",
             filter: `user_id=eq.${user?.id}`,
           },
-          (payload) => {
-            console.log("REAL-TIME EVENT RECEIVED – recalculating KPIs", payload);
-            void refetchEntries(user.id);
-          },
+            (payload) => {
+              console.log("REAL-TIME EVENT RECEIVED – recalculating KPIs", payload);
+              void refetchEntries(user.id);
+            },
         )
         .subscribe();
     };
