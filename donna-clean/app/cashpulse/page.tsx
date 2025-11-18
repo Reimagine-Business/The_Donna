@@ -31,7 +31,7 @@ export default async function CashpulsePage() {
           <SiteHeader />
           <section className="px-4 pb-12 md:px-8">
               <div className="mx-auto w-full max-w-6xl">
-                <CashpulseShell initialEntries={entries || []} />
+                <CashpulseShell initialEntries={entries || []} userId={user.id} />
             </div>
           </section>
         </div>

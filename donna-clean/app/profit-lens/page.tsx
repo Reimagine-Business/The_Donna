@@ -31,7 +31,7 @@ export default async function ProfitLensPage() {
           <SiteHeader />
           <section className="px-4 pb-12 md:px-8">
               <div className="mx-auto w-full max-w-6xl">
-                <ProfitLensShell initialEntries={entries || []} />
+                <ProfitLensShell initialEntries={entries || []} userId={user.id} />
             </div>
           </section>
         </div>
