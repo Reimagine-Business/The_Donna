@@ -47,7 +47,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     (nextEntries: Entry[], nextFilters = filters) => {
       const nextStats = buildProfitStats(nextEntries, nextFilters);
       setStats(nextStats);
-      console.log("KPIs after recalc: inflow", nextStats.netProfit, "sales", nextStats.sales);
+      console.log("KPIs recalc: inflow", nextStats.netProfit, "sales", nextStats.sales);
     },
     [filters],
   );
@@ -65,6 +65,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
       }
 
       const nextEntries = data?.map((entry) => normalizeEntry(entry)) ?? [];
+      console.log("Refetched entries count (profit lens):", nextEntries.length);
       skipNextRecalc.current = true;
       setEntries(nextEntries);
       recalcKpis(nextEntries);

@@ -54,21 +54,17 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
   const [stats, setStats] = useState(() => buildCashpulseStats(initialEntries, historyFilters));
   const skipNextRecalc = useRef(false);
 
-  const recalcKpis = useCallback(
-    (nextEntries: Entry[], nextFilters = historyFilters) => {
-      const updatedStats = buildCashpulseStats(nextEntries, nextFilters);
-      setStats(updatedStats);
-      console.log(
-        "KPIs after recalc: inflow",
-        updatedStats.cashInflow,
-        "sales",
-        updatedStats.cashBreakdown
+    const recalcKpis = useCallback(
+      (nextEntries: Entry[], nextFilters = historyFilters) => {
+        const updatedStats = buildCashpulseStats(nextEntries, nextFilters);
+        setStats(updatedStats);
+        const salesTotal = updatedStats.cashBreakdown
           .filter((channel) => channel.method === "Cash" || channel.method === "Bank")
-          .reduce((sum, channel) => sum + channel.value, 0),
-      );
-    },
-    [historyFilters],
-  );
+          .reduce((sum, channel) => sum + channel.value, 0);
+        console.log("KPIs recalc: inflow", updatedStats.cashInflow, "sales", salesTotal);
+      },
+      [historyFilters],
+    );
 
   const refetchEntries = useCallback(async () => {
     try {
@@ -82,7 +78,8 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
         throw error;
       }
 
-      const nextEntries = data?.map((entry) => normalizeEntry(entry)) ?? [];
+        const nextEntries = data?.map((entry) => normalizeEntry(entry)) ?? [];
+        console.log("Refetched entries count (cashpulse):", nextEntries.length);
       skipNextRecalc.current = true;
       setEntries(nextEntries);
       recalcKpis(nextEntries);
