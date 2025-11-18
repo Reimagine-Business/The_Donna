@@ -43,7 +43,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
   const initialStatsRef = useRef<ProfitStats | null>(null);
   if (!initialStatsRef.current) {
-    initialStatsRef.current = buildProfitStats(initialEntries, filters);
+    initialStatsRef.current = buildProfitStats(initialEntries);
   }
   const initialStats = initialStatsRef.current as ProfitStats;
 
@@ -62,7 +62,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
   const recalcKpis = useCallback(
     (nextEntries: Entry[], nextFilters = filters) => {
-      const nextStats = buildProfitStats(nextEntries, nextFilters);
+      const nextStats = buildProfitStats(nextEntries);
       setSales(nextStats.sales);
       setCogs(nextStats.cogs);
       setOpex(nextStats.opex);
@@ -341,5 +341,18 @@ const buildProfitStats = (entries: Entry[]) => {
     if (entry.category === "Opex" && entry.entry_type === "Cash Outflow") opex += entry.amount;
   });
 
-  return { sales, cogs, opex, grossProfit: sales - cogs, netProfit: sales - cogs - opex };
+  const grossProfit = sales - cogs;
+  const netProfit = grossProfit - opex;
+  const grossMargin = sales === 0 ? 0 : grossProfit / sales;
+  const netMargin = sales === 0 ? 0 : netProfit / sales;
+
+  return {
+    sales,
+    cogs,
+    opex,
+    grossProfit,
+    netProfit,
+    grossMargin,
+    netMargin,
+  };
 };

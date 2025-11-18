@@ -47,7 +47,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
 
   const initialStatsRef = useRef<CashpulseStats | null>(null);
   if (!initialStatsRef.current) {
-    initialStatsRef.current = buildCashpulseStats(initialEntries, historyFilters);
+    initialStatsRef.current = buildCashpulseStats(initialEntries);
   }
   const initialStats = initialStatsRef.current as CashpulseStats;
 
@@ -68,7 +68,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
 
   const recalcKpis = useCallback(
     (nextEntries: Entry[], nextFilters = historyFilters) => {
-      const updatedStats = buildCashpulseStats(nextEntries, nextFilters);
+      const updatedStats = buildCashpulseStats(nextEntries);
       setInflow(updatedStats.cashInflow);
       setOutflow(updatedStats.cashOutflow);
       setNet(updatedStats.netCashFlow);
@@ -381,16 +381,25 @@ type PendingList = {
   entries: Entry[];
 };
 
-const buildCashpulseStats = (entries: Entry[]) => {
-  let inflow = 0;
-  let outflow = 0;
+const buildCashpulseStats = (entries: Entry[]): CashpulseStats => {
+  let cashInflow = 0;
+  let cashOutflow = 0;
 
   entries.forEach((entry) => {
-    if (entry.entry_type === "Cash Inflow") inflow += entry.amount;
-    if (entry.entry_type === "Cash Outflow") outflow += entry.amount;
+    if (entry.entry_type === "Cash Inflow") cashInflow += entry.amount;
+    if (entry.entry_type === "Cash Outflow") cashOutflow += entry.amount;
   });
 
-  return { inflow, outflow, net: inflow - outflow };
+  return {
+    cashInflow,
+    cashOutflow,
+    netCashFlow: cashInflow - cashOutflow,
+    cashBreakdown: { Cash: 0, Bank: 0 },
+    pendingCollections: 0,
+    pendingBills: 0,
+    advances: 0,
+    totalPending: 0,
+  };
 };
 
 type StatCardProps = {
