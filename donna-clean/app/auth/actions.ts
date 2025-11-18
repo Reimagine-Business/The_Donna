@@ -1,9 +1,8 @@
 "use server";
 
-import { headers } from "next/headers";
+import { createServerClient } from "@supabase/ssr";
+import { cookies, headers } from "next/headers";
 import { redirect } from "next/navigation";
-
-import { createClient } from "@/lib/supabase/server";
 
 type AuthState = {
   error?: string | null;
@@ -19,6 +18,30 @@ const getOrigin = async () => {
   return process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://localhost:3000";
 };
 
+async function getSupabaseClient() {
+  const cookieStore = await cookies();
+  return createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch (error) {
+            // ignore if called from a Server Component (common during auth refresh)
+          }
+        },
+      },
+    },
+  );
+}
+
 export async function loginAction(_: AuthState, formData: FormData): Promise<AuthState> {
   const email = formData.get("email");
   const password = formData.get("password");
@@ -27,7 +50,7 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
     return { error: "Email and password are required" };
   }
 
-  const supabase = await createClient();
+  const supabase = await getSupabaseClient();
   const { error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
@@ -50,7 +73,7 @@ export async function signUpAction(_: AuthState, formData: FormData): Promise<Au
     return { error: "Passwords do not match" };
   }
 
-  const supabase = await createClient();
+  const supabase = await getSupabaseClient();
   const origin = await getOrigin();
 
   const { error } = await supabase.auth.signUp({
@@ -75,7 +98,7 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     return { error: "Email is required" };
   }
 
-  const supabase = await createClient();
+  const supabase = await getSupabaseClient();
   const origin = await getOrigin();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -96,7 +119,7 @@ export async function updatePasswordAction(_: AuthState, formData: FormData): Pr
     return { error: "Password is required" };
   }
 
-  const supabase = await createClient();
+  const supabase = await getSupabaseClient();
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
@@ -107,7 +130,7 @@ export async function updatePasswordAction(_: AuthState, formData: FormData): Pr
 }
 
 export async function logoutAction() {
-  const supabase = await createClient();
+  const supabase = await getSupabaseClient();
   await supabase.auth.signOut();
   redirect("/auth/login");
 }

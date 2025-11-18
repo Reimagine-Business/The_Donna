@@ -16,9 +16,13 @@ export default async function ProtectedPage() {
           return cookieStore.getAll();
         },
         setAll(cookiesToSet) {
-          cookiesToSet.forEach(({ name, value, options }) => {
-            cookieStore.set(name, value, options);
-          });
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch (error) {
+            // ignore if called from a Server Component (common during auth refresh)
+          }
         },
       },
     },

@@ -1,14 +1,34 @@
+import { createServerClient } from "@supabase/ssr";
+import { cookies } from "next/headers";
 import Link from "next/link";
-import { Button } from "./ui/button";
-import { createClient } from "@/lib/supabase/server";
+
 import { LogoutButton } from "./logout-button";
+import { Button } from "./ui/button";
 
 export async function AuthButton() {
-  const supabase = await createClient();
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!,
+    {
+      cookies: {
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch (error) {
+            // ignore if called from a Server Component (common during auth refresh)
+          }
+        },
+      },
+    },
+  );
 
-  // You can also use getUser() which will be slower.
   const { data } = await supabase.auth.getClaims();
-
   const user = data?.claims;
 
   return user ? (
@@ -18,10 +38,10 @@ export async function AuthButton() {
     </div>
   ) : (
     <div className="flex gap-2">
-      <Button asChild size="sm" variant={"outline"}>
+      <Button asChild size="sm" variant="outline">
         <Link href="/auth/login">Sign in</Link>
       </Button>
-      <Button asChild size="sm" variant={"default"}>
+      <Button asChild size="sm" variant="default">
         <Link href="/auth/sign-up">Sign up</Link>
       </Button>
     </div>
