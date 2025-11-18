@@ -1,17 +1,23 @@
 "use client";
 
-import { createClient } from "@/lib/supabase/client";
+import { useTransition } from "react";
+
+import { logoutAction } from "@/app/auth/actions";
 import { Button } from "@/components/ui/button";
-import { useRouter } from "next/navigation";
 
 export function LogoutButton() {
-  const router = useRouter();
+  const [isPending, startTransition] = useTransition();
 
-  const logout = async () => {
-    const supabase = createClient();
-    await supabase.auth.signOut();
-    router.push("/auth/login");
-  };
-
-  return <Button onClick={logout}>Logout</Button>;
+  return (
+    <Button
+      onClick={() => {
+        startTransition(() => {
+          void logoutAction();
+        });
+      }}
+      disabled={isPending}
+    >
+      {isPending ? "Logging out..." : "Logout"}
+    </Button>
+  );
 }

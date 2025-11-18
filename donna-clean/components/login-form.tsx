@@ -1,5 +1,11 @@
 "use client";
 
+import { useActionState, useState } from "react";
+import { useFormStatus } from "react-dom";
+import Link from "next/link";
+import { Loader2 } from "lucide-react";
+
+import { loginAction } from "@/app/auth/actions";
 import { cn } from "@/lib/utils";
 import { Button } from "@/components/ui/button";
 import {
@@ -11,45 +17,11 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import Link from "next/link";
-import { useRouter } from "next/navigation";
-import { useState } from "react";
-import { Loader2 } from "lucide-react";
-import { createClient } from "@/lib/supabase/client";
 
-export function LoginForm({
-  className,
-  ...props
-}: React.ComponentPropsWithoutRef<"div">) {
+export function LoginForm({ className, ...props }: React.ComponentPropsWithoutRef<"div">) {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const router = useRouter();
-
-  const handleLogin = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    console.log("Login submitted");
-    setIsLoading(true);
-    setError(null);
-
-    try {
-      const supabase = createClient();
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
-        password,
-      });
-      if (error) {
-        setError("Invalid credentials");
-        return;
-      }
-      router.push("/dashboard");
-    } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : "An error occurred");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  const [state, formAction] = useActionState(loginAction, { error: null });
 
   return (
     <div className={cn("flex flex-col gap-6", className)} {...props}>
@@ -60,8 +32,8 @@ export function LoginForm({
             Enter your email below to login to your account
           </CardDescription>
         </CardHeader>
-        <CardContent>
-          <form onSubmit={handleLogin}>
+          <CardContent>
+            <form action={formAction}>
             <div className="flex flex-col gap-6">
               <div className="grid gap-2">
                 <Label htmlFor="email">Email</Label>
@@ -70,6 +42,7 @@ export function LoginForm({
                   type="email"
                   placeholder="m@example.com"
                   required
+                    name="email"
                   value={email}
                   onChange={(e) => setEmail(e.target.value)}
                 />
@@ -88,25 +61,17 @@ export function LoginForm({
                   id="password"
                   type="password"
                   required
+                    name="password"
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
                 />
               </div>
-                {error && (
+                {state?.error && (
                   <p className="text-sm text-red-500" role="alert">
-                    {error}
+                    {state.error}
                   </p>
                 )}
-                <Button type="submit" className="w-full" disabled={isLoading}>
-                  {isLoading ? (
-                    <span className="flex items-center justify-center gap-2">
-                      <Loader2 className="h-4 w-4 animate-spin" />
-                      Logging in...
-                    </span>
-                  ) : (
-                    "Login"
-                  )}
-              </Button>
+                <SubmitButton pendingText="Logging in..." idleText="Login" />
             </div>
             <div className="mt-4 text-center text-sm">
               Don&apos;t have an account?{" "}
@@ -121,5 +86,22 @@ export function LoginForm({
         </CardContent>
       </Card>
     </div>
+  );
+}
+
+function SubmitButton({ pendingText, idleText }: { pendingText: string; idleText: string }) {
+  const { pending } = useFormStatus();
+
+  return (
+    <Button type="submit" className="w-full" disabled={pending}>
+      {pending ? (
+        <span className="flex items-center justify-center gap-2">
+          <Loader2 className="h-4 w-4 animate-spin" />
+          {pendingText}
+        </span>
+      ) : (
+        idleText
+      )}
+    </Button>
   );
 }

@@ -1,0 +1,112 @@
+"use server";
+
+import { headers } from "next/headers";
+import { redirect } from "next/navigation";
+
+import { createClient } from "@/lib/supabase/server";
+
+type AuthState = {
+  error?: string | null;
+  success?: boolean;
+};
+
+const getOrigin = () => {
+  const origin = headers().get("origin");
+  if (origin) {
+    return origin;
+  }
+  return process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://localhost:3000";
+};
+
+export async function loginAction(_: AuthState, formData: FormData): Promise<AuthState> {
+  const email = formData.get("email");
+  const password = formData.get("password");
+
+  if (typeof email !== "string" || typeof password !== "string") {
+    return { error: "Email and password are required" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.signInWithPassword({ email, password });
+
+  if (error) {
+    return { error: "Invalid credentials" };
+  }
+
+  redirect("/dashboard");
+}
+
+export async function signUpAction(_: AuthState, formData: FormData): Promise<AuthState> {
+  const email = formData.get("email");
+  const password = formData.get("password");
+  const repeatPassword = formData.get("repeat-password");
+
+  if (typeof email !== "string" || typeof password !== "string" || typeof repeatPassword !== "string") {
+    return { error: "Please complete the form." };
+  }
+
+  if (password !== repeatPassword) {
+    return { error: "Passwords do not match" };
+  }
+
+  const supabase = await createClient();
+  const origin = getOrigin();
+
+  const { error } = await supabase.auth.signUp({
+    email,
+    password,
+    options: {
+      emailRedirectTo: `${origin}/protected`,
+    },
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  redirect("/auth/sign-up-success");
+}
+
+export async function forgotPasswordAction(_: AuthState, formData: FormData): Promise<AuthState> {
+  const email = formData.get("email");
+
+  if (typeof email !== "string") {
+    return { error: "Email is required" };
+  }
+
+  const supabase = await createClient();
+  const origin = getOrigin();
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `${origin}/auth/update-password`,
+  });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  return { success: true };
+}
+
+export async function updatePasswordAction(_: AuthState, formData: FormData): Promise<AuthState> {
+  const password = formData.get("password");
+
+  if (typeof password !== "string" || !password.length) {
+    return { error: "Password is required" };
+  }
+
+  const supabase = await createClient();
+  const { error } = await supabase.auth.updateUser({ password });
+
+  if (error) {
+    return { error: error.message };
+  }
+
+  redirect("/protected");
+}
+
+export async function logoutAction() {
+  const supabase = await createClient();
+  await supabase.auth.signOut();
+  redirect("/auth/login");
+}

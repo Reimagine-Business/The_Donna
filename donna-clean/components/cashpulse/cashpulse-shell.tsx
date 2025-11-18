@@ -14,6 +14,7 @@ import { Download } from "lucide-react";
 
 type CashpulseShellProps = {
   initialEntries: Entry[];
+  userId: string;
 };
 
 const currencyFormatter = new Intl.NumberFormat("en-IN", {
@@ -41,7 +42,7 @@ const getCashDate = (entry: Entry) => {
 const ENTRY_SELECT =
   "id, user_id, entry_type, category, payment_method, amount, entry_date, notes, image_url, settled, settled_at, created_at, updated_at";
 
-export function CashpulseShell({ initialEntries }: CashpulseShellProps) {
+export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) {
   const supabase = useMemo(() => createClient(), []);
   const [entries, setEntries] = useState<Entry[]>(initialEntries.map(normalizeEntry));
   const [settlementEntry, setSettlementEntry] = useState<Entry | null>(null);
@@ -49,20 +50,12 @@ export function CashpulseShell({ initialEntries }: CashpulseShellProps) {
     start_date: format(subDays(new Date(), 30), "yyyy-MM-dd"),
     end_date: format(new Date(), "yyyy-MM-dd"),
   });
-  const [realtimeError, setRealtimeError] = useState<string | null>(null);
-  const [activeUserId, setActiveUserId] = useState<string | null>(null);
 
   const refetchEntries = useCallback(async () => {
-    if (!activeUserId) {
-      console.error("Cannot refetch entries without a user id");
-      setRealtimeError("Not logged in");
-      return;
-    }
-
     const { data, error } = await supabase
       .from("entries")
       .select(ENTRY_SELECT)
-      .eq("user_id", activeUserId)
+      .eq("user_id", userId)
       .order("entry_date", { ascending: false });
 
     if (error) {
@@ -73,59 +66,31 @@ export function CashpulseShell({ initialEntries }: CashpulseShellProps) {
     const nextEntries = data?.map((entry) => normalizeEntry(entry)) ?? [];
     setEntries(nextEntries);
     setStats(buildCashpulseStats(nextEntries, historyFilters));
-  }, [activeUserId, historyFilters, supabase]);
+  }, [historyFilters, supabase, userId]);
 
   useEffect(() => {
-    let channel: ReturnType<typeof supabase.channel> | null = null;
-    let isMounted = true;
-
-    const setupRealtime = async () => {
-      const {
-        data: { user },
-        error,
-      } = await supabase.auth.getUser();
-
-        if (!isMounted) {
-          return;
-        }
-
-        if (error || !user) {
-          setRealtimeError("Not logged in");
-          console.error("Failed to subscribe to Cashpulse realtime updates", error);
-          return;
-        }
-
-        setRealtimeError(null);
-        setActiveUserId(user.id);
-        console.log("Real-time subscribed for user_id:", user.id);
-
-        channel = supabase
-          .channel("cashpulse-entries")
-          .on(
-            "postgres_changes",
-            {
-              event: "*",
-              schema: "public",
-              table: "entries",
-              filter: `user_id=eq.${user?.id}`,
-            },
-            (payload) => {
-              console.log("REAL-TIME EVENT RECEIVED – recalculating KPIs", payload);
-              void refetchEntries();
-            },
-          )
-          .subscribe();
-    };
-
-    void setupRealtime();
+    const channel = supabase
+      .channel("cashpulse-entries")
+      .on(
+        "postgres_changes",
+        {
+          event: "*",
+          schema: "public",
+          table: "entries",
+          filter: `user_id=eq.${userId}`,
+        },
+        (payload) => {
+          console.log("REAL-TIME EVENT RECEIVED – recalculating KPIs", payload);
+          void refetchEntries();
+        },
+      )
+      .subscribe();
+    console.log("Real-time subscribed for user_id:", userId);
 
     return () => {
-      isMounted = false;
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
+      supabase.removeChannel(channel);
     };
-  }, [refetchEntries, supabase]);
+  }, [refetchEntries, supabase, userId]);
 
   const [stats, setStats] = useState(() => buildCashpulseStats(initialEntries, historyFilters));
 
@@ -169,11 +134,6 @@ export function CashpulseShell({ initialEntries }: CashpulseShellProps) {
 
   return (
     <div className="flex flex-col gap-8 text-white">
-      {realtimeError && (
-        <div className="rounded-2xl border border-rose-500/40 bg-rose-500/10 p-4 text-sm text-rose-100">
-          {realtimeError}
-        </div>
-      )}
       <div className="flex flex-col gap-3 md:flex-row md:items-end md:justify-between">
         <div>
           <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Donna · Cashpulse</p>
