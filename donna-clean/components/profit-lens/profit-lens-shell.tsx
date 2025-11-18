@@ -330,23 +330,10 @@ type ProfitStats = {
   netMargin: number;
 };
 
-const getProfitLensDate = (entry: Entry): string | null => {
-  if (entry.entry_type === "Advance") {
-    if (!entry.settled) {
-      return null;
-    }
-    return (entry.settled_at ?? entry.entry_date).slice(0, 10);
-  }
-  return entry.entry_date;
-};
-
 const buildProfitStats = (entries: Entry[], filters: FiltersState): ProfitStats => {
   const filtered = entries.filter((entry) => {
-    const profitDate = getProfitLensDate(entry);
-    if (!profitDate) {
-      return false;
-    }
-    return profitDate >= filters.start_date && profitDate <= filters.end_date;
+    const entryDate = entry.entry_date.slice(0, 10);
+    return entryDate >= filters.start_date && entryDate <= filters.end_date;
   });
 
   let sales = 0;
@@ -354,29 +341,20 @@ const buildProfitStats = (entries: Entry[], filters: FiltersState): ProfitStats 
   let opex = 0;
 
   filtered.forEach((entry) => {
-    const isSettledAdvance = entry.entry_type === "Advance" && entry.settled;
-    const qualifiesForSales =
-      entry.category === "Sales" &&
-      (entry.entry_type === "Cash Inflow" ||
-        entry.entry_type === "Credit" ||
-        isSettledAdvance);
-    const qualifiesForCogs =
-      entry.category === "COGS" &&
-      (entry.entry_type === "Cash Outflow" ||
-        entry.entry_type === "Credit" ||
-        isSettledAdvance);
-    const qualifiesForOpex =
-      entry.category === "Opex" &&
-      (entry.entry_type === "Cash Outflow" ||
-        entry.entry_type === "Credit" ||
-        isSettledAdvance);
-
-    if (qualifiesForSales) {
+    if (entry.category === "Sales" && entry.entry_type === "Cash Inflow") {
       sales += entry.amount;
-    } else if (qualifiesForCogs) {
-      cogs += entry.amount;
-    } else if (qualifiesForOpex) {
-      opex += entry.amount;
+      return;
+    }
+
+    if (entry.entry_type === "Cash Outflow") {
+      if (entry.category === "COGS") {
+        cogs += entry.amount;
+        return;
+      }
+
+      if (entry.category === "Opex") {
+        opex += entry.amount;
+      }
     }
   });
 
