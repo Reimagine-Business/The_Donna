@@ -80,16 +80,17 @@ const buildInitialFiltersState = (): FiltersState => ({
 const CREDIT_PAYMENT_METHOD: PaymentMethod = "None";
 const CREDIT_METHOD_OPTIONS = [CREDIT_PAYMENT_METHOD] as const;
 const CASH_PAYMENT_METHOD_OPTIONS = PAYMENT_METHODS as readonly PaymentMethod[];
-const CASH_REQUIRED_ENTRY_TYPES = ["Cash Inflow", "Cash Outflow", "Advance"] as const;
 
-const entryTypeRequiresCashMovement = (entryType: EntryType) =>
-  CASH_REQUIRED_ENTRY_TYPES.includes(entryType);
+const entryTypeIsCredit = (type: EntryType): boolean => type === "Credit";
+
+const entryTypeRequiresCashMovement = (type: EntryType): boolean =>
+  type === "Cash Inflow" || type === "Cash Outflow" || type === "Advance";
 
 const enforcePaymentMethodForType = (
   entryType: EntryType,
   paymentMethod: PaymentMethod,
 ): PaymentMethod => {
-  if (entryType === "Credit") {
+  if (entryTypeIsCredit(entryType)) {
     return CREDIT_PAYMENT_METHOD;
   }
   if (entryTypeRequiresCashMovement(entryType) && paymentMethod === CREDIT_PAYMENT_METHOD) {
@@ -102,17 +103,11 @@ const paymentMethodRuleViolation = (
   entryType: EntryType,
   paymentMethod: PaymentMethod,
 ): string | null => {
-  if (entryType === "Credit" && paymentMethod !== CREDIT_PAYMENT_METHOD) {
+  if (entryTypeIsCredit(entryType) && paymentMethod !== CREDIT_PAYMENT_METHOD) {
     return "Credit entries must use Payment Method: None";
   }
-  if (entryType === "Advance" && paymentMethod === CREDIT_PAYMENT_METHOD) {
-    return "Advances must have actual cash movement";
-  }
-  if (
-    (entryType === "Cash Inflow" || entryType === "Cash Outflow") &&
-    paymentMethod === CREDIT_PAYMENT_METHOD
-  ) {
-    return "Cash entries must use Cash or Bank";
+  if (entryTypeRequiresCashMovement(entryType) && paymentMethod === CREDIT_PAYMENT_METHOD) {
+    return "This entry type requires actual payment";
   }
   return null;
 };
@@ -280,8 +275,9 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
         uploadedUrl = await uploadReceipt();
       }
 
-      const normalizedPaymentMethod =
-        selectedEntryType === "Credit" ? CREDIT_PAYMENT_METHOD : paymentMethod;
+      const normalizedPaymentMethod = entryTypeIsCredit(selectedEntryType)
+        ? CREDIT_PAYMENT_METHOD
+        : paymentMethod;
 
       const payload = {
         entry_type: selectedEntryType,
@@ -406,16 +402,15 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
     URL.revokeObjectURL(url);
   };
 
-    const isCreditEntry = formValues.entry_type === "Credit";
-    const isAdvanceEntry = formValues.entry_type === "Advance";
+    const isCreditEntry = entryTypeIsCredit(formValues.entry_type);
     const paymentMethodOptions = isCreditEntry
       ? CREDIT_METHOD_OPTIONS
       : CASH_PAYMENT_METHOD_OPTIONS;
     const paymentMethodHelperText = isCreditEntry
       ? "Credit entries use 'None' – cash moves only on settlement"
-      : isAdvanceEntry
-        ? "Advances must have actual cash movement"
-        : "Cash entries must use Cash or Bank";
+      : entryTypeRequiresCashMovement(formValues.entry_type)
+        ? "This entry type requires actual payment"
+        : "Use Cash or Bank to match how money moved";
 
   return (
     <div className="flex flex-col gap-10 text-white">

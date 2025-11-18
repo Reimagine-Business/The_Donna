@@ -6,6 +6,11 @@ import { revalidatePath } from "next/cache";
 import { type EntryType, type CategoryType, type PaymentMethod } from "@/lib/entries";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
+const entryTypeIsCredit = (type: EntryType): boolean => type === "Credit";
+
+const entryTypeRequiresCashMovement = (type: EntryType): boolean =>
+  type === "Cash Inflow" || type === "Cash Outflow" || type === "Advance";
+
 type AddEntryInput = {
   entry_type: EntryType;
   category: CategoryType;
@@ -33,19 +38,12 @@ export async function addEntry(data: AddEntryInput) {
     return { error: "Amount must be a valid number." };
   }
 
-  if (data.entry_type === "Credit" && data.payment_method !== "None") {
+  if (entryTypeIsCredit(data.entry_type) && data.payment_method !== "None") {
     return { error: "Credit entries must use Payment Method: None" };
   }
 
-  if (data.entry_type === "Advance" && data.payment_method === "None") {
-    return { error: "Advances must have actual cash movement" };
-  }
-
-  if (
-    (data.entry_type === "Cash Inflow" || data.entry_type === "Cash Outflow") &&
-    data.payment_method === "None"
-  ) {
-    return { error: "Cash entries must use Cash or Bank" };
+  if (entryTypeRequiresCashMovement(data.entry_type) && data.payment_method === "None") {
+    return { error: "This entry type requires actual payment" };
   }
 
   const shouldTrackRemaining = data.entry_type === "Credit" || data.entry_type === "Advance";
@@ -54,7 +52,7 @@ export async function addEntry(data: AddEntryInput) {
     user_id: user.id,
     entry_type: data.entry_type,
     category: data.category,
-    payment_method: data.entry_type === "Credit" ? "None" : data.payment_method,
+    payment_method: entryTypeIsCredit(data.entry_type) ? "None" : data.payment_method,
     amount,
     remaining_amount: shouldTrackRemaining ? amount : null,
     entry_date: data.entry_date,
