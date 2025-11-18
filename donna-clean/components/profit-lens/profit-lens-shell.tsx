@@ -43,7 +43,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
   const initialStatsRef = useRef<ProfitStats | null>(null);
   if (!initialStatsRef.current) {
-    initialStatsRef.current = buildProfitStats(initialEntries, filters);
+    initialStatsRef.current = buildProfitStats(initialEntries);
   }
   const initialStats = initialStatsRef.current as ProfitStats;
 
@@ -62,7 +62,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
   const recalcKpis = useCallback(
     (nextEntries: Entry[], nextFilters = filters) => {
-      const nextStats = buildProfitStats(nextEntries, nextFilters);
+      const nextStats = buildProfitStats(nextEntries);
       setSales(nextStats.sales);
       setCogs(nextStats.cogs);
       setOpex(nextStats.opex);
