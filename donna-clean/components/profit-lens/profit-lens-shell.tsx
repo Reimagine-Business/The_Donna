@@ -42,6 +42,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
   const [stats, setStats] = useState(() => buildProfitStats(initialEntries, filters));
   const skipNextRecalc = useRef(false);
+  const [realtimeUserId, setRealtimeUserId] = useState<string | null>(userId ?? null);
 
   const recalcKpis = useCallback(
     (nextEntries: Entry[], nextFilters = filters) => {
@@ -53,11 +54,17 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
   );
 
   const refetchEntries = useCallback(async () => {
+    const targetUserId = realtimeUserId ?? userId;
+    if (!targetUserId) {
+      console.error("Cannot refetch entries for Profit Lens: missing user id");
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("entries")
         .select(ENTRY_SELECT)
-        .eq("user_id", userId)
+        .eq("user_id", targetUserId)
         .order("entry_date", { ascending: false });
 
       if (error) {
@@ -72,9 +79,28 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     } catch (error) {
       console.error("Failed to refetch entries for Profit Lens", error);
     }
-  }, [recalcKpis, supabase, userId]);
+    }, [realtimeUserId, recalcKpis, supabase, userId]);
 
   useEffect(() => {
+    let isMounted = true;
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!isMounted) return;
+      if (error) {
+        console.error("Failed to fetch auth user for realtime (Profit Lens)", error);
+        return;
+      }
+      if (data?.user?.id) {
+        setRealtimeUserId(data.user.id);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!realtimeUserId) return;
+
     const channel = supabase
       .channel("entries-realtime")
       .on(
@@ -83,7 +109,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
           event: "*",
           schema: "public",
           table: "entries",
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${realtimeUserId}`,
         },
         (payload) => {
           console.log("REAL-TIME PAYLOAD:", payload);
@@ -91,12 +117,12 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
         },
       )
       .subscribe();
-    console.log("SUBSCRIBED TO REAL-TIME with user_id:", userId);
+    console.log("SUBSCRIPTION CREATED FOR USER:", realtimeUserId);
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetchEntries, supabase, userId]);
+  }, [realtimeUserId, refetchEntries, supabase]);
 
   useEffect(() => {
     if (skipNextRecalc.current) {

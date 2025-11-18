@@ -53,6 +53,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
 
   const [stats, setStats] = useState(() => buildCashpulseStats(initialEntries, historyFilters));
   const skipNextRecalc = useRef(false);
+  const [realtimeUserId, setRealtimeUserId] = useState<string | null>(userId ?? null);
 
     const recalcKpis = useCallback(
       (nextEntries: Entry[], nextFilters = historyFilters) => {
@@ -67,11 +68,17 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     );
 
   const refetchEntries = useCallback(async () => {
+    const targetUserId = realtimeUserId ?? userId;
+    if (!targetUserId) {
+      console.error("Cannot refetch entries: missing user id");
+      return;
+    }
+
     try {
       const { data, error } = await supabase
         .from("entries")
         .select(ENTRY_SELECT)
-        .eq("user_id", userId)
+        .eq("user_id", targetUserId)
         .order("entry_date", { ascending: false });
 
       if (error) {
@@ -86,9 +93,28 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     } catch (error) {
       console.error("Failed to refetch entries for Cashpulse", error);
     }
-  }, [recalcKpis, supabase, userId]);
+    }, [realtimeUserId, recalcKpis, supabase, userId]);
 
   useEffect(() => {
+    let isMounted = true;
+    supabase.auth.getUser().then(({ data, error }) => {
+      if (!isMounted) return;
+      if (error) {
+        console.error("Failed to fetch auth user for realtime (Cashpulse)", error);
+        return;
+      }
+      if (data?.user?.id) {
+        setRealtimeUserId(data.user.id);
+      }
+    });
+    return () => {
+      isMounted = false;
+    };
+  }, [supabase]);
+
+  useEffect(() => {
+    if (!realtimeUserId) return;
+
     const channel = supabase
       .channel("entries-realtime")
       .on(
@@ -97,7 +123,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
           event: "*",
           schema: "public",
           table: "entries",
-          filter: `user_id=eq.${userId}`,
+          filter: `user_id=eq.${realtimeUserId}`,
         },
         (payload) => {
           console.log("REAL-TIME PAYLOAD:", payload);
@@ -105,12 +131,12 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
         },
       )
       .subscribe();
-    console.log("SUBSCRIBED TO REAL-TIME with user_id:", userId);
+    console.log("SUBSCRIPTION CREATED FOR USER:", realtimeUserId);
 
     return () => {
       supabase.removeChannel(channel);
     };
-  }, [refetchEntries, supabase, userId]);
+  }, [realtimeUserId, refetchEntries, supabase]);
 
   useEffect(() => {
     if (skipNextRecalc.current) {
