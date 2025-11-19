@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
 import { type EntryType, type CategoryType, type PaymentMethod } from "@/lib/entries";
+import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
 const entryTypeIsCredit = (type: EntryType): boolean => type === "Credit";
@@ -24,11 +25,24 @@ type AddEntryInput = {
 export async function addEntry(data: AddEntryInput) {
   const supabase = await createSupabaseServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
+
+  if (wasInitiallyNull) {
+    console.warn(
+      `[Auth] GetUser null – error {${
+        initialError ? initialError.message : "none"
+      }} (ctx: daily-entries/addEntry)`,
+      initialError ?? undefined,
+    );
+  }
 
   if (!user) {
+    if (refreshError) {
+      console.error(
+        `[Auth] refreshSession failed – error {${refreshError.message}} (ctx: daily-entries/addEntry)`,
+        refreshError,
+      );
+    }
     redirect("/auth/login");
   }
 

@@ -2,16 +2,30 @@ import { redirect } from "next/navigation";
 
 import { SiteHeader } from "@/components/site-header";
 import { CashpulseShell } from "@/components/cashpulse/cashpulse-shell";
+import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
 export default async function CashpulsePage() {
   const supabase = await createSupabaseServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
+
+  if (wasInitiallyNull) {
+    console.warn(
+      `[Auth] GetUser null – error {${
+        initialError ? initialError.message : "none"
+      }} (ctx: cashpulse/page)`,
+      initialError ?? undefined,
+    );
+  }
 
   if (!user) {
+    if (refreshError) {
+      console.error(
+        `[Auth] refreshSession failed – error {${refreshError.message}} (ctx: cashpulse/page)`,
+        refreshError,
+      );
+    }
     redirect("/auth/login");
   }
 

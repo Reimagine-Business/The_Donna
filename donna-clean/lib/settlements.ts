@@ -2,6 +2,7 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 
 import type { Entry, SupabaseEntry } from "@/lib/entries";
 import { normalizeEntry } from "@/lib/entries";
+import { getOrRefreshUser } from "@/lib/supabase/get-user";
 
 // To fix schema errors, run the SQL in scripts/supabase-migrations/add-settlement-columns.sql in Supabase SQL Editor. This adds remaining_amount, settled, settled_at and backfills.
 
@@ -39,16 +40,25 @@ export async function createSettlement({
       return { success: false, error: "Settlement amount must be greater than zero." };
     }
 
-    const {
-      data: { user },
-      error: userError,
-    } = await supabase.auth.getUser();
+    const { user, wasInitiallyNull, initialError, refreshError } =
+      await getOrRefreshUser(supabase);
 
-    if (userError) {
-      console.error("Unable to load user for settlement", userError);
+    if (wasInitiallyNull) {
+      console.warn(
+        `[Auth] GetUser null – error {${
+          initialError ? initialError.message : "none"
+        }} (ctx: settlements/createSettlement)`,
+        initialError ?? undefined,
+      );
     }
 
     if (!user) {
+      if (refreshError) {
+        console.error(
+          `[Auth] refreshSession failed – error {${refreshError.message}} (ctx: settlements/createSettlement)`,
+          refreshError,
+        );
+      }
       return { success: false, error: "You must be signed in to settle entries." };
     }
 
@@ -93,9 +103,7 @@ export async function createSettlement({
       }
     }
 
-    const nextRemainingAmount = Number(
-      Math.max(remainingAmount - settledAmount, 0).toFixed(2),
-    );
+    const nextRemainingAmount = Number(Math.max(remainingAmount - settledAmount, 0).toFixed(2));
     const isFullySettled = nextRemainingAmount <= 0;
 
     const { error: updateError } = await supabase

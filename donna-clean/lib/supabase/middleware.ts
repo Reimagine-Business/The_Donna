@@ -30,15 +30,34 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  const { data } = await supabase.auth.getClaims();
-  const user = data?.claims;
+  const {
+    data: { session },
+    error,
+  } = await supabase.auth.getSession();
 
-  if (
-    request.nextUrl.pathname !== "/" &&
-    !user &&
-    !request.nextUrl.pathname.startsWith("/login") &&
-    !request.nextUrl.pathname.startsWith("/auth")
-  ) {
+  if (error) {
+    console.error("[Auth] middleware getSession error", error);
+  }
+
+  let activeSession = session ?? null;
+
+  if (!activeSession) {
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+
+    if (refreshError) {
+      console.error("[Auth] middleware refreshSession failed", refreshError);
+    } else {
+      activeSession = refreshData.session ?? null;
+    }
+  }
+
+  const user = activeSession?.user ?? null;
+  const { pathname } = request.nextUrl;
+  const isAuthPath = pathname.startsWith("/login") || pathname.startsWith("/auth");
+  const isHome = pathname === "/";
+  const requiresAuth = !isHome && !isAuthPath;
+
+  if (requiresAuth && !user) {
     const url = request.nextUrl.clone();
     url.pathname = "/auth/login";
     return NextResponse.redirect(url);
