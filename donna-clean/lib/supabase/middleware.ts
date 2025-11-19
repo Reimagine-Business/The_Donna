@@ -1,5 +1,6 @@
 import { createServerClient } from "@supabase/ssr";
 import type { AuthError } from "@supabase/supabase-js";
+import { revalidatePath } from "next/cache";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
 
@@ -53,23 +54,24 @@ export async function updateSession(request: NextRequest) {
 
   let activeSession = session ?? null;
 
-  if (!activeSession) {
-    logSessionNull(error ?? null);
+    if (!activeSession) {
+      logSessionNull(error ?? null);
 
-    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+      const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
-    if (refreshError) {
-      console.error(
-        `[Auth Fail] Refresh error {${refreshError.message}} on ${ctx}`,
-        refreshError,
-      );
-    } else {
-      activeSession = refreshData.session ?? null;
-      if (activeSession) {
-        console.info(`[Auth] Refreshed OK on ${ctx}`);
+      if (refreshError) {
+        console.error(
+          `[Auth Fail] Refresh error {${refreshError.message}} on ${ctx}`,
+          refreshError,
+        );
+      } else {
+        activeSession = refreshData.session ?? null;
+        if (activeSession) {
+          console.info(`[Auth] Refreshed OK on ${ctx}`);
+          revalidatePath("/auth/login");
+        }
       }
     }
-  }
 
   response.headers.set("x-auth-session", activeSession ? "active" : "missing");
 

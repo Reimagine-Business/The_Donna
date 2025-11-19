@@ -123,15 +123,16 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
       console.error("Failed to refetch entries for Cashpulse", error);
       return undefined;
     }
-  }, [supabase, userId]);
+    }, [supabase, userId]);
 
-  useEffect(() => {
-    let channel: RealtimeChannel | null = null;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-    let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-    let retryAttempt = 0;
-    let hasAlertedRealtimeFailure = false;
-    let isMounted = true;
+    useEffect(() => {
+      console.log("[Code Load] Realtime changes loaded – backoff max 30s");
+      let channel: RealtimeChannel | null = null;
+      let retryTimer: ReturnType<typeof setTimeout> | null = null;
+      let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+      let retryAttempt = 0;
+      let hasAlertedRealtimeFailure = false;
+      let isMounted = true;
 
     console.info("[Realtime Load] Changes applied – backoff max 30s");
 
