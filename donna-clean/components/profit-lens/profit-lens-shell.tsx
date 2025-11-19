@@ -120,8 +120,9 @@ useEffect(() => {
         type: "broadcast",
         event: "heartbeat",
         payload: {},
-      });
-    }, 20000);
+        topic: "heartbeat",
+      } as any);
+    }, 30000);
   };
 
   const subscribe = () => {
@@ -129,6 +130,9 @@ useEffect(() => {
 
     channel = supabase
       .channel(`public:entries:${userId}:profit`)
+      .on("system", { event: "*" }, (systemPayload) => {
+        console.log("[Realtime System]", systemPayload);
+      })
       .on(
         "postgres_changes",
         {
@@ -159,9 +163,9 @@ useEffect(() => {
           console.log("[Realtime] joined public:entries Profit Lens channel");
           startHeartbeat();
         } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-          console.error(`[Realtime Error] status: ${status} – retrying`);
+          console.error("[Realtime Error] Closed – retrying");
           teardownChannel();
-          await supabase.auth.getSession();
+          await supabase.auth.refreshSession();
           if (!retryTimer) {
             retryTimer = setTimeout(() => {
               retryTimer = null;
@@ -174,8 +178,10 @@ useEffect(() => {
 
   const handleVisibilityChange = () => {
     if (document.visibilityState === "visible") {
-      supabase.auth.getSession().then(() => {
-        subscribe();
+      supabase.auth.refreshSession().finally(() => {
+        if (!channel || channel.state !== "joined") {
+          subscribe();
+        }
       });
     }
   };
@@ -391,9 +397,9 @@ type ProfitStats = {
   netMargin: number;
 };
 
-const logProfitLensSkip = (entry: Entry, message: string) => {
+const logProfitLensSkip = (entry: Entry, reason: string) => {
   console.log(
-    `[ProfitLens Skip] ${message} for ID ${entry.id}: type=${entry.entry_type}, category=${entry.category}, payment=${entry.payment_method}, settled=${entry.settled}, remaining=${entry.remaining_amount}`,
+    `[ProfitLens Skip] ${reason} ID ${entry.id}: type=${entry.entry_type}, category=${entry.category}, payment=${entry.payment_method}, settled=${entry.settled}, remaining=${entry.remaining_amount}`,
   );
 };
 

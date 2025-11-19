@@ -47,9 +47,9 @@ const CASH_METHOD_LOOKUP = new Set<string>(PAYMENT_METHODS);
 const isCashPaymentMethod = (method: PaymentMethod): method is CashPaymentMethod =>
   CASH_METHOD_LOOKUP.has(method);
 
-const logCashpulseSkip = (entry: Entry, message: string) => {
+const logCashpulseSkip = (entry: Entry, reason: string) => {
   console.log(
-    `[Cashpulse Skip] ${message} for ID ${entry.id}: type=${entry.entry_type}, category=${entry.category}, payment=${entry.payment_method}, settled=${entry.settled}, remaining=${entry.remaining_amount}`,
+    `[Cashpulse Skip] ${reason} ID ${entry.id}: type=${entry.entry_type}, category=${entry.category}, payment=${entry.payment_method}, settled=${entry.settled}, remaining=${entry.remaining_amount}`,
   );
 };
 
@@ -144,8 +144,9 @@ useEffect(() => {
         type: "broadcast",
         event: "heartbeat",
         payload: {},
-      });
-    }, 20000);
+        topic: "heartbeat",
+      } as any);
+    }, 30000);
   };
 
   const subscribe = () => {
@@ -153,6 +154,9 @@ useEffect(() => {
 
     channel = supabase
       .channel(`public:entries:${userId}`)
+      .on("system", { event: "*" }, (systemPayload) => {
+        console.log("[Realtime System]", systemPayload);
+      })
       .on(
         "postgres_changes",
         {
@@ -189,9 +193,9 @@ useEffect(() => {
           console.log("[Realtime] joined public:entries Cashpulse channel");
           startHeartbeat();
         } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-          console.error(`[Realtime Error] status: ${status} – retrying`);
+          console.error("[Realtime Error] Closed – retrying");
           teardownChannel();
-          await supabase.auth.getSession();
+          await supabase.auth.refreshSession();
           if (!retryTimer) {
             retryTimer = setTimeout(() => {
               retryTimer = null;
@@ -204,8 +208,10 @@ useEffect(() => {
 
   const handleVisibilityChange = () => {
     if (document.visibilityState === "visible") {
-      supabase.auth.getSession().then(() => {
-        subscribe();
+      supabase.auth.refreshSession().finally(() => {
+        if (!channel || channel.state !== "joined") {
+          subscribe();
+        }
       });
     }
   };
@@ -503,38 +509,38 @@ const buildCashpulseStats = (entries: Entry[]): CashpulseStats => {
         cashInflow += entry.amount;
         countedCashMovement = true;
       } else {
-        logCashpulseSkip(entry, "Ignored for cash inflow: payment method must be Cash/Bank");
+        logCashpulseSkip(entry, "Cash Inflow requires Cash/Bank payment");
       }
     } else if (isCashOutflow) {
       if (paymentIsCash) {
         cashOutflow += entry.amount;
         countedCashMovement = true;
       } else {
-        logCashpulseSkip(entry, "Ignored for cash outflow: payment method must be Cash/Bank");
+        logCashpulseSkip(entry, "Cash Outflow requires Cash/Bank payment");
       }
     } else if (isAdvanceSales) {
       if (paymentIsCash) {
         cashInflow += entry.amount;
         countedCashMovement = true;
       } else {
-        logCashpulseSkip(entry, "Ignored for cash inflow: advance sale must be Cash/Bank");
+        logCashpulseSkip(entry, "Advance Sales must use Cash/Bank to count as cash");
       }
     } else if (isAdvanceExpense) {
       if (paymentIsCash) {
         cashOutflow += entry.amount;
         countedCashMovement = true;
       } else {
-        logCashpulseSkip(entry, "Ignored for cash outflow: advance expense must be Cash/Bank");
+        logCashpulseSkip(entry, "Advance expenses must use Cash/Bank to count as cash");
       }
     } else {
-      logCashpulseSkip(entry, "Ignored for cash totals");
+      logCashpulseSkip(entry, "Entry excluded from cash totals");
     }
 
     if (countedCashMovement) {
       if (paymentIsCash) {
         paymentTotals[entry.payment_method as CashPaymentMethod] += entry.amount;
       } else {
-        logCashpulseSkip(entry, "Cash movement recorded without cash/bank method");
+        logCashpulseSkip(entry, "Cash movement missing Cash/Bank method");
       }
     }
 
@@ -687,7 +693,7 @@ function PendingCard({ title, description, info, accent, onSettle }: PendingCard
           if (!canSettleEntry) {
             console.log(`Settle disabled for ID ${entry.id}: settled or no remaining`);
           }
-          const disabledTitle = canSettleEntry ? undefined : "No balance or settled";
+          const disabledTitle = canSettleEntry ? undefined : "Settled or no balance";
             return (
               <div
                 key={entry.id}

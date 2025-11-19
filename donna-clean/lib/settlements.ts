@@ -73,11 +73,15 @@ export async function createSettlement({
 
     if (latestEntry.entry_type === "Credit") {
       const isInflow = latestEntry.category === "Sales";
+      const settlementPaymentMethod =
+        latestEntry.payment_method === "Cash" || latestEntry.payment_method === "Bank"
+          ? latestEntry.payment_method
+          : "Cash";
       const { error: cashEntryError } = await supabase.from("entries").insert({
         user_id: user.id,
         entry_type: isInflow ? "Cash Inflow" : "Cash Outflow",
         category: latestEntry.category,
-        payment_method: latestEntry.payment_method,
+        payment_method: settlementPaymentMethod,
         amount: settledAmount,
         remaining_amount: settledAmount,
         entry_date: settlementDate,
