@@ -9,21 +9,25 @@ import { createSupabaseServerClient } from "@/utils/supabase/server";
 export default async function CashpulsePage() {
   const supabase = await createSupabaseServerClient();
 
-  const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
+  const { user, wasInitiallyNull, initialError, refreshError, didRefresh } =
+    await getOrRefreshUser(supabase);
 
   if (wasInitiallyNull) {
     console.warn(
-      `[Auth] GetUser null – error {${
+      `[Auth] Session null – error {${
         initialError ? initialError.message : "none"
-      }} (ctx: cashpulse/page)`,
+      }} on cashpulse/page`,
       initialError ?? undefined,
     );
+    if (user && didRefresh) {
+      console.info("[Auth] Refreshed OK on cashpulse/page");
+    }
   }
 
   if (!user) {
     if (refreshError) {
       console.error(
-        `[Auth Fail] Refresh error {${refreshError.message}} (ctx: cashpulse/page)`,
+        `[Auth Fail] Refresh error {${refreshError.message}} on cashpulse/page`,
         refreshError,
       );
       return (

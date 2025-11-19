@@ -35,8 +35,15 @@ export async function updateSession(request: NextRequest) {
     error,
   } = await supabase.auth.getSession();
 
-  if (error) {
-    console.error("[Auth] middleware getSession error", error);
+  if (session) {
+    if (error) {
+      console.error("[Auth] middleware getSession warning", error);
+    }
+  } else {
+    console.warn(
+      `[Auth] Session null – error {${error ? error.message : "none"}} on middleware`,
+      error ?? undefined,
+    );
   }
 
   let activeSession = session ?? null;
@@ -45,9 +52,15 @@ export async function updateSession(request: NextRequest) {
     const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
 
     if (refreshError) {
-      console.error("[Auth] middleware refreshSession failed", refreshError);
+      console.error(
+        `[Auth Fail] Refresh error {${refreshError.message}} on middleware`,
+        refreshError,
+      );
     } else {
       activeSession = refreshData.session ?? null;
+      if (activeSession) {
+        console.info("[Auth] Refreshed OK on middleware");
+      }
     }
   }
 

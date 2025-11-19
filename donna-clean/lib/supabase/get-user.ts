@@ -5,6 +5,7 @@ export type GetOrRefreshUserResult = {
   wasInitiallyNull: boolean;
   initialError: AuthError | null;
   refreshError: AuthError | null;
+  didRefresh: boolean;
 };
 
 export async function getOrRefreshUser(
@@ -21,6 +22,7 @@ export async function getOrRefreshUser(
       wasInitiallyNull: false,
       initialError: error ?? null,
       refreshError: null,
+      didRefresh: false,
     };
   }
 
@@ -32,5 +34,6 @@ export async function getOrRefreshUser(
     wasInitiallyNull: true,
     initialError: error ?? null,
     refreshError: refreshError ?? null,
+    didRefresh: Boolean(refreshedUser),
   };
 }

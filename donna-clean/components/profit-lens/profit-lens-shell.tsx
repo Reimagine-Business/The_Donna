@@ -210,10 +210,8 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
         return;
       }
       const attemptIndex = retryAttempt + 1;
-      const delay = Math.min(
-        BASE_REALTIME_DELAY_MS * 2 ** retryAttempt,
-        MAX_REALTIME_DELAY_MS,
-      );
+      const exponentialDelay = BASE_REALTIME_DELAY_MS * 2 ** retryAttempt;
+      const delay = Math.min(Math.max(5000, exponentialDelay), MAX_REALTIME_DELAY_MS);
       console.warn(
         `[Realtime Retry] attempt ${attemptIndex} in ${delay}ms (profit-lens channel)`,
       );

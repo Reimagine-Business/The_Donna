@@ -40,29 +40,32 @@ export async function createSettlement({
       return { success: false, error: "Settlement amount must be greater than zero." };
     }
 
-    const { user, wasInitiallyNull, initialError, refreshError } =
+    const { user, wasInitiallyNull, initialError, refreshError, didRefresh } =
       await getOrRefreshUser(supabase);
 
     if (wasInitiallyNull) {
       console.warn(
-        `[Auth] GetUser null – error {${
+        `[Auth] Session null – error {${
           initialError ? initialError.message : "none"
-        }} (ctx: settlements/createSettlement)`,
+        }} on settlements/createSettlement`,
         initialError ?? undefined,
       );
+      if (user && didRefresh) {
+        console.info("[Auth] Refreshed OK on settlements/createSettlement");
+      }
     }
 
     if (!user) {
-      if (refreshError) {
-        console.error(
-          `[Auth Fail] Refresh error {${refreshError.message}} (ctx: settlements/createSettlement)`,
-          refreshError,
-        );
-        if (typeof window !== "undefined" && typeof window.alert === "function") {
-          window.alert("Session expired – relogin");
+        if (refreshError) {
+          console.error(
+            `[Auth Fail] Refresh error {${refreshError.message}} on settlements/createSettlement`,
+            refreshError,
+          );
+          if (typeof window !== "undefined" && typeof window.alert === "function") {
+            window.alert("Session expired – relogin");
+          }
+          return { success: false, error: "Session expired – relogin" };
         }
-        return { success: false, error: "Session expired – relogin" };
-      }
       return { success: false, error: "You must be signed in to settle entries." };
     }
 
