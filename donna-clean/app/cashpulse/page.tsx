@@ -2,6 +2,7 @@ import { redirect } from "next/navigation";
 
 import { SiteHeader } from "@/components/site-header";
 import { CashpulseShell } from "@/components/cashpulse/cashpulse-shell";
+import { SessionExpiredNotice } from "@/components/session-expired-notice";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
@@ -22,8 +23,20 @@ export default async function CashpulsePage() {
   if (!user) {
     if (refreshError) {
       console.error(
-        `[Auth] refreshSession failed – error {${refreshError.message}} (ctx: cashpulse/page)`,
+        `[Auth Fail] Refresh error {${refreshError.message}} (ctx: cashpulse/page)`,
         refreshError,
+      );
+      return (
+        <main className="min-h-screen bg-slate-950 text-white">
+          <div className="flex flex-col gap-10">
+            <SiteHeader />
+            <section className="px-4 pb-12 md:px-8">
+              <div className="mx-auto w-full max-w-6xl">
+                <SessionExpiredNotice />
+              </div>
+            </section>
+          </div>
+        </main>
       );
     }
     redirect("/auth/login");

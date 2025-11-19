@@ -53,6 +53,10 @@ const logCashpulseSkip = (entry: Entry, reason: string) => {
   );
 };
 
+const MAX_REALTIME_RECONNECT_ATTEMPTS = 5;
+const BASE_REALTIME_DELAY_MS = 1000;
+const MAX_REALTIME_DELAY_MS = 10000;
+
 export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) {
   const supabase = useMemo(() => createBrowserClient(), []);
   const [entries, setEntries] = useState<Entry[]>(initialEntries.map(normalizeEntry));
@@ -121,117 +125,164 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     }
   }, [supabase, userId]);
 
-useEffect(() => {
-  let channel: RealtimeChannel | null = null;
-  let retryTimer: ReturnType<typeof setTimeout> | null = null;
-  let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+  useEffect(() => {
+    let channel: RealtimeChannel | null = null;
+    let retryTimer: ReturnType<typeof setTimeout> | null = null;
+    let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
+    let retryAttempt = 0;
+    let hasAlertedRealtimeFailure = false;
+    let isMounted = true;
 
-  const teardownChannel = () => {
-    if (heartbeatTimer) {
-      clearInterval(heartbeatTimer);
-      heartbeatTimer = null;
-    }
-    if (channel) {
-      supabase.removeChannel(channel);
-      channel = null;
-    }
-  };
+    const alertRealtimeFailure = () => {
+      if (hasAlertedRealtimeFailure) return;
+      hasAlertedRealtimeFailure = true;
+      if (typeof window !== "undefined" && typeof window.alert === "function") {
+        window.alert("Realtime failed – refresh");
+      }
+    };
 
-  const startHeartbeat = () => {
-    if (heartbeatTimer || !channel) return;
-    heartbeatTimer = setInterval(() => {
-      channel?.send({
-        type: "broadcast",
-        event: "heartbeat",
-        payload: {},
-        topic: "heartbeat",
-      } as any);
-    }, 30000);
-  };
+    const logCloseReason = (event?: { code?: number; reason?: string }) => {
+      const code = event?.code ?? "unknown";
+      const reason = (event?.reason ?? "none").trim() || "none";
+      console.warn(`[Realtime Closed] Code ${code}: ${reason} (cashpulse channel)`);
+    };
 
-  const subscribe = () => {
-    teardownChannel();
+    const teardownChannel = () => {
+      if (heartbeatTimer) {
+        clearInterval(heartbeatTimer);
+        heartbeatTimer = null;
+      }
+      if (channel) {
+        supabase.removeChannel(channel);
+        channel = null;
+      }
+    };
 
-    channel = supabase
-      .channel(`public:entries:${userId}`)
-      .on("system", { event: "*" }, (systemPayload) => {
-        console.log("[Realtime System]", systemPayload);
-      })
-      .on(
-        "postgres_changes",
-        {
-          event: "*",
-          schema: "public",
-          table: "entries",
-          filter: `user_id=eq.${userId}`,
-        },
-        async (payload) => {
-          console.log("REAL-TIME: payload received", payload);
-          const latestEntries = await refetchEntries();
-          if (!latestEntries) {
-            return;
+    const startHeartbeat = () => {
+      if (heartbeatTimer || !channel) return;
+      heartbeatTimer = setInterval(() => {
+        channel?.send({
+          type: "broadcast",
+          event: "heartbeat",
+          payload: {},
+          topic: "heartbeat",
+        } as any);
+      }, 30000);
+    };
+
+    const subscribe = () => {
+      teardownChannel();
+
+      channel = supabase
+        .channel(`public:entries:${userId}`)
+        .on("system", { event: "*" }, (systemPayload) => {
+          console.log("[Realtime System]", systemPayload);
+        })
+        .on(
+          "postgres_changes",
+          {
+            event: "*",
+            schema: "public",
+            table: "entries",
+            filter: `user_id=eq.${userId}`,
+          },
+          async (payload) => {
+            console.log("REAL-TIME: payload received", payload);
+            const latestEntries = await refetchEntries();
+            if (!latestEntries) {
+              return;
+            }
+            console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
+            const updatedStats = recalcKpis(latestEntries);
+            const realtimeSales = updatedStats.cashBreakdown
+              .filter(
+                (channelBreakdown) =>
+                  channelBreakdown.method === "Cash" || channelBreakdown.method === "Bank",
+              )
+              .reduce((sum, channelBreakdown) => sum + channelBreakdown.value, 0);
+            console.log(
+              "REAL-TIME: KPIs recalculated → inflow:",
+              updatedStats.cashInflow,
+              "sales:",
+              realtimeSales,
+            );
+          },
+        )
+        .subscribe(async (status) => {
+          console.log(`[Realtime] Status: ${status}`);
+          if (status === "SUBSCRIBED") {
+            console.log("[Realtime] joined public:entries Cashpulse channel");
+            retryAttempt = 0;
+            hasAlertedRealtimeFailure = false;
+            startHeartbeat();
+          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            console.error("[Realtime Error] Closed – scheduling retry");
+            teardownChannel();
+            await supabase.auth.refreshSession().catch((error) => {
+              console.error("[Realtime Error] refreshSession failed before retry (cashpulse)", error);
+            });
+            scheduleRetry();
           }
-          console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
-          const updatedStats = recalcKpis(latestEntries);
-          const realtimeSales = updatedStats.cashBreakdown
-            .filter(
-              (channelBreakdown) =>
-                channelBreakdown.method === "Cash" || channelBreakdown.method === "Bank",
-            )
-            .reduce((sum, channelBreakdown) => sum + channelBreakdown.value, 0);
-          console.log(
-            "REAL-TIME: KPIs recalculated → inflow:",
-            updatedStats.cashInflow,
-            "sales:",
-            realtimeSales,
-          );
-        },
-      )
-      .subscribe(async (status) => {
-        console.log(`[Realtime] Status: ${status}`);
-        if (status === "SUBSCRIBED") {
-          console.log("[Realtime] joined public:entries Cashpulse channel");
-          startHeartbeat();
-        } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-          console.error("[Realtime Error] Closed – retrying");
-          teardownChannel();
-          await supabase.auth.refreshSession();
-          if (!retryTimer) {
-            retryTimer = setTimeout(() => {
-              retryTimer = null;
-              subscribe();
-            }, 1000);
+        });
+
+      const socket = (channel as unknown as { socket?: { onClose?: (cb: (event?: CloseEvent) => void) => void } })
+        ?.socket;
+      socket?.onClose?.((event?: CloseEvent) => logCloseReason(event));
+    };
+
+    const scheduleRetry = () => {
+      if (!isMounted || retryTimer) {
+        return;
+      }
+      if (retryAttempt >= MAX_REALTIME_RECONNECT_ATTEMPTS) {
+        console.error("[Realtime Error] Max retries reached for Cashpulse channel.");
+        alertRealtimeFailure();
+        return;
+      }
+      const attemptIndex = retryAttempt + 1;
+      const delay = Math.min(
+        BASE_REALTIME_DELAY_MS * 2 ** retryAttempt,
+        MAX_REALTIME_DELAY_MS,
+      );
+      console.warn(
+        `[Realtime Retry] attempt ${attemptIndex} in ${delay}ms (cashpulse channel)`,
+      );
+      retryTimer = setTimeout(() => {
+        retryTimer = null;
+        retryAttempt = attemptIndex;
+        subscribe();
+      }, delay);
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === "visible") {
+        supabase.auth.refreshSession().finally(() => {
+          if (!channel || channel.state !== "joined") {
+            retryAttempt = 0;
+            hasAlertedRealtimeFailure = false;
+            subscribe();
           }
-        }
-      });
-  };
+        });
+      }
+    };
 
-  const handleVisibilityChange = () => {
-    if (document.visibilityState === "visible") {
-      supabase.auth.refreshSession().finally(() => {
-        if (!channel || channel.state !== "joined") {
-          subscribe();
-        }
-      });
-    }
-  };
+    subscribe();
 
-  subscribe();
-
-  if (typeof document !== "undefined") {
-    document.addEventListener("visibilitychange", handleVisibilityChange);
-  }
-
-  return () => {
-    if (retryTimer) {
-      clearTimeout(retryTimer);
-    }
     if (typeof document !== "undefined") {
-      document.removeEventListener("visibilitychange", handleVisibilityChange);
+      document.addEventListener("visibilitychange", handleVisibilityChange);
     }
-    teardownChannel();
-  };
-}, [recalcKpis, refetchEntries, supabase, userId]);
+
+    return () => {
+      isMounted = false;
+      if (retryTimer) {
+        clearTimeout(retryTimer);
+      }
+      if (typeof document !== "undefined") {
+        document.removeEventListener("visibilitychange", handleVisibilityChange);
+      }
+      teardownChannel();
+    };
+  }, [recalcKpis, refetchEntries, supabase, userId]);
 
   useEffect(() => {
     if (skipNextRecalc.current) {

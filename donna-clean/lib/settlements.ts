@@ -55,9 +55,13 @@ export async function createSettlement({
     if (!user) {
       if (refreshError) {
         console.error(
-          `[Auth] refreshSession failed – error {${refreshError.message}} (ctx: settlements/createSettlement)`,
+          `[Auth Fail] Refresh error {${refreshError.message}} (ctx: settlements/createSettlement)`,
           refreshError,
         );
+        if (typeof window !== "undefined" && typeof window.alert === "function") {
+          window.alert("Session expired – relogin");
+        }
+        return { success: false, error: "Session expired – relogin" };
       }
       return { success: false, error: "You must be signed in to settle entries." };
     }
