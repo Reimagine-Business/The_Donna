@@ -4,6 +4,7 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
+import type { Database } from "@/lib/supabase/types";
 
 type AuthState = {
   error?: string | null;
@@ -27,7 +28,7 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
     return { error: "Email and password are required" };
   }
 
-    const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient<Database>();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
 
   if (error) {
@@ -63,7 +64,7 @@ export async function signUpAction(_: AuthState, formData: FormData): Promise<Au
     return { error: "Passwords do not match" };
   }
 
-    const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient<Database>();
   const origin = await getOrigin();
 
   const { error } = await supabase.auth.signUp({
@@ -88,7 +89,7 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     return { error: "Email is required" };
   }
 
-    const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient<Database>();
   const origin = await getOrigin();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
@@ -109,7 +110,7 @@ export async function updatePasswordAction(_: AuthState, formData: FormData): Pr
     return { error: "Password is required" };
   }
 
-    const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient<Database>();
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
@@ -120,7 +121,7 @@ export async function updatePasswordAction(_: AuthState, formData: FormData): Pr
 }
 
 export async function logoutAction() {
-    const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient<Database>();
   await supabase.auth.signOut();
   redirect("/auth/login");
 }

@@ -5,6 +5,7 @@ import { revalidatePath } from "next/cache";
 
 import { type EntryType, type CategoryType, type PaymentMethod } from "@/lib/entries";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
+import type { Database } from "@/lib/supabase/types";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
 const entryTypeIsCredit = (type: EntryType): boolean => type === "Credit";
@@ -23,7 +24,7 @@ type AddEntryInput = {
 };
 
 export async function addEntry(data: AddEntryInput) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient<Database>();
 
   const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
 

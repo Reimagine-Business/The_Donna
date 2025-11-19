@@ -19,9 +19,10 @@ for select
 using (true);`.trim();
 
 const server = `import { createSupabaseServerClient } from '@/lib/supabase/server'
+import type { Database } from '@/lib/supabase/types'
 
 export default async function Page() {
-  const supabase = await createSupabaseServerClient()
+  const supabase = await createSupabaseServerClient<Database>()
   const { data: notes } = await supabase.from('notes').select()
 
   return <pre>{JSON.stringify(notes, null, 2)}</pre>

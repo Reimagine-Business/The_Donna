@@ -3,9 +3,10 @@ import { ProfitLensShell } from "@/components/profit-lens/profit-lens-shell";
 import { SessionExpiredNotice } from "@/components/session-expired-notice";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
+import type { Database } from "@/lib/supabase/types";
 
 export default async function ProfitLensPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient<Database>();
   const ctx = "profit-lens/page";
 
   const { user, wasInitiallyNull, initialError, refreshError, didRefresh } =

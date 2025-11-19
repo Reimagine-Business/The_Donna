@@ -3,9 +3,10 @@ import { CashpulseShell } from "@/components/cashpulse/cashpulse-shell";
 import { SessionExpiredNotice } from "@/components/session-expired-notice";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
+import type { Database } from "@/lib/supabase/types";
 
 export default async function CashpulsePage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createSupabaseServerClient<Database>();
   const ctx = "cashpulse/page";
 
   const { user, wasInitiallyNull, initialError, refreshError, didRefresh } =
