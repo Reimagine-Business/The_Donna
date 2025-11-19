@@ -1,26 +1,20 @@
-"use client";
+'use client'
 
-import { useState, type ReactNode } from "react";
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import type { SupabaseClient } from "@supabase/supabase-js";
-import { ThemeProvider } from "next-themes";
+import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs'
+import { useState } from 'react'
+import { SupabaseProvider } from '@/supabase/Provider'
 
-import { SupabaseProvider } from "@/supabase/Provider";
-import { AuthSessionKeeper } from "@/components/auth-session-keeper";
-
-type ClientProvidersProps = {
-  children: ReactNode;
-};
-
-export function ClientProviders({ children }: ClientProvidersProps) {
-  const [supabaseClient] = useState<SupabaseClient>(() => createBrowserSupabaseClient());
+export default function ClientProviders({ children }: { children: React.ReactNode }) {
+  const [supabaseClient] = useState(() =>
+    createBrowserSupabaseClient({
+      supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+      supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+    })
+  )
 
   return (
     <SupabaseProvider client={supabaseClient}>
-      <ThemeProvider attribute="class" defaultTheme="system" enableSystem disableTransitionOnChange>
-        <AuthSessionKeeper />
-        {children}
-      </ThemeProvider>
+      {children}
     </SupabaseProvider>
-  );
+  )
 }
