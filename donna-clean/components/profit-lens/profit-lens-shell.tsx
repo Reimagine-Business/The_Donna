@@ -34,8 +34,8 @@ const ENTRY_SELECT =
   "id, user_id, entry_type, category, payment_method, amount, remaining_amount, entry_date, notes, image_url, settled, settled_at, created_at, updated_at";
 
 const MAX_REALTIME_RECONNECT_ATTEMPTS = 5;
-const BASE_REALTIME_DELAY_MS = 1000;
-const MAX_REALTIME_DELAY_MS = 10000;
+const BASE_REALTIME_DELAY_MS = 5000;
+const MAX_REALTIME_DELAY_MS = 30000;
 
 export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps) {
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -109,6 +109,8 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     let hasAlertedRealtimeFailure = false;
     let isMounted = true;
 
+    console.info("[Realtime Load] Changes applied – backoff max 30s");
+
     const alertRealtimeFailure = () => {
       if (hasAlertedRealtimeFailure) return;
       hasAlertedRealtimeFailure = true;
@@ -117,10 +119,26 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
       }
     };
 
-    const logCloseReason = (event?: { code?: number; reason?: string }) => {
+    const logCloseReason = (
+      event?: { code?: number; reason?: string },
+      payload?: unknown,
+    ) => {
       const code = event?.code ?? "unknown";
       const reason = (event?.reason ?? "none").trim() || "none";
-      console.warn(`[Realtime Closed] Code ${code}: ${reason} (profit-lens channel)`);
+      let payloadSummary: string;
+      try {
+        payloadSummary =
+          payload === undefined
+            ? "none"
+            : JSON.stringify(payload, (_key, value) =>
+                typeof value === "bigint" ? Number(value) : value,
+              );
+      } catch {
+        payloadSummary = "unserializable";
+      }
+      console.warn(
+        `[Realtime Closed] Code ${code}: ${reason} payload ${payloadSummary} (profit-lens channel)`,
+      );
     };
 
     const teardownChannel = () => {
@@ -186,6 +204,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
             hasAlertedRealtimeFailure = false;
             startHeartbeat();
           } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            logCloseReason(undefined, { status });
             console.error("[Realtime Error] Closed – scheduling retry");
             teardownChannel();
             await supabase.auth.refreshSession().catch((error) => {
@@ -197,7 +216,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
       const socket = (channel as unknown as { socket?: { onClose?: (cb: (event?: CloseEvent) => void) => void } })
         ?.socket;
-      socket?.onClose?.((event?: CloseEvent) => logCloseReason(event));
+      socket?.onClose?.((event?: CloseEvent) => logCloseReason(event, { source: "socket" }));
     };
 
     const scheduleRetry = () => {
@@ -211,7 +230,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
       }
       const attemptIndex = retryAttempt + 1;
       const exponentialDelay = BASE_REALTIME_DELAY_MS * 2 ** retryAttempt;
-      const delay = Math.min(Math.max(5000, exponentialDelay), MAX_REALTIME_DELAY_MS);
+      const delay = Math.min(exponentialDelay, MAX_REALTIME_DELAY_MS);
       console.warn(
         `[Realtime Retry] attempt ${attemptIndex} in ${delay}ms (profit-lens channel)`,
       );

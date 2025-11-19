@@ -54,8 +54,8 @@ const logCashpulseSkip = (entry: Entry, reason: string) => {
 };
 
 const MAX_REALTIME_RECONNECT_ATTEMPTS = 5;
-const BASE_REALTIME_DELAY_MS = 1000;
-const MAX_REALTIME_DELAY_MS = 10000;
+const BASE_REALTIME_DELAY_MS = 5000;
+const MAX_REALTIME_DELAY_MS = 30000;
 
 export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) {
   const supabase = useMemo(() => createBrowserClient(), []);
@@ -133,6 +133,8 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     let hasAlertedRealtimeFailure = false;
     let isMounted = true;
 
+    console.info("[Realtime Load] Changes applied – backoff max 30s");
+
     const alertRealtimeFailure = () => {
       if (hasAlertedRealtimeFailure) return;
       hasAlertedRealtimeFailure = true;
@@ -141,10 +143,26 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
       }
     };
 
-    const logCloseReason = (event?: { code?: number; reason?: string }) => {
+    const logCloseReason = (
+      event?: { code?: number; reason?: string },
+      payload?: unknown,
+    ) => {
       const code = event?.code ?? "unknown";
       const reason = (event?.reason ?? "none").trim() || "none";
-      console.warn(`[Realtime Closed] Code ${code}: ${reason} (cashpulse channel)`);
+      let payloadSummary: string;
+      try {
+        payloadSummary =
+          payload === undefined
+            ? "none"
+            : JSON.stringify(payload, (_key, value) =>
+                typeof value === "bigint" ? Number(value) : value,
+              );
+      } catch {
+        payloadSummary = "unserializable";
+      }
+      console.warn(
+        `[Realtime Closed] Code ${code}: ${reason} payload ${payloadSummary} (cashpulse channel)`,
+      );
     };
 
     const teardownChannel = () => {
@@ -216,6 +234,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
             hasAlertedRealtimeFailure = false;
             startHeartbeat();
           } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+            logCloseReason(undefined, { status });
             console.error("[Realtime Error] Closed – scheduling retry");
             teardownChannel();
             await supabase.auth.refreshSession().catch((error) => {
@@ -227,7 +246,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
 
       const socket = (channel as unknown as { socket?: { onClose?: (cb: (event?: CloseEvent) => void) => void } })
         ?.socket;
-      socket?.onClose?.((event?: CloseEvent) => logCloseReason(event));
+      socket?.onClose?.((event?: CloseEvent) => logCloseReason(event, { source: "socket" }));
     };
 
     const scheduleRetry = () => {
@@ -241,7 +260,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
       }
       const attemptIndex = retryAttempt + 1;
       const exponentialDelay = BASE_REALTIME_DELAY_MS * 2 ** retryAttempt;
-      const delay = Math.min(Math.max(5000, exponentialDelay), MAX_REALTIME_DELAY_MS);
+      const delay = Math.min(exponentialDelay, MAX_REALTIME_DELAY_MS);
       console.warn(
         `[Realtime Retry] attempt ${attemptIndex} in ${delay}ms (cashpulse channel)`,
       );
