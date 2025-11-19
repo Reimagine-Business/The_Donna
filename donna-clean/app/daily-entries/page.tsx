@@ -6,7 +6,7 @@ import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
 export default async function DailyEntriesPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
   const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
 
   if (wasInitiallyNull) {
@@ -30,11 +30,11 @@ export default async function DailyEntriesPage() {
 
   // Then continue with your queries using this supabase client
 
-    const { data } = await supabase
-      .from("entries")
-      .select(
-        "id, user_id, entry_type, category, payment_method, amount, remaining_amount, entry_date, notes, image_url, settled, settled_at, created_at, updated_at",
-      )
+  const { data } = await supabase
+    .from("entries")
+    .select(
+      "id, user_id, entry_type, category, payment_method, amount, remaining_amount, entry_date, notes, image_url, settled, settled_at, created_at, updated_at",
+    )
     .eq("user_id", user.id)
     .order("entry_date", { ascending: false });
 

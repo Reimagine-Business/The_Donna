@@ -5,7 +5,7 @@ import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
 export default async function ProfitLensPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
   const ctx = "profit-lens/page";
 
   const { user, wasInitiallyNull, initialError, refreshError, didRefresh } =

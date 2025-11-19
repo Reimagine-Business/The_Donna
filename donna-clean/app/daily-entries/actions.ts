@@ -23,7 +23,7 @@ type AddEntryInput = {
 };
 
 export async function addEntry(data: AddEntryInput) {
-  const supabase = await createSupabaseServerClient();
+  const supabase = createSupabaseServerClient();
 
   const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
 
