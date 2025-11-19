@@ -3,6 +3,8 @@ import type { SupabaseClient } from "@supabase/supabase-js";
 import type { Entry, SupabaseEntry } from "@/lib/entries";
 import { normalizeEntry } from "@/lib/entries";
 
+// To fix schema errors, run the SQL in scripts/supabase-migrations/add-settlement-columns.sql in Supabase SQL Editor. This adds remaining_amount, settled, settled_at and backfills.
+
 /**
  * Heads-up: run `psql -f supabase/fix-remaining-amounts.sql` once if legacy entries need a remaining_amount backfill.
  */
