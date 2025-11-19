@@ -1,8 +1,9 @@
 "use client";
 
-import type { ReactNode } from "react";
-import { SessionContextProvider } from "@supabase/auth-helpers-react";
+import { createContext, useContext, type ReactNode } from "react";
 import type { SupabaseClient } from "@supabase/supabase-js";
+
+const SupabaseContext = createContext<SupabaseClient | null>(null);
 
 type SupabaseProviderProps = {
   children: ReactNode;
@@ -18,8 +19,18 @@ export function SupabaseProvider({ children, client }: SupabaseProviderProps) {
   }
 
   return (
-    <SessionContextProvider supabaseClient={client}>
+    <SupabaseContext.Provider value={client}>
       {children}
-    </SessionContextProvider>
+    </SupabaseContext.Provider>
   );
+}
+
+export function useSupabaseClient() {
+  const client = useContext(SupabaseContext);
+
+  if (!client) {
+    throw new Error("[SupabaseProvider] Supabase client is not available in context.");
+  }
+
+  return client;
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect } from "react";
-import { useSupabaseClient } from "@supabase/auth-helpers-react";
+import { useSupabaseClient } from "@/supabase/Provider";
 
 const FIVE_MINUTES_MS = 5 * 60 * 1000;
 

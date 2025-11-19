@@ -16,13 +16,13 @@ export default function RootLayout({
 }: Readonly<{
   children: React.ReactNode;
 }>) {
-  return (
-    <html lang="en" suppressHydrationWarning>
-      <body>
-        <ClientProviders>
-          {children}
-        </ClientProviders>
-      </body>
-    </html>
-  );
+    return (
+      <html lang="en" suppressHydrationWarning>
+        <body className={geistSans.variable}>
+          <ClientProviders>
+            {children}
+          </ClientProviders>
+        </body>
+      </html>
+    );
 }
