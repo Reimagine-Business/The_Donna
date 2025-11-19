@@ -1,12 +1,10 @@
-"use client";
+import { createBrowserSupabaseClient } from '@supabase/auth-helpers-nextjs'
+import type { Database } from '@/supabase/types'
 
-import { createBrowserSupabaseClient } from "@supabase/auth-helpers-nextjs";
-import type { SupabaseClient } from "@supabase/supabase-js";
+export const createBrowserClient = () =>
+  createBrowserSupabaseClient<Database>({
+    supabaseUrl: process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    supabaseKey: process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
+  })
 
-export function createBrowserClient(): SupabaseClient {
-  return createBrowserSupabaseClient();
-}
-
-export function createClient(): SupabaseClient {
-  return createBrowserClient();
-}
+// If you also have createClient() for server, leave it or fix the same way
