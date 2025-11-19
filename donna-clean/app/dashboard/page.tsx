@@ -10,6 +10,7 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
+import { getOrRefreshUser } from "@/lib/supabase/get-user";
 
 type Profile = {
   business_name: string | null;
@@ -44,20 +45,28 @@ export default async function DashboardPage() {
     },
   );
 
-  const {
-    data: { user },
-    error: userError,
-  } = await supabase.auth.getUser();
+    const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
 
-  if (!user) {
-    redirect("/auth/login");
-  }
+    if (wasInitiallyNull) {
+      console.warn(
+        `[Auth] GetUser null – error {${
+          initialError ? initialError.message : "none"
+        }} (ctx: dashboard/page)`,
+        initialError ?? undefined,
+      );
+    }
 
-  // Then continue with your queries using this supabase client
+    if (!user) {
+      if (refreshError) {
+        console.error(
+          `[Auth] refreshSession failed – error {${refreshError.message}} (ctx: dashboard/page)`,
+          refreshError,
+        );
+      }
+      redirect("/auth/login");
+    }
 
-  if (userError) {
-    console.error("Dashboard auth fetch failed", userError);
-  }
+    // Then continue with your queries using this supabase client
 
   const metadata = (user.user_metadata as Record<string, string | null>) ?? {};
 

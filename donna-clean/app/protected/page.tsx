@@ -4,6 +4,7 @@ import { redirect } from "next/navigation";
 
 import { InfoIcon } from "lucide-react";
 import { FetchDataSteps } from "@/components/tutorial/fetch-data-steps";
+import { getOrRefreshUser } from "@/lib/supabase/get-user";
 
 export default async function ProtectedPage() {
   const cookieStore = await cookies();
@@ -30,13 +31,26 @@ export default async function ProtectedPage() {
     },
   );
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+    const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
 
-  if (!user) {
-    redirect("/auth/login");
-  }
+    if (wasInitiallyNull) {
+      console.warn(
+        `[Auth] GetUser null – error {${
+          initialError ? initialError.message : "none"
+        }} (ctx: protected/page)`,
+        initialError ?? undefined,
+      );
+    }
+
+    if (!user) {
+      if (refreshError) {
+        console.error(
+          `[Auth] refreshSession failed – error {${refreshError.message}} (ctx: protected/page)`,
+          refreshError,
+        );
+      }
+      redirect("/auth/login");
+    }
 
   // Then continue with your queries using this supabase client
 

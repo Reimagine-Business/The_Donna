@@ -2,16 +2,47 @@ import { redirect } from "next/navigation";
 
 import { SiteHeader } from "@/components/site-header";
 import { ProfitLensShell } from "@/components/profit-lens/profit-lens-shell";
+import { SessionExpiredNotice } from "@/components/session-expired-notice";
+import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
 export default async function ProfitLensPage() {
   const supabase = await createSupabaseServerClient();
 
-  const {
-    data: { user },
-  } = await supabase.auth.getUser();
+  const { user, wasInitiallyNull, initialError, refreshError, didRefresh } =
+    await getOrRefreshUser(supabase);
+
+  if (wasInitiallyNull) {
+    console.warn(
+      `[Auth] Session null – error {${
+        initialError ? initialError.message : "none"
+      }} on profit-lens/page`,
+      initialError ?? undefined,
+    );
+    if (user && didRefresh) {
+      console.info("[Auth] Refreshed OK on profit-lens/page");
+    }
+  }
 
   if (!user) {
+    if (refreshError) {
+      console.error(
+        `[Auth Fail] Refresh error {${refreshError.message}} on profit-lens/page`,
+        refreshError,
+      );
+      return (
+        <main className="min-h-screen bg-slate-950 text-white">
+          <div className="flex flex-col gap-10">
+            <SiteHeader />
+            <section className="px-4 pb-12 md:px-8">
+              <div className="mx-auto w-full max-w-6xl">
+                <SessionExpiredNotice />
+              </div>
+            </section>
+          </div>
+        </main>
+      );
+    }
     redirect("/auth/login");
   }
 
