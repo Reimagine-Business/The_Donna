@@ -146,6 +146,14 @@ function normalizeAmount(value: unknown, fallback: number): number {
 
 async function revalidateDashboards() {
   try {
+    if (typeof window === "undefined") {
+      const { revalidatePath } = await import("next/cache");
+      revalidatePath("/cashpulse");
+      revalidatePath("/profit-lens");
+      revalidatePath("/daily-entries");
+      return;
+    }
+
     await fetch("/api/revalidate", {
       method: "POST",
       headers: {

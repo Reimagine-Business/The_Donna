@@ -97,11 +97,17 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     }
   }, [supabase, userId]);
 
-  useEffect(() => {
-    let channel: RealtimeChannel | null = null;
+useEffect(() => {
+  let channel: RealtimeChannel | null = null;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const subscribe = () => {
+    if (channel) {
+      supabase.removeChannel(channel);
+    }
 
     channel = supabase
-      .channel("public:entries")
+      .channel(`public:entries:${userId}:profit`)
       .on(
         "postgres_changes",
         {
@@ -126,15 +132,31 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
           );
         },
       )
-      .subscribe();
-    console.log("REAL-TIME SUBSCRIBED TO public:entries for user:", userId);
+      .subscribe(async (status) => {
+        console.log(`[Realtime] Status: ${status}`);
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          await supabase.auth.getSession();
+          if (!retryTimer) {
+            retryTimer = setTimeout(() => {
+              retryTimer = null;
+              subscribe();
+            }, 1000);
+          }
+        }
+      });
+  };
 
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, [recalcKpis, refetchEntries, supabase, userId]);
+  subscribe();
+
+  return () => {
+    if (retryTimer) {
+      clearTimeout(retryTimer);
+    }
+    if (channel) {
+      supabase.removeChannel(channel);
+    }
+  };
+}, [recalcKpis, refetchEntries, supabase, userId]);
 
   useEffect(() => {
     if (skipNextRecalc.current) {
@@ -332,7 +354,7 @@ type ProfitStats = {
 
 const logProfitLensSkip = (entry: Entry, message: string) => {
   console.log(
-    `[ProfitLens Skip] ${message} for ID ${entry.id}: type=${entry.entry_type}, category=${entry.category}, settled=${entry.settled}, remaining=${entry.remaining_amount}`,
+    `[ProfitLens Skip] ${message} for ID ${entry.id}: type=${entry.entry_type}, category=${entry.category}, payment=${entry.payment_method}, settled=${entry.settled}, remaining=${entry.remaining_amount}`,
   );
 };
 

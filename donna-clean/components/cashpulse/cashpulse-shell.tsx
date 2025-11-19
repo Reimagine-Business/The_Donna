@@ -121,11 +121,17 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     }
   }, [supabase, userId]);
 
-  useEffect(() => {
-    let channel: RealtimeChannel | null = null;
+useEffect(() => {
+  let channel: RealtimeChannel | null = null;
+  let retryTimer: ReturnType<typeof setTimeout> | null = null;
+
+  const subscribe = () => {
+    if (channel) {
+      supabase.removeChannel(channel);
+    }
 
     channel = supabase
-      .channel("public:entries")
+      .channel(`public:entries:${userId}`)
       .on(
         "postgres_changes",
         {
@@ -156,15 +162,31 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
           );
         },
       )
-      .subscribe();
-    console.log("REAL-TIME SUBSCRIBED TO public:entries for user:", userId);
+      .subscribe(async (status) => {
+        console.log(`[Realtime] Status: ${status}`);
+        if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
+          await supabase.auth.getSession();
+          if (!retryTimer) {
+            retryTimer = setTimeout(() => {
+              retryTimer = null;
+              subscribe();
+            }, 1000);
+          }
+        }
+      });
+  };
 
-    return () => {
-      if (channel) {
-        supabase.removeChannel(channel);
-      }
-    };
-  }, [recalcKpis, refetchEntries, supabase, userId]);
+  subscribe();
+
+  return () => {
+    if (retryTimer) {
+      clearTimeout(retryTimer);
+    }
+    if (channel) {
+      supabase.removeChannel(channel);
+    }
+  };
+}, [recalcKpis, refetchEntries, supabase, userId]);
 
   useEffect(() => {
     if (skipNextRecalc.current) {
@@ -602,7 +624,7 @@ function PendingCard({ title, description, info, accent, onSettle }: PendingCard
   useEffect(() => {
     if (info.entries.length === 0) {
       console.log(
-        `[Pending Skip] No entries for ${title}: filter only unsettled Credit/Advance with remaining >0 by category (Sales=Collections, COGS/Opex=Bills, all for Advances).`,
+        `[Pending Empty] ${title}: filter unsettled Credit/Advance with remaining >0 by category (Sales=Collections, COGS/Opex=Bills, all for Advances).`,
       );
     }
   }, [info.entries.length, title]);
@@ -624,11 +646,9 @@ function PendingCard({ title, description, info, accent, onSettle }: PendingCard
         {info.entries.slice(0, 3).map((entry) => {
           const canSettleEntry = !entry.settled && entry.remaining_amount > 0;
           if (!canSettleEntry) {
-            console.log(
-              `[Pending Skip] Settle disabled for ID ${entry.id}: settled or remaining <=0`,
-            );
+            console.log(`Settle disabled for ID ${entry.id}: settled or no remaining`);
           }
-          const disabledTitle = canSettleEntry ? undefined : "No balance left or already settled";
+          const disabledTitle = canSettleEntry ? undefined : "No balance or settled";
             return (
               <div
                 key={entry.id}
