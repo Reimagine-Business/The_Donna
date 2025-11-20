@@ -1,4 +1,4 @@
-import { createBrowserClient } from '@supabase/ssr'
+import { createBrowserClient } from '@supabase/ssr/nextjs'
 import type { Database } from './dbTypes'
 
 export const supabase = createBrowserClient<Database>(
