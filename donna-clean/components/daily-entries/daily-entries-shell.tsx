@@ -286,21 +286,22 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
         entry_date: formValues.entry_date,
         notes: formValues.notes || null,
         image_url: uploadedUrl,
-      };
+        };
 
-      console.log("Saving entry payload", payload);
+        console.log("Saving entry payload", payload);
 
-      if (editingEntryId) {
-        const { error } = await supabase.from("entries").update(payload).eq("id", editingEntryId);
-        if (error) throw error;
-        setSuccessMessage("Entry updated!");
-      } else {
-        const result = await addEntryAction(payload);
-        if (result?.error) {
-          throw new Error(result.error);
+        if (editingEntryId) {
+          // @ts-ignore temporary until Turbopack respects generics in client components
+          const { error } = await supabase.from("entries").update(payload).eq("id", editingEntryId);
+          if (error) throw error;
+          setSuccessMessage("Entry updated!");
+        } else {
+          const result = await addEntryAction(payload);
+          if (result?.error) {
+            throw new Error(result.error);
+          }
+          setSuccessMessage("Entry saved!");
         }
-        setSuccessMessage("Entry saved!");
-      }
 
       resetForm();
     } catch (error) {
