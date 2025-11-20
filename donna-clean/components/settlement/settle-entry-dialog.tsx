@@ -1,11 +1,10 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import { format } from "date-fns";
-import { createSupabaseBrowser } from "@/lib/supabase/client";
-import { Entry } from "@/lib/entries";
-import { createSettlement, type SettleEntryResult } from "@/lib/settlements";
+import { settleEntry } from "@/app/daily-entries/actions";
+import { Entry, PAYMENT_METHODS, type PaymentMethod } from "@/lib/entries";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -17,9 +16,9 @@ type SettleEntryDialogProps = {
 
 export function SettleEntryDialog({ entry, onClose }: SettleEntryDialogProps) {
   const router = useRouter();
-  const supabase = useMemo(() => createSupabaseBrowser(), []);
   const [settlementDate, setSettlementDate] = useState(format(new Date(), "yyyy-MM-dd"));
   const [amount, setAmount] = useState("");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("Cash");
   const [isSaving, setIsSaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
@@ -29,6 +28,13 @@ export function SettleEntryDialog({ entry, onClose }: SettleEntryDialogProps) {
       const remaining = entry.remaining_amount ?? entry.amount;
       setAmount(remaining.toString());
       setError(null);
+      const nextMethod: PaymentMethod =
+        entry.entry_type === "Credit"
+          ? (entry.payment_method === "Cash" || entry.payment_method === "Bank"
+              ? entry.payment_method
+              : "Cash")
+          : "None";
+      setPaymentMethod(nextMethod);
     }
   }, [entry]);
 
@@ -58,34 +64,30 @@ export function SettleEntryDialog({ entry, onClose }: SettleEntryDialogProps) {
       return;
     }
 
-    setIsSaving(true);
-    setError(null);
+      setIsSaving(true);
+      setError(null);
 
-    try {
-      // Force refresh session so RLS sees the correct user_id (prevents logout!)
-      const { error: refreshError } = await supabase.auth.refreshSession();
-      if (refreshError) throw refreshError;
+      try {
+        const result = await settleEntry({
+          entryId: entry.id,
+          amount: numericAmount,
+          settlementDate,
+          paymentMethod: isCredit ? paymentMethod : "None",
+        });
 
-      const result: SettleEntryResult = await createSettlement({
-        supabase,                           // ← passes the freshly-refreshed client
-        entryId: entry.id,
-        amount: numericAmount,
-        settlementDate,
-      });
+        if (result?.error) {
+          setError(result.error);
+          return;
+        }
 
-      if (!result.success) {
-        setError(result.error);
-        return;
+        router.refresh();
+        onClose();
+      } catch (err) {
+        console.error("Settlement failed", err);
+        setError(err instanceof Error ? err.message : "Unable to settle entry.");
+      } finally {
+        setIsSaving(false);
       }
-
-      router.refresh();   // refreshes data on the current page
-      onClose();
-    } catch (err) {
-      console.error("Settlement failed", err);
-      setError(err instanceof Error ? err.message : "Unable to settle entry.");
-    } finally {
-      setIsSaving(false);
-    }
   };
 
   return (
@@ -128,6 +130,23 @@ export function SettleEntryDialog({ entry, onClose }: SettleEntryDialogProps) {
               className="border-white/10 bg-slate-900 text-white"
             />
           </div>
+
+            {isCredit && (
+              <div className="space-y-2">
+                <Label className="text-xs uppercase text-slate-400">Payment method</Label>
+                <select
+                  value={paymentMethod}
+                  onChange={(event) => setPaymentMethod(event.target.value as PaymentMethod)}
+                  className="w-full rounded-lg border border-white/10 bg-slate-900 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+                >
+                  {(PAYMENT_METHODS as readonly PaymentMethod[]).map((method) => (
+                    <option key={method} value={method}>
+                      {method}
+                    </option>
+                  ))}
+                </select>
+              </div>
+            )}
 
           {error && <p className="text-sm text-rose-300">{error}</p>}
         </div>
