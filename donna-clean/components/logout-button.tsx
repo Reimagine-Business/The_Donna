@@ -1,36 +1,36 @@
 "use client";
 
-import { useCallback, useMemo, useState } from "react";
-
+import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
-import { createClient } from "@/lib/supabase/client";
+import { supabase } from "@/lib/supabase/client";   // ← new shared client
 
 export function LogoutButton() {
-  const supabase = useMemo(() => createClient(), []);
+  const router = useRouter();
   const [isPending, setIsPending] = useState(false);
 
-  const handleLogout = useCallback(async () => {
-    if (isPending) {
-      return;
-    }
+  const handleLogout = async () => {
+    if (isPending) return;
 
     setIsPending(true);
-    try {
-      await supabase.auth.signOut();
-    } catch (error) {
+
+    const { error } = await supabase.auth.signOut();
+
+    if (error) {
       console.error("[Auth] Logout failed", error);
-    } finally {
-      if (typeof window !== "undefined") {
-        try {
-          window.localStorage?.clear();
-        } catch {
-          // ignore storage clearing errors
-        }
-        window.location.href = "/auth/login";
-      }
-      setIsPending(false);
     }
-  }, [isPending, supabase]);
+
+    // Clear any leftover localStorage if you want (optional)
+    if (typeof window !== "undefined") {
+      try {
+        window.localStorage.clear();
+      } catch {}
+    }
+
+    // Redirect to login (or refresh current page)
+    router.push("/auth/login");
+    router.refresh();   // forces Next.js to re-check auth state immediately
+  };
 
   return (
     <Button onClick={handleLogout} disabled={isPending}>
