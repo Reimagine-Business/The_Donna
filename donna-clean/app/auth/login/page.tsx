@@ -1,53 +1,26 @@
-// app/auth/login/page.tsx
-
 "use client";
 
-import { useEffect, useRef, useState } from "react";
-import { useRouter } from "next/navigation";
-import { createSupabaseBrowser } from "@/lib/supabase/client";
+import { useFormState, useFormStatus } from "react-dom";
+import { loginAction } from "@/app/auth/actions";
+
+const initialState = { error: null as string | null };
+
+function SubmitButton() {
+  const { pending } = useFormStatus();
+
+  return (
+    <button
+      type="submit"
+      disabled={pending}
+      className="w-full rounded-lg bg-[#a78bfa] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#9770ff] disabled:cursor-not-allowed disabled:opacity-50"
+    >
+      {pending ? "Signing in..." : "Sign in"}
+    </button>
+  );
+}
 
 export default function LoginPage() {
-  const router = useRouter();
-  const supabaseRef = useRef<ReturnType<typeof createSupabaseBrowser> | null>(null);
-
-  const [email, setEmail] = useState("");
-  const [password, setPassword] = useState("");
-  const [error, setError] = useState<string | null>(null);
-  const [loading, setLoading] = useState(false);
-
-  useEffect(() => {
-    supabaseRef.current = createSupabaseBrowser();
-  }, []);
-
-  const getSupabase = () => {
-    if (!supabaseRef.current) {
-      supabaseRef.current = createSupabaseBrowser();
-    }
-    return supabaseRef.current;
-  };
-
-  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
-    event.preventDefault();
-    setError(null);
-    setLoading(true);
-
-    const supabase = getSupabase();
-
-    const { error: signInError } = await supabase.auth.signInWithPassword({
-      email,
-      password,
-    });
-
-    setLoading(false);
-
-    if (signInError) {
-      setError(signInError.message);
-      return;
-    }
-
-    router.push("/dashboard");
-    router.refresh();
-  };
+  const [state, formAction] = useFormState(loginAction, initialState);
 
   return (
     <div className="flex min-h-svh w-full items-center justify-center p-6 md:p-10">
@@ -59,16 +32,14 @@ export default function LoginPage() {
           </p>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <form action={formAction} className="space-y-4">
           <div>
             <label className="block text-sm font-medium text-slate-300">Email</label>
             <input
               type="email"
+              name="email"
               placeholder="m@example.com"
-              value={email}
-              onChange={(event) => setEmail(event.target.value)}
               required
-              disabled={loading}
               className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white placeholder-slate-500 focus:outline-none focus:ring-2 focus:ring-[#a78bfa] disabled:opacity-50"
             />
           </div>
@@ -77,27 +48,19 @@ export default function LoginPage() {
             <label className="block text-sm font-medium text-slate-300">Password</label>
             <input
               type="password"
-              value={password}
-              onChange={(event) => setPassword(event.target.value)}
+              name="password"
               required
-              disabled={loading}
               className="mt-1 w-full rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-[#a78bfa] disabled:opacity-50"
             />
           </div>
 
-          {error && (
+          {state?.error && (
             <p className="rounded-lg border border-white/10 bg-rose-500/10 px-3 py-2 text-sm text-rose-200">
-              {error}
+              {state.error}
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={loading}
-            className="w-full rounded-lg bg-[#a78bfa] px-4 py-2 text-sm font-semibold text-white transition hover:bg-[#9770ff] disabled:cursor-not-allowed disabled:opacity-50"
-          >
-            {loading ? "Signing in..." : "Sign in"}
-          </button>
+          <SubmitButton />
         </form>
       </div>
     </div>
