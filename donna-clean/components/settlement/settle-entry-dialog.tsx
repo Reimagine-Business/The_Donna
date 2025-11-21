@@ -52,7 +52,7 @@ export function SettleEntryDialog({ entry, onClose }: SettleEntryDialogProps) {
       ? "Settle Bill - Cash Outflow"
       : "Recognise Advance - Accrual Only";
 
-  const handleConfirm = async () => {
+    const handleConfirm = async () => {
     if (!canSettle) {
       setError("Only Credit and Advance entries can be settled");
       return;
@@ -77,6 +77,9 @@ export function SettleEntryDialog({ entry, onClose }: SettleEntryDialogProps) {
 
         if (result?.error) {
           setError(result.error);
+          if (result.error.toLowerCase().includes("login")) {
+            router.push("/auth/login");
+          }
           return;
         }
 

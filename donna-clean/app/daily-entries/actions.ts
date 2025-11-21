@@ -104,6 +104,11 @@ type SettleEntryInput = {
 export async function settleEntry(data: SettleEntryInput) {
   "use server";
 
+  console.log("[settleEntry] Starting settlement:", {
+    entryId: data.entryId,
+    amount: data.amount,
+  });
+
   const supabase = await createSupabaseServer();
   const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
 
@@ -122,6 +127,7 @@ export async function settleEntry(data: SettleEntryInput) {
     }
     redirect("/auth/login");
   }
+  console.log("[settleEntry] User validated:", { userId: user.id });
 
   const settledAmount = Number(data.amount);
   if (!Number.isFinite(settledAmount) || settledAmount <= 0) {
@@ -138,6 +144,12 @@ export async function settleEntry(data: SettleEntryInput) {
   if (fetchError || !originalEntry) {
     return { error: "Entry not found or you don't have permission." };
   }
+  console.log("[settleEntry] Original entry loaded:", {
+    id: originalEntry.id,
+    type: originalEntry.entry_type,
+    category: originalEntry.category,
+    remaining: originalEntry.remaining_amount ?? originalEntry.amount,
+  });
 
   if (originalEntry.entry_type !== "Credit" && originalEntry.entry_type !== "Advance") {
     return { error: "Only Credit and Advance entries can be settled." };
@@ -160,6 +172,13 @@ export async function settleEntry(data: SettleEntryInput) {
     const isSales = originalEntry.category === "Sales";
     const newEntryType = isSales ? "Cash Inflow" : "Cash Outflow";
 
+    console.log("[settleEntry] Inserting cash settlement entry", {
+      entryType: newEntryType,
+      category: originalEntry.category,
+      paymentMethod: data.paymentMethod,
+      amount: settledAmount,
+    });
+
     const { error: insertError } = await supabase.from("entries").insert({
       user_id: user.id,
       entry_type: newEntryType,
@@ -181,6 +200,11 @@ export async function settleEntry(data: SettleEntryInput) {
     }
   } else if (originalEntry.entry_type === "Advance") {
     if (originalEntry.category !== "Assets") {
+      console.log("[settleEntry] Inserting advance recognition entry", {
+        category: originalEntry.category,
+        amount: settledAmount,
+      });
+
       const { error: insertError } = await supabase.from("entries").insert({
         user_id: user.id,
         entry_type: "Credit",
@@ -215,9 +239,17 @@ export async function settleEntry(data: SettleEntryInput) {
     return { error: updateError.message };
   }
 
+  console.log("[settleEntry] Updated original entry", {
+    entryId: data.entryId,
+    nextRemainingAmount,
+    isFullySettled,
+  });
+
   revalidatePath("/daily-entries");
   revalidatePath("/cashpulse");
   revalidatePath("/profit-lens");
+
+  console.log("[settleEntry] Settlement completed successfully");
 
   return { success: true };
 }
