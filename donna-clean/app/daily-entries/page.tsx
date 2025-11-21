@@ -3,10 +3,10 @@ import { SiteHeader } from "@/components/site-header";
 import { DailyEntriesShell } from "@/components/daily-entries/daily-entries-shell";
 import { normalizeEntry, type Entry } from "@/lib/entries";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
-import { createSupabaseServerClient } from "@/utils/supabase/server";
+import { createClient } from "@/lib/supabase/server";
 
 export default async function DailyEntriesPage() {
-  const supabase = await createSupabaseServerClient();
+  const supabase = await createClient();
   const { user, wasInitiallyNull, initialError, refreshError } = await getOrRefreshUser(supabase);
 
   if (wasInitiallyNull) {
