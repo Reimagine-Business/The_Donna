@@ -22,6 +22,7 @@ const getOrigin = async () => {
 export async function loginAction(_: AuthState, formData: FormData): Promise<AuthState> {
   const email = formData.get("email");
   const password = formData.get("password");
+  console.log("[loginAction] Called with email:", email);
 
   if (typeof email !== "string" || typeof password !== "string") {
     return { error: "Email and password are required" };
@@ -29,6 +30,11 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
 
     const supabase = await createSupabaseServer();
   const { data, error } = await supabase.auth.signInWithPassword({ email, password });
+  console.log("[loginAction] Login result:", {
+    success: !error,
+    hasUser: !!data?.user,
+    error: error?.message,
+  });
 
   if (error) {
     return { error: "Invalid credentials" };
