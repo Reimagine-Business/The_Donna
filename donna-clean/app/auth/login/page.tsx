@@ -1,6 +1,7 @@
 "use client";
 
-import { useEffect, useFormState, useFormStatus } from "react-dom";
+import { useEffect } from "react";
+import { useFormState, useFormStatus } from "react-dom";
 import { loginAction } from "@/app/auth/actions";
 
 const initialState = { error: null as string | null };
