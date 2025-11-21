@@ -22,7 +22,7 @@ const getOrigin = async () => {
 export async function loginAction(_: AuthState, formData: FormData): Promise<AuthState> {
   const email = formData.get("email");
   const password = formData.get("password");
-  console.log("[loginAction] Called with email:", email);
+  console.log("=== LOGIN ACTION CALLED ===", { email });
 
   if (typeof email !== "string" || typeof password !== "string") {
     return { error: "Email and password are required" };
