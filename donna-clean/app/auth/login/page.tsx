@@ -31,8 +31,8 @@ export default function LoginPage() {
       return;
     }
 
+    // Navigate to dashboard - navigation loads fresh data automatically
     router.push("/dashboard");
-    router.refresh();
   };
 
   return (
