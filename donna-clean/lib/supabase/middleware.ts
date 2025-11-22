@@ -6,7 +6,6 @@ import { hasEnvVars } from "../utils";
 const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24; // 24 hours
 
 export async function updateSession(request: NextRequest) {
-  const ctx = "middleware";
   let response = NextResponse.next({ request });
 
   if (!hasEnvVars) {
@@ -35,41 +34,40 @@ export async function updateSession(request: NextRequest) {
     },
   );
 
-  // Use getUser() instead of getSession() to validate the JWT
-  // getUser() makes an API call to verify the token is still valid
+  // IMPORTANT: Use getSession() first (doesn't make API call)
+  // This checks if we have session cookies without hitting Supabase
   const {
-    data: { user },
-    error,
-  } = await supabase.auth.getUser();
+    data: { session },
+  } = await supabase.auth.getSession();
 
-  if (user) {
-    // User is authenticated and JWT is valid
-    response.headers.set("x-auth-session", "active");
+  if (session) {
+    // We have a session - validate it's not expired
+    const now = Math.floor(Date.now() / 1000);
+    const expiresAt = session.expires_at ?? 0;
+    
+    // If session expires in more than 5 minutes, it's good
+    if (expiresAt > now + 300) {
+      response.headers.set("x-auth-session", "active");
+      return response;
+    }
+    
+    // Session is expiring soon (< 5 min), try to refresh
+    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
+    
+    if (!refreshError && refreshData.session) {
+      response.headers.set("x-auth-session", "active");
+      return response;
+    }
+    
+    // Refresh failed - session will expire, but let request continue
+    // Page will redirect to login if needed
+    response.headers.set("x-auth-session", "expiring");
     return response;
   }
 
-  // No valid user, attempt to refresh the session
-  console.warn(
-    `[Auth] No user in ${ctx} – error {${error ? error.message : "none"}}. Attempting refresh...`,
-    error ?? undefined,
-  );
-
-  const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-
-  if (refreshError || !refreshData.session) {
-    console.error(
-      `[Auth Fail] Refresh failed in ${ctx}${
-        refreshError ? ` – error: ${refreshError.message}` : ""
-      }`,
-      refreshError ?? undefined,
-    );
-    response.headers.set("x-auth-session", "missing");
-    // Don't redirect here - let the page handle it
-    return response;
-  }
-
-  // Refresh successful
-  console.info(`[Auth] Session refreshed successfully in ${ctx}`);
-  response.headers.set("x-auth-session", "active");
+  // No session at all - user is not logged in
+  // DON'T try to refresh - there's nothing to refresh!
+  // Let the request continue, page will redirect to login if needed
+  response.headers.set("x-auth-session", "missing");
   return response;
 }
