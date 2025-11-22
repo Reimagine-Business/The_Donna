@@ -728,7 +728,7 @@ const accentText: Record<PendingCardProps["accent"], string> = {
   purple: "text-[#a78bfa]",
 };
 
-function PendingCard({ title, description, info, accent, onSettle }: PendingCardProps) {
+function PendingCard({ title, description, info, accent }: PendingCardProps) {
   const accentColor = accentText[accent];
   useEffect(() => {
     if (info.entries.length === 0) {
