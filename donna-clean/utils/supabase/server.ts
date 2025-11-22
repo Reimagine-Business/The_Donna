@@ -12,14 +12,10 @@ export async function createSupabaseServerClient() {
         getAll() {
           return cookieStore.getAll();
         },
-        setAll(cookiesToSet) {
-          try {
-            cookiesToSet.forEach(({ name, value, options }) => {
-              cookieStore.set(name, value, options);
-            });
-          } catch {
-            // The `setAll` method is called from a Server Component — ignore
-          }
+        setAll() {
+          // Server Actions CANNOT set cookies (no access to response)
+          // Middleware handles all cookie updates
+          // This is intentionally a no-op to prevent silent failures
         },
       },
     }
