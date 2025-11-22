@@ -772,23 +772,8 @@ function PendingCard({ title, description, info, accent, onSettle }: PendingCard
                   </p>
                   <p className="text-xs text-slate-500">{formatDisplayDate(entry.entry_date)}</p>
                 </div>
-              <Button
-                variant="outline"
-                size="sm"
-                className={cn(
-                  "border-[#a78bfa]/40 text-[#a78bfa] hover:text-white",
-                  !canSettleEntry &&
-                    "border-white/5 text-slate-500 hover:text-slate-500 disabled:pointer-events-auto",
-                )}
-                disabled={!canSettleEntry}
-                title={disabledTitle}
-                onClick={() => {
-                  if (canSettleEntry) {
-                    onSettle(entry);
-                  }
-                }}
-              >
-                  Settle
+                <Button disabled>
+                  Settle (Coming Soon)
                 </Button>
               </div>
             );
