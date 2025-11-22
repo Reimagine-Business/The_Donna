@@ -1,22 +1,19 @@
 // lib/supabase/client.ts
 import { createBrowserClient } from '@supabase/ssr'
 
+/**
+ * Creates a new Supabase browser client.
+ * 
+ * IMPORTANT: Always create a NEW client instance per component using useMemo:
+ * 
+ * @example
+ * const supabase = useMemo(() => createClient(), []);
+ * 
+ * DO NOT use a singleton/shared client - it can hold stale session references!
+ */
 export function createClient() {
   return createBrowserClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   )
 }
-
-// Singleton instance for components that need a shared client
-let clientInstance: ReturnType<typeof createClient> | null = null
-
-export function getSupabaseClient() {
-  if (!clientInstance) {
-    clientInstance = createClient()
-  }
-  return clientInstance
-}
-
-// Default export for convenience
-export const supabase = getSupabaseClient()
