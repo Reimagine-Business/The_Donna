@@ -41,29 +41,15 @@ export async function createSettlement({
       return { success: false, error: "Settlement amount must be greater than zero." };
     }
 
-    const { user, wasInitiallyNull, initialError, refreshError, didRefresh } =
-      await getOrRefreshUser(supabase);
-
-    if (wasInitiallyNull) {
-      console.warn(
-        `[Auth] Session null on ${ctx} – error {${
-          initialError ? initialError.message : "none"
-        }}`,
-        initialError ?? undefined,
-      );
-      if (user && didRefresh) {
-        console.info(`[Auth] Refreshed OK on ${ctx}`);
-      }
-    }
+    const { user, initialError } = await getOrRefreshUser(supabase);
 
     if (!user) {
-      if (refreshError) {
-        console.error(
-          `[Auth Fail] Refresh error {${refreshError.message}} on ${ctx}`,
-          refreshError,
-        );
-        return { success: false, error: "Session expired – relogin" };
-      }
+      console.error(
+        `[Auth Fail] No user in ${ctx}${
+          initialError ? ` – error: ${initialError.message}` : ""
+        }`,
+        initialError ?? undefined,
+      );
       return { success: false, error: "You must be signed in to settle entries." };
     }
 
