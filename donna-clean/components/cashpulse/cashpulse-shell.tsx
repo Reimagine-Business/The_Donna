@@ -17,6 +17,8 @@ import { cn } from "@/lib/utils";
 import { SettleEntryDialog } from "@/components/settlement/settle-entry-dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Download } from "lucide-react";
 
 type CashpulseShellProps = {
@@ -65,6 +67,10 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     start_date: format(subDays(new Date(), 30), "yyyy-MM-dd"),
     end_date: format(new Date(), "yyyy-MM-dd"),
   });
+  const [dateFilter, setDateFilter] = useState("this-month");
+  const [showCustomDatePickers, setShowCustomDatePickers] = useState(false);
+  const [customFromDate, setCustomFromDate] = useState<Date>();
+  const [customToDate, setCustomToDate] = useState<Date>();
 
   const initialStatsRef = useRef<CashpulseStats | null>(null);
   if (!initialStatsRef.current) {
@@ -350,44 +356,61 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
           <h1 className="text-4xl font-semibold">Cashpulse</h1>
           <p className="text-sm text-slate-400">Accrual basis for {historyLabel}</p>
         </div>
-        <div className="flex flex-wrap gap-3 text-sm">
-          <div>
-            <p className="text-xs uppercase text-slate-400">From</p>
-            <Input
-              type="date"
-              value={historyFilters.start_date}
-              max={historyFilters.end_date}
-              onChange={(event) =>
-                setHistoryFilters((prev) => ({ ...prev, start_date: event.target.value }))
-              }
-              className="border-white/10 bg-slate-950/80 text-white"
-            />
-          </div>
-          <div>
-            <p className="text-xs uppercase text-slate-400">To</p>
-            <Input
-              type="date"
-              value={historyFilters.end_date}
-              min={historyFilters.start_date}
-              onChange={(event) =>
-                setHistoryFilters((prev) => ({ ...prev, end_date: event.target.value }))
-              }
-              className="border-white/10 bg-slate-950/80 text-white"
-            />
-          </div>
-          <Button
-            type="button"
-            variant="ghost"
-            className="text-slate-300 hover:text-white"
-            onClick={() =>
-              setHistoryFilters({
-                start_date: format(subDays(new Date(), 30), "yyyy-MM-dd"),
-                end_date: format(new Date(), "yyyy-MM-dd"),
-              })
-            }
+        {/* Date Range Selector */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-400">Date:</span>
+          <select
+            value={dateFilter}
+            onChange={(e) => {
+              setDateFilter(e.target.value);
+              setShowCustomDatePickers(e.target.value === "customize");
+            }}
+            className="px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-sm text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
           >
-            Last 30 days
-          </Button>
+            <option value="this-month">📅 This Month</option>
+            <option value="last-month">Last Month</option>
+            <option value="this-year">This Year</option>
+            <option value="customize">Customize</option>
+          </select>
+
+          {/* Show calendar pickers when Customize is selected */}
+          {showCustomDatePickers && (
+            <>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-sm text-white hover:bg-slate-700 focus:border-purple-500 focus:outline-none">
+                    {customFromDate ? format(customFromDate, "MMM dd, yyyy") : "From Date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customFromDate}
+                    onSelect={setCustomFromDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <span className="text-sm text-slate-400">to</span>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-sm text-white hover:bg-slate-700 focus:border-purple-500 focus:outline-none">
+                    {customToDate ? format(customToDate, "MMM dd, yyyy") : "To Date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customToDate}
+                    onSelect={setCustomToDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
         </div>
         </div>
 

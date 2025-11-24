@@ -6,6 +6,8 @@ import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
 import { Entry, normalizeEntry } from "@/lib/entries";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 
 type ProfitLensShellProps = {
@@ -44,6 +46,10 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     start_date: currentStart,
     end_date: currentEnd,
   });
+  const [dateFilter, setDateFilter] = useState("this-month");
+  const [showCustomDatePickers, setShowCustomDatePickers] = useState(false);
+  const [customFromDate, setCustomFromDate] = useState<Date>();
+  const [customToDate, setCustomToDate] = useState<Date>();
 
   const initialStatsRef = useRef<ProfitStats | null>(null);
   if (!initialStatsRef.current) {
@@ -299,49 +305,61 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
           <h1 className="text-4xl font-semibold">Profit Lens</h1>
           <p className="text-sm text-slate-400">Accrual basis for {rangeLabel}</p>
         </div>
-        <div className="flex flex-wrap gap-3 text-sm">
-          <div>
-            <p className="text-xs uppercase text-slate-400">From</p>
-            <input
-              type="date"
-              value={filters.start_date}
-              max={filters.end_date}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  start_date: event.target.value,
-                }))
-              }
-              className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
-            />
-          </div>
-          <div>
-            <p className="text-xs uppercase text-slate-400">To</p>
-            <input
-              type="date"
-              value={filters.end_date}
-              min={filters.start_date}
-              onChange={(event) =>
-                setFilters((prev) => ({
-                  ...prev,
-                  end_date: event.target.value,
-                }))
-              }
-              className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
-            />
-          </div>
-          <button
-            type="button"
-            onClick={() =>
-              setFilters({
-                start_date: currentStart,
-                end_date: currentEnd,
-              })
-            }
-            className="mt-4 rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-300 transition hover:border-[#a78bfa]/60 hover:text-white"
+        {/* Date Range Selector */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-400">Date:</span>
+          <select
+            value={dateFilter}
+            onChange={(e) => {
+              setDateFilter(e.target.value);
+              setShowCustomDatePickers(e.target.value === "customize");
+            }}
+            className="px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-sm text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
           >
-            Current month
-          </button>
+            <option value="this-month">📅 This Month</option>
+            <option value="last-month">Last Month</option>
+            <option value="this-year">This Year</option>
+            <option value="customize">Customize</option>
+          </select>
+
+          {/* Show calendar pickers when Customize is selected */}
+          {showCustomDatePickers && (
+            <>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-sm text-white hover:bg-slate-700 focus:border-purple-500 focus:outline-none">
+                    {customFromDate ? format(customFromDate, "MMM dd, yyyy") : "From Date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customFromDate}
+                    onSelect={setCustomFromDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <span className="text-sm text-slate-400">to</span>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-sm text-white hover:bg-slate-700 focus:border-purple-500 focus:outline-none">
+                    {customToDate ? format(customToDate, "MMM dd, yyyy") : "To Date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customToDate}
+                    onSelect={setCustomToDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
         </div>
       </div>
 

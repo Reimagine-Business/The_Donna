@@ -8,6 +8,8 @@ import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Calendar } from "@/components/ui/calendar";
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
 import {
   CATEGORIES,
@@ -122,6 +124,10 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
   const [existingImageUrl, setExistingImageUrl] = useState<string | null>(null);
   const [formError, setFormError] = useState<string | null>(null);
   const [paymentMethodError, setPaymentMethodError] = useState<string | null>(null);
+  const [dateFilter, setDateFilter] = useState("this-month");
+  const [showCustomDatePickers, setShowCustomDatePickers] = useState(false);
+  const [customFromDate, setCustomFromDate] = useState<Date>();
+  const [customToDate, setCustomToDate] = useState<Date>();
 
   const [formValues, setFormValues] = useState<EntryFormState>(buildInitialFormState);
   const [filters, setFilters] = useState<FiltersState>(buildInitialFiltersState);
@@ -429,11 +435,70 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
 
   return (
     <div className="flex flex-col gap-10 text-white">
-      <div className="space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight">Daily Entries</h1>
-        <p className="text-sm text-slate-300">
-          Record every inflow/outflow with supporting receipts to keep Donna in sync.
-        </p>
+      <div className="flex items-center justify-between">
+        <div className="space-y-2">
+          <h1 className="text-3xl font-semibold tracking-tight">Daily Entries</h1>
+          <p className="text-sm text-slate-300">
+            Record every inflow/outflow with supporting receipts to keep Donna in sync.
+          </p>
+        </div>
+
+        {/* Date Range Selector */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-slate-400">Date:</span>
+          <select
+            value={dateFilter}
+            onChange={(e) => {
+              setDateFilter(e.target.value);
+              setShowCustomDatePickers(e.target.value === "customize");
+            }}
+            className="px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-sm text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+          >
+            <option value="this-month">📅 This Month</option>
+            <option value="last-month">Last Month</option>
+            <option value="this-year">This Year</option>
+            <option value="customize">Customize</option>
+          </select>
+
+          {/* Show calendar pickers when Customize is selected */}
+          {showCustomDatePickers && (
+            <>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-sm text-white hover:bg-slate-700 focus:border-purple-500 focus:outline-none">
+                    {customFromDate ? format(customFromDate, "MMM dd, yyyy") : "From Date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customFromDate}
+                    onSelect={setCustomFromDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+
+              <span className="text-sm text-slate-400">to</span>
+
+              <Popover>
+                <PopoverTrigger asChild>
+                  <button className="px-3 py-2 border border-slate-700 bg-slate-800 rounded-lg text-sm text-white hover:bg-slate-700 focus:border-purple-500 focus:outline-none">
+                    {customToDate ? format(customToDate, "MMM dd, yyyy") : "To Date"}
+                  </button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0" align="start">
+                  <Calendar
+                    mode="single"
+                    selected={customToDate}
+                    onSelect={setCustomToDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
+            </>
+          )}
+        </div>
       </div>
 
       <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-2xl shadow-black/40">
