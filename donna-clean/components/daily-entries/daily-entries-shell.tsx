@@ -438,46 +438,36 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
 
   // Filter entries based on date range
   const filteredEntries = useMemo(() => {
-    // === CHECKPOINT 3: Filtering ===
     console.log('🔥 FILTERING:');
     console.log('  entries.length:', entries.length);
     console.log('  dateFilter:', dateFilter);
     console.log('  getDateRange:', getDateRange);
 
-    // TEMPORARILY DISABLE FILTERING TO TEST
-    console.log('  ⚠️ TEMP: Showing ALL entries (no filter)');
-    const result = entries.sort((a, b) =>
-      b.entry_date.localeCompare(a.entry_date)
-    );
-    console.log('  Result length:', result.length);
-    console.log('  First result entry:', result[0]);
+    const filtered = entries.filter((entry) => {
+      // Parse entry_date explicitly in local time to avoid timezone issues
+      // entry_date is "yyyy-MM-dd" format (e.g., "2025-01-15")
+      const [year, month, day] = entry.entry_date.split('-').map(Number);
+      const entryDate = new Date(year, month - 1, day); // month is 0-indexed
+
+      const fromDate = new Date(getDateRange.from);
+      const toDate = new Date(getDateRange.to);
+
+      // Set time to start/end of day for accurate comparison
+      fromDate.setHours(0, 0, 0, 0);
+      toDate.setHours(23, 59, 59, 999);
+      // entryDate is already at 00:00:00 from constructor
+
+      const isInRange = entryDate >= fromDate && entryDate <= toDate;
+      return isInRange;
+    });
+
+    const sorted = filtered.sort((a, b) => b.entry_date.localeCompare(a.entry_date));
+
+    console.log('  Filtered result:', sorted.length);
     console.log('  ==================');
-    return result;
 
-    /* ORIGINAL FILTERING CODE - TEMPORARILY DISABLED
-    const filtered = entries
-      .filter((entry) => {
-        // Parse entry_date explicitly in local time to avoid timezone issues
-        // entry_date is "yyyy-MM-dd" format (e.g., "2025-01-15")
-        const [year, month, day] = entry.entry_date.split('-').map(Number);
-        const entryDate = new Date(year, month - 1, day); // month is 0-indexed
-
-        const fromDate = new Date(getDateRange.from);
-        const toDate = new Date(getDateRange.to);
-
-        // Set time to start/end of day for accurate comparison
-        fromDate.setHours(0, 0, 0, 0);
-        toDate.setHours(23, 59, 59, 999);
-        // entryDate is already at 00:00:00 from constructor
-
-        const isInRange = entryDate >= fromDate && entryDate <= toDate;
-        return isInRange;
-      })
-      .sort((a, b) => b.entry_date.localeCompare(a.entry_date));
-
-    return filtered;
-    */
-  }, [entries]); // Simplified dependencies for debugging
+    return sorted;
+  }, [entries, getDateRange]);
 
   const handleExportToExcel = () => {
     if (filteredEntries.length === 0) {
