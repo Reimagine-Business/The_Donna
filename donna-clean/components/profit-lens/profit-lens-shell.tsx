@@ -327,13 +327,14 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     return "Select date range";
   }, [dateFilter, customFromDate, customToDate]);
 
-  const plRows = [
+  // Memoize P&L rows to avoid recreating on every render
+  const plRows = useMemo(() => [
     { label: "Sales", value: sales, variant: "positive" as RowVariant },
     { label: "Cost of Goods Sold", value: cogs, variant: "negative" as RowVariant },
     { label: "Gross Profit", value: grossProfit, variant: "neutral" as RowVariant },
     { label: "Operating Expenses", value: opex, variant: "negative" as RowVariant },
     { label: "Net Profit", value: netProfit, variant: "positive" as RowVariant },
-  ];
+  ], [sales, cogs, grossProfit, opex, netProfit]);
 
   return (
       <div className="flex flex-col gap-4 md:gap-8 text-white">
