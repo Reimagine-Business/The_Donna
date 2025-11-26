@@ -105,8 +105,48 @@ export function getDateRangeLabel(range: DateRange): string {
     return "All Time";
   }
 
-  const startStr = format(boundaries.start, "MMM dd, yyyy");
-  const endStr = format(boundaries.end, "MMM dd, yyyy");
+  const startStr = format(boundaries.start, "dd MMM yyyy");
+  const endStr = format(boundaries.end, "dd MMM yyyy");
 
+  return `${startStr} - ${endStr}`;
+}
+
+/**
+ * Filter items by custom date range
+ * @param items Array of items with a date field
+ * @param startDate Custom start date
+ * @param endDate Custom end date
+ * @param dateField Name of the date field (default: 'entry_date')
+ */
+export function filterByCustomDateRange<T extends Record<string, any>>(
+  items: T[],
+  startDate: Date,
+  endDate: Date,
+  dateField: keyof T = "entry_date" as keyof T
+): T[] {
+  return items.filter((item) => {
+    const dateValue = item[dateField];
+    if (!dateValue) return false;
+
+    try {
+      const itemDate =
+        typeof dateValue === "string" ? parseISO(dateValue) : new Date(dateValue);
+      return isWithinInterval(itemDate, {
+        start: startDate,
+        end: endDate,
+      });
+    } catch (error) {
+      console.warn(`Invalid date value: ${dateValue}`);
+      return false;
+    }
+  });
+}
+
+/**
+ * Format custom date range label for display
+ */
+export function formatCustomDateLabel(startDate: Date, endDate: Date): string {
+  const startStr = format(startDate, "dd MMM yyyy");
+  const endStr = format(endDate, "dd MMM yyyy");
   return `${startStr} - ${endStr}`;
 }
