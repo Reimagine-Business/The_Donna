@@ -378,73 +378,13 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
                 {currencyFormatter.format(row.value)}
               </p>
             </div>
-          ))}
+          </section>
         </div>
-      </section>
-
-        <section className="grid gap-2 md:gap-4 md:grid-cols-2">
-          <MetricCard
-            title="Gross Margin"
-            value={percentageFormatter(grossMargin)}
-            subtitle="Gross profit ÷ sales"
-          />
-          <MetricCard
-            title="Net Profit Margin"
-            value={percentageFormatter(netMargin)}
-            subtitle="Net profit ÷ sales"
-          />
-        </section>
-
-      <section className="space-y-2 md:space-y-4">
-        <div className="flex flex-col gap-1 md:gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-muted-foreground">Top Expense Breakdown</p>
-            <h2 className="text-base md:text-2xl font-semibold text-white">Where cash is leaving</h2>
-          </div>
-        </div>
-          <div className="grid gap-2 md:gap-4 md:grid-cols-2">
-            <BreakdownCard
-              title="Cost of Goods Sold"
-              value={currencyFormatter.format(cogs)}
-              description="Direct inputs tied to sales"
-            />
-            <BreakdownCard
-              title="Other Expenses"
-              value={currencyFormatter.format(opex)}
-              description="Operating and overhead costs"
-            />
-          </div>
-      </section>
-
-        <section className="rounded-xl md:rounded-3xl border border-border bg-gradient-to-br from-[#a78bfa]/30 to-[#a78bfa]/10 p-3 md:p-6 text-white shadow-[0_0_35px_rgba(167,139,250,0.25)]">
-          <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/80">Total Sales</p>
-          <p className="mt-2 md:mt-4 text-xl md:text-4xl font-semibold">{currencyFormatter.format(sales)}</p>
-          <p className="mt-1 md:mt-2 text-xs md:text-sm text-white/70">
-            Includes cash inflows and credit sales captured this period.
-          </p>
-        </section>
-    </div>
-  );
-}
-
-type RowVariant = "positive" | "negative" | "neutral";
-
-const rowColor = (variant: RowVariant) => {
-  switch (variant) {
-    case "positive":
-      return "text-emerald-300";
-    case "negative":
-      return "text-rose-300";
-    default:
-      return "text-white";
+      </main>
+    );
   }
-};
 
-type MetricCardProps = {
-  title: string;
-  value: string;
-  subtitle: string;
-};
+  // Then continue with your queries using this supabase client
 
 function MetricCard({ title, value, subtitle }: MetricCardProps) {
   return (
@@ -460,13 +400,8 @@ function MetricCard({ title, value, subtitle }: MetricCardProps) {
   );
 }
 
-type BreakdownCardProps = {
-  title: string;
-  value: string;
-  description: string;
-};
+  if (error) throw error;
 
-function BreakdownCard({ title, value, description }: BreakdownCardProps) {
   return (
     <div className="rounded-lg md:rounded-2xl border border-primary/30 bg-gradient-to-br from-[#a78bfa]/20 to-transparent p-3 md:p-5 shadow-lg shadow-primary/20">
       <div className="flex items-center justify-between">
@@ -479,107 +414,3 @@ function BreakdownCard({ title, value, description }: BreakdownCardProps) {
     </div>
   );
 }
-
-type ProfitStats = {
-  sales: number;
-  cogs: number;
-  opex: number;
-  grossProfit: number;
-  netProfit: number;
-  grossMargin: number;
-  netMargin: number;
-};
-
-const logProfitLensSkip = (entry: Entry, reason: string) => {
-  console.log(
-    `[ProfitLens Skip] ${reason} ID ${entry.id}: type=${entry.entry_type}, category=${entry.category}, payment=${entry.payment_method}, settled=${entry.settled}, remaining=${entry.remaining_amount}`,
-  );
-};
-
-const buildProfitStats = (entries: Entry[]): ProfitStats => {
-  let sales = 0;
-  let cogs = 0;
-  let opex = 0;
-
-  entries.forEach((entry) => {
-    const isCashInflow = entry.entry_type === "Cash Inflow";
-    const isCashOutflow = entry.entry_type === "Cash Outflow";
-    const isCredit = entry.entry_type === "Credit";
-    const isSettledAdvance = entry.entry_type === "Advance" && entry.settled;
-
-    // ✅ FIX: Exclude "Collection" and "Payment" categories from P&L
-    // These are settlement entries that should only affect cash flow, not profit/loss
-    if (entry.category === "Collection" || entry.category === "Payment") {
-      logProfitLensSkip(entry, "Settlement entry (Collection/Payment) - excluded from P&L");
-      return;
-    }
-
-    if (entry.category === "Sales") {
-      if (isCashInflow || isCredit || isSettledAdvance) {
-        sales += entry.amount;
-      } else {
-        const reason =
-          entry.entry_type === "Credit"
-            ? "Ignored Credit for Sales: immediate accrual needed"
-            : entry.entry_type === "Advance"
-              ? "Ignored Advance for Sales: settle before recognition"
-              : "Ignored for Sales: requires Cash Inflow, Credit, or settled Advance";
-        logProfitLensSkip(entry, reason);
-      }
-      return;
-    }
-
-    if (entry.category === "COGS") {
-      if (isCashOutflow || isCredit || isSettledAdvance) {
-        cogs += entry.amount;
-      } else {
-        const reason =
-          entry.entry_type === "Credit"
-            ? "Ignored Credit for COGS: immediate accrual needed"
-            : entry.entry_type === "Advance"
-              ? "Ignored Advance for COGS: settle before recognition"
-              : "Ignored for COGS: requires Cash Outflow, Credit, or settled Advance";
-        logProfitLensSkip(entry, reason);
-      }
-      return;
-    }
-
-    if (entry.category === "Opex") {
-      if (isCashOutflow || isCredit || isSettledAdvance) {
-        opex += entry.amount;
-      } else {
-        const reason =
-          entry.entry_type === "Credit"
-            ? "Ignored Credit for Opex: immediate accrual needed"
-            : entry.entry_type === "Advance"
-              ? "Ignored Advance for Opex: settle before recognition"
-              : "Ignored for Opex: requires Cash Outflow, Credit, or settled Advance";
-        logProfitLensSkip(entry, reason);
-      }
-      return;
-    }
-
-    if (entry.entry_type === "Credit") {
-      logProfitLensSkip(entry, `Ignored Credit for ${entry.category}: immediate accrual needed`);
-    } else if (entry.entry_type === "Advance") {
-      logProfitLensSkip(entry, `Ignored Advance for ${entry.category}: settle before recognition`);
-    } else {
-      logProfitLensSkip(entry, "Ignored for P&L (balance sheet / unsupported category)");
-    }
-  });
-
-  const grossProfit = sales - cogs;
-  const netProfit = grossProfit - opex;
-  const grossMargin = sales === 0 ? 0 : grossProfit / sales;
-  const netMargin = sales === 0 ? 0 : netProfit / sales;
-
-  return {
-    sales,
-    cogs,
-    opex,
-    grossProfit,
-    netProfit,
-    grossMargin,
-    netMargin,
-  };
-};
