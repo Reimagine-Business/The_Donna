@@ -9,6 +9,7 @@ import { Entry, normalizeEntry } from "@/lib/entries";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
+import { filterByDateRange, type DateRange } from "@/lib/date-utils";
 
 type ProfitLensShellProps = {
   initialEntries: Entry[];
@@ -53,7 +54,9 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
   const initialStatsRef = useRef<ProfitStats | null>(null);
   if (!initialStatsRef.current) {
-    initialStatsRef.current = buildProfitStats(initialEntries);
+    // Filter initial entries by default date range (this-month)
+    const filteredInitial = filterByDateRange(initialEntries, "this-month" as DateRange);
+    initialStatsRef.current = buildProfitStats(filteredInitial);
   }
   const initialStats = initialStatsRef.current as ProfitStats;
 
@@ -65,6 +68,11 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
   const [grossMargin, setGrossMargin] = useState(initialStats.grossMargin);
   const [netMargin, setNetMargin] = useState(initialStats.netMargin);
   const skipNextRecalc = useRef(false);
+
+  // Filter entries by selected date range
+  const filteredEntries = useMemo(() => {
+    return filterByDateRange(entries, dateFilter as DateRange);
+  }, [entries, dateFilter]);
 
   useEffect(() => {
     console.log("Profit Lens is now CLIENT — real-time will work");
@@ -193,7 +201,9 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
               return;
             }
             console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
-            const updatedStats = recalcKpis(latestEntries);
+            // Filter entries by current date range before recalculating
+            const filteredLatest = filterByDateRange(latestEntries, dateFilter as DateRange);
+            const updatedStats = recalcKpis(filteredLatest);
             console.log(
               "REAL-TIME: KPIs recalculated → net profit:",
               updatedStats.netProfit,
@@ -281,8 +291,8 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
       skipNextRecalc.current = false;
       return;
     }
-    recalcKpis(entries, filters);
-  }, [entries, filters, recalcKpis]);
+    recalcKpis(filteredEntries, filters);
+  }, [filteredEntries, filters, recalcKpis]);
 
   const rangeLabel = `${format(new Date(filters.start_date), "dd MMM")} — ${format(
     new Date(filters.end_date),
@@ -319,6 +329,8 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
             <option value="this-month">📅 This Month</option>
             <option value="last-month">Last Month</option>
             <option value="this-year">This Year</option>
+            <option value="last-year">Last Year</option>
+            <option value="all-time">All Time</option>
             <option value="customize">Customize</option>
           </select>
 
