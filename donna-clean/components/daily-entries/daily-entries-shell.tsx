@@ -117,17 +117,13 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
   useEffect(() => {
     console.log('🔥 SYNCING initialEntries to state:');
     console.log('  initialEntries.length:', initialEntries.length);
-    console.log('  Before normalize - first entry:', initialEntries[0]);
+    console.log('  First entry (already normalized):', initialEntries[0]);
 
-    const normalized = initialEntries.map(normalizeEntry);
+    // initialEntries are already normalized by the parent page
+    // No need to normalize again
+    setEntries(initialEntries);
 
-    console.log('  After normalize - count:', normalized.length);
-    console.log('  After normalize - first entry:', normalized[0]);
-    console.log('  Setting entries state...');
-
-    setEntries(normalized);
-
-    console.log('  ✅ State updated!');
+    console.log('  ✅ State updated with', initialEntries.length, 'entries');
     console.log('  ==================');
   }, [initialEntries]);
 
