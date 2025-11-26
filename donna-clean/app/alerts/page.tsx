@@ -1,36 +1,74 @@
+'use client'
+
 import { redirect } from "next/navigation";
 import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { AlertsPageClient } from "@/components/alerts/alerts-page-client";
-import { getOrRefreshUser } from "@/lib/supabase/get-user";
-import { createSupabaseServerClient } from "@/utils/supabase/server";
+import { createClient } from "@/lib/supabase/client";
+import { useQuery } from "@tanstack/react-query";
+import { useRouter } from "next/navigation";
 
-// Force dynamic rendering to prevent caching
-export const dynamic = 'force-dynamic';
+export default function AlertsPage() {
+  const supabase = createClient();
+  const router = useRouter();
 
-export default async function AlertsPage() {
-  const supabase = await createSupabaseServerClient();
-  const { user, initialError } = await getOrRefreshUser(supabase);
+  // Fetch user with React Query
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-  if (!user) {
-    console.error(
-      `[Auth Fail] No user in alerts/page${
-        initialError ? ` – error: ${initialError.message}` : ""
-      }`,
-      initialError ?? undefined,
-    );
-    redirect("/auth/login");
+  // Fetch reminders with React Query (only when user is available)
+  const { data: reminders, isLoading: remindersLoading } = useQuery({
+    queryKey: ['alerts-reminders', userData?.id],
+    queryFn: async () => {
+      if (!userData?.id) return [];
+
+      const { data, error } = await supabase
+        .from("reminders")
+        .select("*")
+        .eq("user_id", userData.id)
+        .order("due_date", { ascending: true });
+
+      if (error) {
+        console.error("Error fetching reminders:", error);
+        return [];
+      }
+      return data || [];
+    },
+    enabled: !!userData?.id, // Only run when user is available
+    staleTime: 60 * 1000, // 1 minute
+  });
+
+  // Redirect if no user (after loading completes)
+  if (!userLoading && !userData) {
+    router.push("/auth/login");
+    return null;
   }
 
-  // Fetch reminders from database
-  const { data: reminders, error } = await supabase
-    .from("reminders")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("due_date", { ascending: true });
-
-  if (error) {
-    console.error("Error fetching reminders:", error);
+  // Show loading skeleton while fetching
+  if (userLoading || remindersLoading) {
+    return (
+      <main className="min-h-screen bg-background text-foreground">
+        <div className="flex flex-col gap-10">
+          <SiteHeader />
+          <section className="px-4 pb-12 md:px-8">
+            <div className="mx-auto w-full max-w-6xl">
+              <div className="animate-pulse space-y-4">
+                <div className="h-8 bg-purple-500/20 rounded w-48"></div>
+                <div className="h-64 bg-purple-500/10 rounded"></div>
+              </div>
+            </div>
+          </section>
+          <BottomNav />
+        </div>
+      </main>
+    );
   }
 
   return (
@@ -41,7 +79,7 @@ export default async function AlertsPage() {
 
         {/* Client Component with Mobile Header and Content */}
         <AlertsPageClient
-          userEmail={user.email || ""}
+          userEmail={userData?.email || ""}
           initialReminders={reminders || []}
         />
 
