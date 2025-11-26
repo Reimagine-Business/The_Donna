@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 
 export const ENTRY_TYPES = ["Cash Inflow", "Cash Outflow", "Credit", "Advance"] as const;
-export const CATEGORIES = ["Sales", "COGS", "Opex", "Assets", "Collection", "Payment"] as const;
+export const CATEGORIES = ["Sales", "COGS", "Opex", "Assets"] as const;
 export const PAYMENT_METHODS = ["Cash", "Bank"] as const;
 
 const PAYMENT_METHOD_OPTIONS = [...PAYMENT_METHODS, "None"] as const;

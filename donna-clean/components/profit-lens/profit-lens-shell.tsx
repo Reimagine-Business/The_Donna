@@ -496,12 +496,12 @@ function buildProfitStats(entries: Entry[]): ProfitStats {
   let opex = 0;
 
   entries.forEach((entry) => {
-    if (entry.entry_type === "Income" && entry.category === "Sales") {
+    if (entry.entry_type === "Cash Inflow" && entry.category === "Sales") {
       sales += entry.amount;
-    } else if (entry.entry_type === "Expense") {
+    } else if (entry.entry_type === "Cash Outflow") {
       if (entry.category === "COGS") {
         cogs += entry.amount;
-      } else if (entry.category === "Operating Expenses") {
+      } else if (entry.category === "Operating Expenses" || entry.category === "Opex") {
         opex += entry.amount;
       }
     }
