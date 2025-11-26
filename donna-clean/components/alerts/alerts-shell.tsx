@@ -1,12 +1,13 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useState, useTransition, useMemo } from "react";
 import { cn } from "@/lib/utils";
 import { markReminderDone } from "@/app/reminders/actions";
 import { EditReminderDialog } from "./edit-reminder-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
+import { filterByDateRange, type DateRange } from "@/lib/date-utils";
 
 type FilterOption = "all" | "due_soon" | "overdue" | "completed";
 
@@ -82,29 +83,35 @@ export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) 
     { id: "completed", label: "Completed" },
   ];
 
-  // Filter reminders based on selected filter
-  const filteredReminders = initialReminders.filter((reminder) => {
-    const dueDate = new Date(reminder.due_date);
-    const now = new Date();
-    now.setHours(0, 0, 0, 0);
-    dueDate.setHours(0, 0, 0, 0);
+  // Filter reminders based on date range AND status filter
+  const filteredReminders = useMemo(() => {
+    // First, filter by date range
+    const dateFiltered = filterByDateRange(initialReminders, dateFilter as DateRange, "due_date");
 
-    const diffTime = dueDate.getTime() - now.getTime();
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+    // Then, filter by status
+    return dateFiltered.filter((reminder) => {
+      const dueDate = new Date(reminder.due_date);
+      const now = new Date();
+      now.setHours(0, 0, 0, 0);
+      dueDate.setHours(0, 0, 0, 0);
 
-    switch (activeFilter) {
-      case "all":
-        return true;
-      case "due_soon":
-        return reminder.status === "pending" && diffDays >= 0 && diffDays <= 30;
-      case "overdue":
+      const diffTime = dueDate.getTime() - now.getTime();
+      const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+      switch (activeFilter) {
+        case "all":
+          return true;
+        case "due_soon":
+          return reminder.status === "pending" && diffDays >= 0 && diffDays <= 30;
+        case "overdue":
         return reminder.status === "pending" && diffDays < 0;
       case "completed":
         return reminder.status === "completed";
       default:
         return true;
     }
-  });
+    });
+  }, [initialReminders, dateFilter, activeFilter]);
 
   const handleMarkDone = (reminderId: string) => {
     startTransition(async () => {
@@ -207,6 +214,8 @@ export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) 
               <option value="this-month">📅 This Month</option>
               <option value="last-month">Last Month</option>
               <option value="this-year">This Year</option>
+              <option value="last-year">Last Year</option>
+              <option value="all-time">All Time</option>
               <option value="customize">Customize</option>
             </select>
 
