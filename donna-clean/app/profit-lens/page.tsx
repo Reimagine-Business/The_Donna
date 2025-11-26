@@ -1,25 +1,67 @@
+'use client'
+
 import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { TopNavMobile } from "@/components/navigation/top-nav-mobile";
 import { ProfitLensShell } from "@/components/profit-lens/profit-lens-shell";
 import { SessionExpiredNotice } from "@/components/session-expired-notice";
-import { getOrRefreshUser } from "@/lib/supabase/get-user";
-import { createSupabaseServerClient } from "@/utils/supabase/server";
+import { ProfitLensSkeletonLoading } from "@/components/ui/skeleton-card";
+import { createClient } from "@/lib/supabase/client";
+import { useQuery } from "@tanstack/react-query";
 
-// Force dynamic rendering to prevent caching
-export const dynamic = 'force-dynamic';
+export default function ProfitLensPage() {
+  const supabase = createClient();
 
-export default async function ProfitLensPage() {
-  const supabase = await createSupabaseServerClient();
-  const { user, initialError } = await getOrRefreshUser(supabase);
+  // Fetch user with React Query
+  const { data: userData, isLoading: userLoading } = useQuery({
+    queryKey: ['user'],
+    queryFn: async () => {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
+      return user;
+    },
+    staleTime: 5 * 60 * 1000, // 5 minutes
+  });
 
-  if (!user) {
-    console.error(
-      `[Auth Fail] No user in profit-lens/page${
-        initialError ? ` – error: ${initialError.message}` : ""
-      }`,
-      initialError ?? undefined,
+  // Fetch entries with React Query (only when user is available)
+  const { data: entries, isLoading: entriesLoading } = useQuery({
+    queryKey: ['profit-lens-entries', userData?.id],
+    queryFn: async () => {
+      if (!userData?.id) return [];
+
+      const { data, error } = await supabase
+        .from("entries")
+        .select("*")
+        .eq("user_id", userData.id)
+        .order("created_at", { ascending: false });
+
+      if (error) throw error;
+      return data || [];
+    },
+    enabled: !!userData?.id, // Only run when user is available
+    staleTime: 60 * 1000, // 1 minute
+  });
+
+  // Show loading skeleton while fetching
+  if (userLoading || entriesLoading) {
+    return (
+      <main className="min-h-screen bg-background text-foreground pb-24 md:pb-8">
+        <div className="flex flex-col gap-10">
+          <SiteHeader />
+          <TopNavMobile pageTitle="Profit Lens" />
+          <section className="px-4 pb-12 md:px-8">
+            <div className="mx-auto w-full max-w-6xl">
+              <ProfitLensSkeletonLoading />
+            </div>
+          </section>
+        </div>
+        <BottomNav />
+      </main>
     );
+  }
+
+  // Show session expired if no user
+  if (!userData) {
     return (
       <main className="min-h-screen bg-background text-foreground">
         <div className="flex flex-col gap-10">
@@ -36,24 +78,14 @@ export default async function ProfitLensPage() {
     );
   }
 
-  // Then continue with your queries using this supabase client
-
-  const { data: entries, error } = await supabase
-    .from("entries")
-    .select("*")
-    .eq("user_id", user.id)
-    .order("created_at", { ascending: false });
-
-  if (error) throw error;
-
   return (
     <main className="min-h-screen bg-background text-foreground pb-24 md:pb-8">
       <div className="flex flex-col gap-10">
         <SiteHeader />
-        <TopNavMobile pageTitle="Profit Lens" userEmail={user.email || undefined} />
+        <TopNavMobile pageTitle="Profit Lens" userEmail={userData.email || undefined} />
         <section className="px-4 pb-12 md:px-8">
           <div className="mx-auto w-full max-w-6xl">
-            <ProfitLensShell initialEntries={entries || []} userId={user.id} />
+            <ProfitLensShell initialEntries={entries || []} userId={userData.id} />
           </div>
         </section>
       </div>
