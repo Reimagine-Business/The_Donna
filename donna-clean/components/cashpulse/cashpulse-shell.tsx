@@ -20,6 +20,7 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Download } from "lucide-react";
+import { filterByDateRange, type DateRange } from "@/lib/date-utils";
 
 type CashpulseShellProps = {
   initialEntries: Entry[];
@@ -74,7 +75,9 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
 
   const initialStatsRef = useRef<CashpulseStats | null>(null);
   if (!initialStatsRef.current) {
-    initialStatsRef.current = buildCashpulseStats(initialEntries);
+    // Filter initial entries by default date range (this-month)
+    const filteredInitial = filterByDateRange(initialEntries, "this-month" as DateRange);
+    initialStatsRef.current = buildCashpulseStats(filteredInitial);
   }
   const initialStats = initialStatsRef.current as CashpulseStats;
 
@@ -88,6 +91,11 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
   const [history, setHistory] = useState(initialStats.history);
 
   const skipNextRecalc = useRef(false);
+
+  // Filter entries by selected date range
+  const filteredEntries = useMemo(() => {
+    return filterByDateRange(entries, dateFilter as DateRange);
+  }, [entries, dateFilter]);
 
   useEffect(() => {
     console.log("Cashpulse is now CLIENT — real-time will work");
@@ -217,7 +225,9 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
               return;
             }
             console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
-            const updatedStats = recalcKpis(latestEntries);
+            // Filter entries by current date range before recalculating
+            const filteredLatest = filterByDateRange(latestEntries, dateFilter as DateRange);
+            const updatedStats = recalcKpis(filteredLatest);
             const realtimeSales = updatedStats.cashBreakdown
               .filter(
                 (channelBreakdown) =>
@@ -311,8 +321,8 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
       skipNextRecalc.current = false;
       return;
     }
-    recalcKpis(entries, historyFilters);
-  }, [entries, historyFilters, recalcKpis]);
+    recalcKpis(filteredEntries, historyFilters);
+  }, [filteredEntries, historyFilters, recalcKpis]);
   const historyLabel = `${format(new Date(historyFilters.start_date), "dd MMM yyyy")} – ${format(
     new Date(historyFilters.end_date),
     "dd MMM yyyy",
@@ -339,6 +349,18 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
         return {
           from: new Date(now.getFullYear(), 0, 1),
           to: new Date(now.getFullYear(), 11, 31),
+        };
+
+      case "last-year":
+        return {
+          from: new Date(now.getFullYear() - 1, 0, 1),
+          to: new Date(now.getFullYear() - 1, 11, 31),
+        };
+
+      case "all-time":
+        return {
+          from: new Date(2000, 0, 1), // Far past date
+          to: new Date(2099, 11, 31), // Far future date
         };
 
       case "customize":
@@ -443,6 +465,8 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
             <option value="this-month">📅 This Month</option>
             <option value="last-month">Last Month</option>
             <option value="this-year">This Year</option>
+            <option value="last-year">Last Year</option>
+            <option value="all-time">All Time</option>
             <option value="customize">Customize</option>
           </select>
 
@@ -564,6 +588,8 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
                   <option value="this-month">This Month</option>
                   <option value="last-month">Last Month</option>
                   <option value="this-year">This Year</option>
+                  <option value="last-year">Last Year</option>
+                  <option value="all-time">All Time</option>
                   <option value="customize">Customize</option>
                 </select>
 
