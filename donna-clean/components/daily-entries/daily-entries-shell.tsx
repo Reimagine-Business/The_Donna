@@ -108,7 +108,28 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
   console.log('  ==================');
 
   const supabase = useMemo(() => createClient(), []);
-  const [entries, setEntries] = useState<Entry[]>(initialEntries.map(normalizeEntry));
+
+  // CRITICAL FIX: Initialize with empty array, then sync via useEffect
+  // This ensures state updates when initialEntries changes
+  const [entries, setEntries] = useState<Entry[]>([]);
+
+  // Sync initialEntries to state whenever it changes
+  useEffect(() => {
+    console.log('🔥 SYNCING initialEntries to state:');
+    console.log('  initialEntries.length:', initialEntries.length);
+    console.log('  Before normalize - first entry:', initialEntries[0]);
+
+    const normalized = initialEntries.map(normalizeEntry);
+
+    console.log('  After normalize - count:', normalized.length);
+    console.log('  After normalize - first entry:', normalized[0]);
+    console.log('  Setting entries state...');
+
+    setEntries(normalized);
+
+    console.log('  ✅ State updated!');
+    console.log('  ==================');
+  }, [initialEntries]);
 
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [receiptFile, setReceiptFile] = useState<File | null>(null);
