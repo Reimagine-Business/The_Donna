@@ -7,7 +7,7 @@ import { EditReminderDialog } from "./edit-reminder-dialog";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { format } from "date-fns";
-import { filterByDateRange, type DateRange } from "@/lib/date-utils";
+import { filterByDateRange, filterByCustomDateRange, type DateRange } from "@/lib/date-utils";
 
 type FilterOption = "all" | "due_soon" | "overdue" | "completed";
 
@@ -86,7 +86,14 @@ export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) 
   // Filter reminders based on date range AND status filter
   const filteredReminders = useMemo(() => {
     // First, filter by date range
-    const dateFiltered = filterByDateRange(initialReminders, dateFilter as DateRange, "due_date");
+    let dateFiltered: Reminder[];
+    if (dateFilter === "customize" && customFromDate && customToDate) {
+      dateFiltered = filterByCustomDateRange(initialReminders, customFromDate, customToDate, "due_date");
+    } else if (dateFilter !== "customize") {
+      dateFiltered = filterByDateRange(initialReminders, dateFilter as DateRange, "due_date");
+    } else {
+      dateFiltered = initialReminders;
+    }
 
     // Then, filter by status
     return dateFiltered.filter((reminder) => {
@@ -111,7 +118,7 @@ export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) 
         return true;
     }
     });
-  }, [initialReminders, dateFilter, activeFilter]);
+  }, [initialReminders, dateFilter, activeFilter, customFromDate, customToDate]);
 
   const handleMarkDone = (reminderId: string) => {
     startTransition(async () => {

@@ -9,7 +9,13 @@ import { Entry, normalizeEntry } from "@/lib/entries";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { cn } from "@/lib/utils";
-import { filterByDateRange, type DateRange } from "@/lib/date-utils";
+import {
+  filterByDateRange,
+  filterByCustomDateRange,
+  getDateRangeLabel,
+  formatCustomDateLabel,
+  type DateRange
+} from "@/lib/date-utils";
 
 type ProfitLensShellProps = {
   initialEntries: Entry[];
@@ -71,8 +77,17 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
 
   // Filter entries by selected date range
   const filteredEntries = useMemo(() => {
-    return filterByDateRange(entries, dateFilter as DateRange);
-  }, [entries, dateFilter]);
+    // Handle custom date range
+    if (dateFilter === "customize" && customFromDate && customToDate) {
+      return filterByCustomDateRange(entries, customFromDate, customToDate);
+    }
+    // Handle preset date ranges
+    if (dateFilter !== "customize") {
+      return filterByDateRange(entries, dateFilter as DateRange);
+    }
+    // If customize selected but dates not set, return all entries
+    return entries;
+  }, [entries, dateFilter, customFromDate, customToDate]);
 
   useEffect(() => {
     console.log("Profit Lens is now CLIENT — real-time will work");
@@ -202,7 +217,14 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
             }
             console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
             // Filter entries by current date range before recalculating
-            const filteredLatest = filterByDateRange(latestEntries, dateFilter as DateRange);
+            let filteredLatest: Entry[];
+            if (dateFilter === "customize" && customFromDate && customToDate) {
+              filteredLatest = filterByCustomDateRange(latestEntries, customFromDate, customToDate);
+            } else if (dateFilter !== "customize") {
+              filteredLatest = filterByDateRange(latestEntries, dateFilter as DateRange);
+            } else {
+              filteredLatest = latestEntries;
+            }
             const updatedStats = recalcKpis(filteredLatest);
             console.log(
               "REAL-TIME: KPIs recalculated → net profit:",
@@ -294,10 +316,16 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     recalcKpis(filteredEntries, filters);
   }, [filteredEntries, filters, recalcKpis]);
 
-  const rangeLabel = `${format(new Date(filters.start_date), "dd MMM")} — ${format(
-    new Date(filters.end_date),
-    "dd MMM",
-  )}`;
+  // Dynamic date range label
+  const dateRangeLabel = useMemo(() => {
+    if (dateFilter === "customize" && customFromDate && customToDate) {
+      return formatCustomDateLabel(customFromDate, customToDate);
+    }
+    if (dateFilter !== "customize") {
+      return getDateRangeLabel(dateFilter as DateRange);
+    }
+    return "Select date range";
+  }, [dateFilter, customFromDate, customToDate]);
 
   const plRows = [
     { label: "Sales", value: sales, variant: "positive" as RowVariant },
@@ -313,7 +341,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
         <div>
           <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-muted-foreground">Donna · Profit Lens</p>
           <h1 className="text-xl md:text-4xl font-semibold">Profit Lens</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">Accrual basis for {rangeLabel}</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Accrual basis for {dateRangeLabel}</p>
         </div>
         {/* Date Range Selector */}
         <div className="flex flex-wrap items-center gap-1.5 md:gap-2">

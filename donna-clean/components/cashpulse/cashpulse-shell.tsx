@@ -20,7 +20,13 @@ import { Input } from "@/components/ui/input";
 import { Calendar } from "@/components/ui/calendar";
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover";
 import { Download } from "lucide-react";
-import { filterByDateRange, type DateRange } from "@/lib/date-utils";
+import {
+  filterByDateRange,
+  filterByCustomDateRange,
+  getDateRangeLabel,
+  formatCustomDateLabel,
+  type DateRange
+} from "@/lib/date-utils";
 
 type CashpulseShellProps = {
   initialEntries: Entry[];
@@ -94,8 +100,17 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
 
   // Filter entries by selected date range
   const filteredEntries = useMemo(() => {
-    return filterByDateRange(entries, dateFilter as DateRange);
-  }, [entries, dateFilter]);
+    // Handle custom date range
+    if (dateFilter === "customize" && customFromDate && customToDate) {
+      return filterByCustomDateRange(entries, customFromDate, customToDate);
+    }
+    // Handle preset date ranges
+    if (dateFilter !== "customize") {
+      return filterByDateRange(entries, dateFilter as DateRange);
+    }
+    // If customize selected but dates not set, return all entries
+    return entries;
+  }, [entries, dateFilter, customFromDate, customToDate]);
 
   useEffect(() => {
     console.log("Cashpulse is now CLIENT — real-time will work");
@@ -226,7 +241,14 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
             }
             console.log("REAL-TIME: refetch complete – entries count:", latestEntries.length);
             // Filter entries by current date range before recalculating
-            const filteredLatest = filterByDateRange(latestEntries, dateFilter as DateRange);
+            let filteredLatest: Entry[];
+            if (dateFilter === "customize" && customFromDate && customToDate) {
+              filteredLatest = filterByCustomDateRange(latestEntries, customFromDate, customToDate);
+            } else if (dateFilter !== "customize") {
+              filteredLatest = filterByDateRange(latestEntries, dateFilter as DateRange);
+            } else {
+              filteredLatest = latestEntries;
+            }
             const updatedStats = recalcKpis(filteredLatest);
             const realtimeSales = updatedStats.cashBreakdown
               .filter(
@@ -323,10 +345,17 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     }
     recalcKpis(filteredEntries, historyFilters);
   }, [filteredEntries, historyFilters, recalcKpis]);
-  const historyLabel = `${format(new Date(historyFilters.start_date), "dd MMM yyyy")} – ${format(
-    new Date(historyFilters.end_date),
-    "dd MMM yyyy",
-  )}`;
+
+  // Dynamic date range label
+  const dateRangeLabel = useMemo(() => {
+    if (dateFilter === "customize" && customFromDate && customToDate) {
+      return formatCustomDateLabel(customFromDate, customToDate);
+    }
+    if (dateFilter !== "customize") {
+      return getDateRangeLabel(dateFilter as DateRange);
+    }
+    return "Select date range";
+  }, [dateFilter, customFromDate, customToDate]);
 
   // Function to get date range for settlement history filter
   const getSettlementDateRange = useMemo(() => {
@@ -449,7 +478,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
         <div>
           <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-muted-foreground">Donna · Cashpulse</p>
           <h1 className="text-xl md:text-4xl font-semibold">Cashpulse</h1>
-          <p className="text-xs md:text-sm text-muted-foreground">Accrual basis for {historyLabel}</p>
+          <p className="text-xs md:text-sm text-muted-foreground">Accrual basis for {dateRangeLabel}</p>
         </div>
         {/* Date Range Selector */}
         <div className="flex flex-wrap items-center gap-1.5 md:gap-2">
@@ -515,19 +544,19 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
           <StatCard
             title="Total Cash Inflow"
             value={currencyFormatter.format(inflow)}
-            subtitle={historyLabel}
+            subtitle={dateRangeLabel}
             variant="positive"
           />
           <StatCard
             title="Total Cash Outflow"
             value={currencyFormatter.format(outflow)}
-            subtitle={historyLabel}
+            subtitle={dateRangeLabel}
             variant="negative"
           />
           <StatCard
             title="Net Cash Flow"
             value={currencyFormatter.format(net)}
-            subtitle={historyLabel}
+            subtitle={dateRangeLabel}
             variant="neutral"
           />
         </section>
