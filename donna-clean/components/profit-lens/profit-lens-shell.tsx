@@ -378,13 +378,73 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
                 {currencyFormatter.format(row.value)}
               </p>
             </div>
-          </section>
+          ))}
         </div>
-      </main>
-    );
-  }
+      </section>
 
-  // Then continue with your queries using this supabase client
+        <section className="grid gap-2 md:gap-4 md:grid-cols-2">
+          <MetricCard
+            title="Gross Margin"
+            value={percentageFormatter(grossMargin)}
+            subtitle="Gross profit ÷ sales"
+          />
+          <MetricCard
+            title="Net Profit Margin"
+            value={percentageFormatter(netMargin)}
+            subtitle="Net profit ÷ sales"
+          />
+        </section>
+
+      <section className="space-y-2 md:space-y-4">
+        <div className="flex flex-col gap-1 md:gap-3 md:flex-row md:items-center md:justify-between">
+          <div>
+            <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-muted-foreground">Top Expense Breakdown</p>
+            <h2 className="text-base md:text-2xl font-semibold text-white">Where cash is leaving</h2>
+          </div>
+        </div>
+          <div className="grid gap-2 md:gap-4 md:grid-cols-2">
+            <BreakdownCard
+              title="Cost of Goods Sold"
+              value={currencyFormatter.format(cogs)}
+              description="Direct inputs tied to sales"
+            />
+            <BreakdownCard
+              title="Other Expenses"
+              value={currencyFormatter.format(opex)}
+              description="Operating and overhead costs"
+            />
+          </div>
+      </section>
+
+        <section className="rounded-xl md:rounded-3xl border border-border bg-gradient-to-br from-[#a78bfa]/30 to-[#a78bfa]/10 p-3 md:p-6 text-white shadow-[0_0_35px_rgba(167,139,250,0.25)]">
+          <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/80">Total Sales</p>
+          <p className="mt-2 md:mt-4 text-xl md:text-4xl font-semibold">{currencyFormatter.format(sales)}</p>
+          <p className="mt-1 md:mt-2 text-xs md:text-sm text-white/70">
+            Includes cash inflows and credit sales captured this period.
+          </p>
+        </section>
+    </div>
+  );
+}
+
+type RowVariant = "positive" | "negative" | "neutral";
+
+const rowColor = (variant: RowVariant) => {
+  switch (variant) {
+    case "positive":
+      return "text-emerald-300";
+    case "negative":
+      return "text-rose-300";
+    default:
+      return "text-white";
+  }
+};
+
+type MetricCardProps = {
+  title: string;
+  value: string;
+  subtitle: string;
+};
 
 function MetricCard({ title, value, subtitle }: MetricCardProps) {
   return (
@@ -400,8 +460,13 @@ function MetricCard({ title, value, subtitle }: MetricCardProps) {
   );
 }
 
-  if (error) throw error;
+type BreakdownCardProps = {
+  title: string;
+  value: string;
+  description: string;
+};
 
+function BreakdownCard({ title, value, description }: BreakdownCardProps) {
   return (
     <div className="rounded-lg md:rounded-2xl border border-primary/30 bg-gradient-to-br from-[#a78bfa]/20 to-transparent p-3 md:p-5 shadow-lg shadow-primary/20">
       <div className="flex items-center justify-between">
