@@ -536,9 +536,9 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
         : "Use Cash or Bank to match how money moved";
 
   return (
-    <div className="flex flex-col gap-4 md:gap-10 text-white">
+    <div className="flex flex-col gap-4 text-white">
       {/* Page Header */}
-      <div className="mt-2 mb-4">
+      <div className="mt-2 mb-3">
         <h1 className="text-2xl md:text-3xl font-bold text-white">Daily Entries</h1>
       </div>
 
