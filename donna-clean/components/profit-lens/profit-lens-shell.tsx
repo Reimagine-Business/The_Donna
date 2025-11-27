@@ -16,7 +16,7 @@ import {
   formatCustomDateLabel,
   type DateRange
 } from "@/lib/date-utils";
-import { formatAmountInWordsShort } from "@/lib/format-number-words";
+import { formatAmountInWordsShort, formatCurrencyWithWords } from "@/lib/format-number-words";
 
 type ProfitLensShellProps = {
   initialEntries: Entry[];
@@ -331,8 +331,37 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
   // Calculate total expenses (COGS + OPEX)
   const totalExpenses = useMemo(() => cogs + opex, [cogs, opex]);
 
+  // Calculate Top 5 Expenses by aggregating entries by category
+  const topExpenses = useMemo(() => {
+    // Group expense entries by category
+    const expensesByCategory = filteredEntries
+      .filter(entry => {
+        // Include all Cash Outflow entries (COGS, Opex, Assets)
+        return entry.entry_type === 'Cash Outflow';
+      })
+      .reduce((acc, entry) => {
+        const category = entry.category;
+        if (!acc[category]) {
+          acc[category] = {
+            category: category,
+            total: 0,
+            type: category === 'COGS' ? 'COGS' : category === 'Opex' ? 'OPEX' : 'OTHER',
+            transactions: []
+          };
+        }
+        acc[category].total += entry.amount;
+        acc[category].transactions.push(entry);
+        return acc;
+      }, {} as Record<string, { category: string; total: number; type: string; transactions: Entry[] }>);
+
+    // Convert to array and sort by total (highest first), take top 5
+    return Object.values(expensesByCategory)
+      .sort((a, b) => b.total - a.total)
+      .slice(0, 5);
+  }, [filteredEntries]);
+
   return (
-      <div className="flex flex-col gap-4 text-white">
+      <div className="flex flex-col gap-3 md:gap-4 text-white">
       {/* Page Header - Title and Date Filter on Same Line */}
       <div className="flex items-center justify-between mt-2 mb-3">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
@@ -399,55 +428,171 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
         </div>
       )}
 
-      {/* Simplified 3-Line Profit Calculation */}
-      <section className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/40 to-purple-800/40 p-6 md:p-8 shadow-2xl shadow-black/40">
-        <div className="space-y-6">
+      {/* Simplified 3-Line Profit Calculation - Compact on Mobile */}
+      <section className="rounded-lg md:rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/40 to-purple-800/40 p-4 md:p-6 lg:p-8 shadow-xl md:shadow-2xl shadow-black/40">
+        <div className="space-y-3 md:space-y-6">
           {/* Line 1: Sales */}
-          <div className="border-b border-purple-500/30 pb-5">
-            <p className="text-sm md:text-base uppercase tracking-[0.2em] text-purple-300 font-semibold mb-3">
+          <div className="border-b border-purple-500/30 pb-3 md:pb-5">
+            <p className="text-xs md:text-sm uppercase tracking-[0.15em] md:tracking-[0.2em] text-purple-300 font-semibold mb-2 md:mb-3">
               Sales
             </p>
-            <p className="text-4xl md:text-5xl font-bold text-white mb-2">
+            <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-1 md:mb-2">
               {currencyFormatter.format(sales)}
             </p>
-            <p className="text-base md:text-lg text-purple-200 font-medium">
+            <p className="text-sm md:text-base lg:text-lg text-purple-200 font-medium">
               {formatAmountInWordsShort(sales)}
             </p>
           </div>
 
           {/* Line 2: Total Expenses (COGS + OPEX) */}
-          <div className="border-b border-purple-500/30 pb-5">
-            <p className="text-sm md:text-base uppercase tracking-[0.2em] text-purple-300 font-semibold mb-3 flex items-center gap-2">
-              <span className="text-xl">−</span> Total Expenses
+          <div className="border-b border-purple-500/30 pb-3 md:pb-5">
+            <p className="text-xs md:text-sm uppercase tracking-[0.15em] md:tracking-[0.2em] text-purple-300 font-semibold mb-2 md:mb-3 flex items-center gap-1 md:gap-2">
+              <span className="text-base md:text-xl">−</span> Total Expenses
             </p>
-            <p className="text-4xl md:text-5xl font-bold text-white mb-2">
+            <p className="text-3xl md:text-4xl lg:text-5xl font-bold text-white mb-1 md:mb-2">
               {currencyFormatter.format(totalExpenses)}
             </p>
-            <p className="text-base md:text-lg text-purple-200 font-medium">
+            <p className="text-sm md:text-base lg:text-lg text-purple-200 font-medium">
               {formatAmountInWordsShort(totalExpenses)}
             </p>
-            <p className="text-xs md:text-sm text-purple-400 mt-2">
+            <p className="text-xs md:text-sm text-purple-400 mt-1 md:mt-2">
               COGS: {currencyFormatter.format(cogs)} + OPEX: {currencyFormatter.format(opex)}
             </p>
           </div>
 
-          {/* Line 3: Net Profit with Net Margin % */}
-          <div className="bg-purple-900/30 rounded-xl p-5 md:p-6 border border-purple-400/40 shadow-[0_0_25px_rgba(167,139,250,0.3)]">
-            <p className="text-sm md:text-base uppercase tracking-[0.2em] text-purple-300 font-semibold mb-3 flex items-center gap-2">
-              <span className="text-xl">=</span> Net Profit
-            </p>
-            <div className="flex items-baseline gap-3 mb-2">
-              <p className="text-5xl md:text-6xl font-bold text-white">
-                {currencyFormatter.format(netProfit)}
+          {/* Line 3: Net Profit with Net Margin % on Same Line */}
+          <div className="bg-purple-900/30 rounded-lg md:rounded-xl p-4 md:p-5 lg:p-6 border border-purple-400/40 shadow-[0_0_15px_rgba(167,139,250,0.3)] md:shadow-[0_0_25px_rgba(167,139,250,0.3)]">
+            <div className="flex items-start justify-between mb-2 md:mb-3">
+              <p className="text-xs md:text-sm uppercase tracking-[0.15em] md:tracking-[0.2em] text-purple-300 font-semibold flex items-center gap-1 md:gap-2">
+                <span className="text-base md:text-xl">=</span> Net Profit
               </p>
-              <p className="text-2xl md:text-3xl font-semibold text-purple-300">
-                ({percentageFormatter(netMargin)})
-              </p>
+              {/* Net Margin % - Same line, right side */}
+              <div className="text-right">
+                <div className="text-lg md:text-xl lg:text-2xl font-bold text-purple-300">
+                  {percentageFormatter(netMargin)}
+                </div>
+                <div className="text-purple-400 text-[10px] md:text-xs">
+                  Net Margin
+                </div>
+              </div>
             </div>
-            <p className="text-lg md:text-xl text-purple-200 font-medium">
+            <p className="text-3xl md:text-5xl lg:text-6xl font-bold text-white mb-1 md:mb-2">
+              {currencyFormatter.format(netProfit)}
+            </p>
+            <p className="text-sm md:text-lg lg:text-xl text-purple-200 font-medium">
               {formatAmountInWordsShort(netProfit)}
             </p>
           </div>
+        </div>
+      </section>
+
+      {/* COGS and OPEX Breakdown */}
+      <section className="mt-4 md:mt-6">
+        <h3 className="text-white text-base md:text-lg font-semibold mb-3 md:mb-4 px-1">
+          Expense Breakdown
+        </h3>
+
+        <div className="grid grid-cols-2 gap-2 md:gap-4">
+          {/* COGS */}
+          <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3 md:p-4 lg:p-5">
+            <h4 className="text-purple-300 text-xs md:text-sm font-medium mb-1 md:mb-2 uppercase tracking-[0.15em]">
+              COGS
+            </h4>
+            <div className="text-xl md:text-2xl lg:text-2xl font-bold text-white mb-0.5 md:mb-1">
+              {currencyFormatter.format(cogs)}
+            </div>
+            <p className="text-purple-300 text-xs md:text-sm">
+              {formatAmountInWordsShort(cogs)}
+            </p>
+            <p className="text-purple-400 text-[10px] md:text-xs mt-1">
+              Cost of Goods Sold
+            </p>
+          </div>
+
+          {/* OPEX */}
+          <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3 md:p-4 lg:p-5">
+            <h4 className="text-purple-300 text-xs md:text-sm font-medium mb-1 md:mb-2 uppercase tracking-[0.15em]">
+              OPEX
+            </h4>
+            <div className="text-xl md:text-2xl lg:text-2xl font-bold text-white mb-0.5 md:mb-1">
+              {currencyFormatter.format(opex)}
+            </div>
+            <p className="text-purple-300 text-xs md:text-sm">
+              {formatAmountInWordsShort(opex)}
+            </p>
+            <p className="text-purple-400 text-[10px] md:text-xs mt-1">
+              Operating Expenses
+            </p>
+          </div>
+        </div>
+      </section>
+
+      {/* Top 5 Expenses */}
+      <section className="mt-4 md:mt-6">
+        <h3 className="text-white text-base md:text-lg font-semibold mb-3 md:mb-4 px-1">
+          Top 5 Expenses
+        </h3>
+
+        <div className="space-y-2 md:space-y-3">
+          {topExpenses.length === 0 ? (
+            <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-6 md:p-8 text-center">
+              <p className="text-purple-300 text-sm md:text-base">
+                No expense data available for the selected period
+              </p>
+            </div>
+          ) : (
+            topExpenses.map((expense, index) => {
+              const formatted = formatCurrencyWithWords(expense.total);
+              // Get the first transaction's notes (or show count)
+              const sampleNote = expense.transactions[0]?.notes || '';
+              const txCount = expense.transactions.length;
+
+              return (
+                <div
+                  key={expense.category}
+                  className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-3 md:p-4 hover:bg-purple-900/30 transition-colors"
+                >
+                  <div className="flex items-start justify-between gap-3">
+                    <div className="flex-1 min-w-0">
+                      <div className="flex items-center gap-2 mb-1 md:mb-2">
+                        <span className="text-purple-400 font-bold text-sm md:text-base">
+                          {index + 1}.
+                        </span>
+                        <span className="text-white font-bold text-lg md:text-xl lg:text-2xl">
+                          {formatted.formatted}
+                        </span>
+                      </div>
+
+                      <div className="flex items-center gap-2 mb-1">
+                        <span className="text-purple-200 text-sm md:text-base font-medium">
+                          {expense.category}
+                        </span>
+                        <span className="text-purple-400 text-xs md:text-sm">
+                          ({expense.type})
+                        </span>
+                      </div>
+
+                      <p className="text-purple-300 text-xs md:text-sm mb-1">
+                        {formatted.words}
+                      </p>
+
+                      {sampleNote && (
+                        <p className="text-purple-400 text-xs italic truncate">
+                          "{sampleNote}"
+                        </p>
+                      )}
+
+                      {txCount > 1 && (
+                        <p className="text-purple-500 text-[10px] md:text-xs mt-1">
+                          {txCount} transaction{txCount > 1 ? 's' : ''}
+                        </p>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              );
+            })
+          )}
         </div>
       </section>
     </div>
