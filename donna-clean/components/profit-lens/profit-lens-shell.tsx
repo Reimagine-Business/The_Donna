@@ -16,6 +16,7 @@ import {
   formatCustomDateLabel,
   type DateRange
 } from "@/lib/date-utils";
+import { formatAmountInWordsShort } from "@/lib/format-number-words";
 
 type ProfitLensShellProps = {
   initialEntries: Entry[];
@@ -327,14 +328,8 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
     return "Select date range";
   }, [dateFilter, customFromDate, customToDate]);
 
-  // Memoize P&L rows to avoid recreating on every render
-  const plRows = useMemo(() => [
-    { label: "Sales", value: sales, variant: "positive" as RowVariant },
-    { label: "Cost of Goods Sold", value: cogs, variant: "negative" as RowVariant },
-    { label: "Gross Profit", value: grossProfit, variant: "neutral" as RowVariant },
-    { label: "Operating Expenses", value: opex, variant: "negative" as RowVariant },
-    { label: "Net Profit", value: netProfit, variant: "positive" as RowVariant },
-  ], [sales, cogs, grossProfit, opex, netProfit]);
+  // Calculate total expenses (COGS + OPEX)
+  const totalExpenses = useMemo(() => cogs + opex, [cogs, opex]);
 
   return (
       <div className="flex flex-col gap-4 text-white">
@@ -404,119 +399,57 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
         </div>
       )}
 
-      <section className="rounded-xl md:rounded-3xl border border-border bg-card/40 p-3 md:p-6 shadow-2xl shadow-black/40">
-        <div className="space-y-2 md:space-y-4">
-          {plRows.map((row, index) => (
-            <div
-              key={row.label}
-              className={cn(
-                "flex items-center justify-between rounded-lg md:rounded-2xl border border-border/50 bg-slate-950/30 p-2 md:p-4",
-                index === plRows.length - 1 ? "shadow-[0_0_25px_rgba(167,139,250,0.2)]" : "",
-              )}
-            >
-              <p className="text-base font-semibold text-white uppercase tracking-[0.3em]">{row.label}</p>
-                <p className={cn("text-base md:text-3xl font-semibold", rowColor(row.variant))}>
-                {currencyFormatter.format(row.value)}
+      {/* Simplified 3-Line Profit Calculation */}
+      <section className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/40 to-purple-800/40 p-6 md:p-8 shadow-2xl shadow-black/40">
+        <div className="space-y-6">
+          {/* Line 1: Sales */}
+          <div className="border-b border-purple-500/30 pb-5">
+            <p className="text-sm md:text-base uppercase tracking-[0.2em] text-purple-300 font-semibold mb-3">
+              Sales
+            </p>
+            <p className="text-4xl md:text-5xl font-bold text-white mb-2">
+              {currencyFormatter.format(sales)}
+            </p>
+            <p className="text-base md:text-lg text-purple-200 font-medium">
+              {formatAmountInWordsShort(sales)}
+            </p>
+          </div>
+
+          {/* Line 2: Total Expenses (COGS + OPEX) */}
+          <div className="border-b border-purple-500/30 pb-5">
+            <p className="text-sm md:text-base uppercase tracking-[0.2em] text-purple-300 font-semibold mb-3 flex items-center gap-2">
+              <span className="text-xl">−</span> Total Expenses
+            </p>
+            <p className="text-4xl md:text-5xl font-bold text-white mb-2">
+              {currencyFormatter.format(totalExpenses)}
+            </p>
+            <p className="text-base md:text-lg text-purple-200 font-medium">
+              {formatAmountInWordsShort(totalExpenses)}
+            </p>
+            <p className="text-xs md:text-sm text-purple-400 mt-2">
+              COGS: {currencyFormatter.format(cogs)} + OPEX: {currencyFormatter.format(opex)}
+            </p>
+          </div>
+
+          {/* Line 3: Net Profit with Net Margin % */}
+          <div className="bg-purple-900/30 rounded-xl p-5 md:p-6 border border-purple-400/40 shadow-[0_0_25px_rgba(167,139,250,0.3)]">
+            <p className="text-sm md:text-base uppercase tracking-[0.2em] text-purple-300 font-semibold mb-3 flex items-center gap-2">
+              <span className="text-xl">=</span> Net Profit
+            </p>
+            <div className="flex items-baseline gap-3 mb-2">
+              <p className="text-5xl md:text-6xl font-bold text-white">
+                {currencyFormatter.format(netProfit)}
+              </p>
+              <p className="text-2xl md:text-3xl font-semibold text-purple-300">
+                ({percentageFormatter(netMargin)})
               </p>
             </div>
-          ))}
-        </div>
-      </section>
-
-        <section className="grid gap-2 md:gap-4 md:grid-cols-2">
-          <MetricCard
-            title="Gross Margin"
-            value={percentageFormatter(grossMargin)}
-            subtitle="Gross profit ÷ sales"
-          />
-          <MetricCard
-            title="Net Profit Margin"
-            value={percentageFormatter(netMargin)}
-            subtitle="Net profit ÷ sales"
-          />
-        </section>
-
-      <section className="space-y-2 md:space-y-4">
-        <div className="flex flex-col gap-1 md:gap-3 md:flex-row md:items-center md:justify-between">
-          <div>
-            <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-muted-foreground">Top Expense Breakdown</p>
-            <h2 className="text-base md:text-2xl font-semibold text-white">Where cash is leaving</h2>
+            <p className="text-lg md:text-xl text-purple-200 font-medium">
+              {formatAmountInWordsShort(netProfit)}
+            </p>
           </div>
         </div>
-          <div className="grid gap-2 md:gap-4 md:grid-cols-2">
-            <BreakdownCard
-              title="Cost of Goods Sold"
-              value={currencyFormatter.format(cogs)}
-              description="Direct inputs tied to sales"
-            />
-            <BreakdownCard
-              title="Other Expenses"
-              value={currencyFormatter.format(opex)}
-              description="Operating and overhead costs"
-            />
-          </div>
       </section>
-
-        <section className="rounded-xl md:rounded-3xl border border-border bg-gradient-to-br from-[#a78bfa]/30 to-[#a78bfa]/10 p-3 md:p-6 text-white shadow-[0_0_35px_rgba(167,139,250,0.25)]">
-          <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-white/80">Total Sales</p>
-          <p className="mt-2 md:mt-4 text-xl md:text-4xl font-semibold">{currencyFormatter.format(sales)}</p>
-          <p className="mt-1 md:mt-2 text-xs md:text-sm text-white/70">
-            Includes cash inflows and credit sales captured this period.
-          </p>
-        </section>
-    </div>
-  );
-}
-
-type RowVariant = "positive" | "negative" | "neutral";
-
-const rowColor = (variant: RowVariant) => {
-  switch (variant) {
-    case "positive":
-      return "text-emerald-300";
-    case "negative":
-      return "text-rose-300";
-    default:
-      return "text-white";
-  }
-};
-
-type MetricCardProps = {
-  title: string;
-  value: string;
-  subtitle: string;
-};
-
-function MetricCard({ title, value, subtitle }: MetricCardProps) {
-  return (
-    <div className="rounded-lg md:rounded-2xl border border-border bg-card/60 p-3 md:p-5 shadow-lg shadow-black/40">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-muted-foreground">{title}</p>
-          <p className="mt-1 text-xs md:text-sm text-muted-foreground">{subtitle}</p>
-        </div>
-        <p className="text-xl md:text-3xl font-semibold text-white">{value}</p>
-      </div>
-    </div>
-  );
-}
-
-type BreakdownCardProps = {
-  title: string;
-  value: string;
-  description: string;
-};
-
-function BreakdownCard({ title, value, description }: BreakdownCardProps) {
-  return (
-    <div className="rounded-lg md:rounded-2xl border border-primary/30 bg-gradient-to-br from-[#a78bfa]/20 to-transparent p-3 md:p-5 shadow-lg shadow-primary/20">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-[10px] md:text-xs uppercase tracking-[0.3em] text-[#c4b5fd]">{title}</p>
-          <p className="mt-1 text-xs md:text-sm text-[#c4b5fd]">{description}</p>
-        </div>
-        <p className="text-xl md:text-3xl font-semibold text-white">{value}</p>
-      </div>
     </div>
   );
 }

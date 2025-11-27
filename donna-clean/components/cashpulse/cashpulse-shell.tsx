@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format, subDays } from "date-fns";
-import { ArrowDownRight, ArrowUpRight, Activity } from "lucide-react";
+import { ArrowDownRight, ArrowUpRight, Activity, TrendingUp, TrendingDown, Wallet } from "lucide-react";
 import type { RealtimeChannel } from "@supabase/supabase-js";
 
 import { createClient } from "@/lib/supabase/client";
@@ -28,6 +28,7 @@ import {
   formatCustomDateLabel,
   type DateRange
 } from "@/lib/date-utils";
+import { formatAmountInWordsShort } from "@/lib/format-number-words";
 
 type CashpulseShellProps = {
   initialEntries: Entry[];
@@ -541,33 +542,70 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
         </div>
       )}
 
-        <section className="grid gap-2 md:gap-4 md:grid-cols-3">
-          <StatCard
-            title="Total Cash Inflow"
-            value={currencyFormatter.format(inflow)}
-            subtitle={dateRangeLabel}
-            variant="positive"
-          />
-          <StatCard
-            title="Total Cash Outflow"
-            value={currencyFormatter.format(outflow)}
-            subtitle={dateRangeLabel}
-            variant="negative"
-          />
-          <StatCard
-            title="Net Cash Flow"
-            value={currencyFormatter.format(net)}
-            subtitle={dateRangeLabel}
-            variant="neutral"
-          />
+        {/* Cash Balance - Main Element */}
+        <section className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/40 to-purple-800/40 p-6 md:p-8 shadow-2xl shadow-black/40">
+          <div className="flex flex-col items-center text-center">
+            <div className="flex items-center gap-3 mb-4">
+              <Wallet className="w-8 h-8 md:w-10 md:h-10 text-purple-400" />
+              <p className="text-sm md:text-base uppercase tracking-[0.3em] text-purple-300 font-semibold">
+                Cash Balance
+              </p>
+            </div>
+            <p className="text-5xl md:text-7xl font-bold text-white mb-2">
+              {currencyFormatter.format(net)}
+            </p>
+            <p className="text-lg md:text-xl text-purple-200 font-medium">
+              {formatAmountInWordsShort(net)}
+            </p>
+            <p className="text-sm text-purple-400 mt-3">
+              {dateRangeLabel}
+            </p>
+          </div>
         </section>
 
+        {/* CASH IN and CASH OUT - Side by Side */}
+        <section className="grid gap-3 md:gap-4 md:grid-cols-2">
+          {/* CASH IN - Green Border */}
+          <div className="rounded-xl border-2 border-green-500 bg-gradient-to-br from-green-900/20 to-green-800/10 p-5 md:p-6 shadow-xl shadow-black/40">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
+              <p className="text-sm md:text-base uppercase tracking-[0.2em] text-green-300 font-semibold">
+                CASH IN
+              </p>
+            </div>
+            <p className="text-3xl md:text-4xl font-bold text-white mb-2">
+              {currencyFormatter.format(inflow)}
+            </p>
+            <p className="text-base md:text-lg text-green-200 font-medium">
+              {formatAmountInWordsShort(inflow)}
+            </p>
+          </div>
+
+          {/* CASH OUT - Red Border */}
+          <div className="rounded-xl border-2 border-red-500 bg-gradient-to-br from-red-900/20 to-red-800/10 p-5 md:p-6 shadow-xl shadow-black/40">
+            <div className="flex items-center gap-2 mb-4">
+              <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-red-400" />
+              <p className="text-sm md:text-base uppercase tracking-[0.2em] text-red-300 font-semibold">
+                CASH OUT
+              </p>
+            </div>
+            <p className="text-3xl md:text-4xl font-bold text-white mb-2">
+              {currencyFormatter.format(outflow)}
+            </p>
+            <p className="text-base md:text-lg text-red-200 font-medium">
+              {formatAmountInWordsShort(outflow)}
+            </p>
+          </div>
+        </section>
+
+        {/* Cash & Bank Breakdown */}
         <section className="grid gap-2 md:gap-4 md:grid-cols-2">
           {cashBreakdown.map((channel) => (
             <ChannelCard
               key={channel.method}
               method={channel.method}
               value={currencyFormatter.format(channel.value)}
+              amount={channel.value}
             />
           ))}
         </section>
@@ -875,61 +913,26 @@ const buildCashpulseStats = (entries: Entry[]): CashpulseStats => {
   };
 };
 
-type StatCardProps = {
-  title: string;
-  value: string;
-  subtitle: string;
-  variant: "positive" | "negative" | "neutral";
-};
-
-function StatCard({ title, value, subtitle, variant }: StatCardProps) {
-  const colorMap = {
-    positive: "from-emerald-500/40 to-emerald-500/5 border-emerald-500/40",
-    negative: "from-rose-500/40 to-rose-500/5 border-rose-500/40",
-    neutral: "from-[#a78bfa]/40 to-[#a78bfa]/5 border-primary/40",
-  };
-
-  const icon =
-    variant === "positive"
-      ? ArrowUpRight
-      : variant === "negative"
-        ? ArrowDownRight
-        : Activity;
-  const Icon = icon;
-
-  return (
-    <div
-      className={cn(
-        "rounded-lg md:rounded-2xl border bg-gradient-to-br p-3 md:p-5 shadow-xl shadow-black/40",
-        colorMap[variant],
-      )}
-    >
-      <div className="flex items-center justify-between">
-        <div className="flex items-center gap-2 md:gap-3">
-          <Icon className="h-3 w-3 md:h-4 md:w-4 text-white/70" />
-          <span className="text-base font-semibold text-white uppercase tracking-widest">{title}</span>
-        </div>
-        <p className="text-xl md:text-3xl font-semibold text-white">{value}</p>
-      </div>
-    </div>
-  );
-}
-
 type ChannelCardProps = {
   method: string;
   value: string;
+  amount: number;
 };
 
-function ChannelCard({ method, value }: ChannelCardProps) {
+function ChannelCard({ method, value, amount }: ChannelCardProps) {
   return (
-    <div className="rounded-lg md:rounded-2xl border border-border bg-card/60 p-3 md:p-5 shadow-lg shadow-black/30">
-      <div className="flex items-center justify-between">
-        <div>
-          <p className="text-sm font-medium text-white uppercase tracking-[0.3em]">Channel</p>
-          <p className="mt-1 text-sm md:text-lg font-semibold text-white">{method}</p>
+    <div className="rounded-lg md:rounded-2xl border border-purple-500/30 bg-purple-900/20 p-4 md:p-5 shadow-lg shadow-black/30">
+      <div className="flex flex-col">
+        <div className="flex items-center justify-between mb-2">
+          <p className="text-xs md:text-sm font-medium text-purple-300 uppercase tracking-[0.2em]">
+            {method}
+          </p>
         </div>
-        <p className={cn("text-xl font-semibold", value.startsWith("-") ? "text-rose-300" : "text-primary")}>
+        <p className="text-2xl md:text-3xl font-bold text-white mb-1">
           {value}
+        </p>
+        <p className="text-sm md:text-base text-purple-200 font-medium">
+          {formatAmountInWordsShort(amount)}
         </p>
       </div>
     </div>
