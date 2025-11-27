@@ -337,9 +337,9 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
   ], [sales, cogs, grossProfit, opex, netProfit]);
 
   return (
-      <div className="flex flex-col gap-4 md:gap-8 text-white">
+      <div className="flex flex-col gap-4 text-white">
       {/* Page Header - Title and Date Filter on Same Line */}
-      <div className="flex items-center justify-between mt-2 mb-4">
+      <div className="flex items-center justify-between mt-2 mb-3">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
           Profit Lens
         </h1>

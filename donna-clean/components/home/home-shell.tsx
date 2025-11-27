@@ -81,9 +81,9 @@ export function HomeShell({ initialReminders }: HomeShellProps) {
   };
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-4">
       {/* Page Header */}
-      <div className="mt-2 mb-6">
+      <div className="mt-2 mb-3">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
           Home
         </h1>
