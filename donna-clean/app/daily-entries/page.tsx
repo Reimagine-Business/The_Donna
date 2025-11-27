@@ -3,7 +3,6 @@ import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { TopNavMobile } from "@/components/navigation/top-nav-mobile";
 import { DailyEntriesShell } from "@/components/daily-entries/daily-entries-shell";
-import { DebugPanel } from "@/components/daily-entries/debug-panel";
 import { normalizeEntry, type Entry } from "@/lib/entries";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
@@ -38,12 +37,9 @@ export default async function DailyEntriesPage() {
 
   const entries: Entry[] = data?.map((entry) => normalizeEntry(entry)) ?? [];
 
-  // === DEBUG: Server-side Data Fetch ===
-  console.log('🔵 SERVER: Daily Entries Page');
-  console.log('  Fetched:', data?.length || 0, 'raw entries');
-  console.log('  Normalized:', entries.length, 'entries');
-  if (error) console.error('  Error:', error);
-  if (entries.length > 0) console.log('  First entry:', entries[0]);
+  if (error) {
+    console.error('Daily Entries: Error fetching entries:', error);
+  }
 
   return (
     <main className="min-h-screen bg-background text-foreground pb-24 md:pb-8">
@@ -57,8 +53,6 @@ export default async function DailyEntriesPage() {
         </section>
       </div>
       <BottomNav />
-      {/* Debug panel to verify data is being passed from server */}
-      <DebugPanel entries={entries} userId={user.id} />
     </main>
   );
 }
