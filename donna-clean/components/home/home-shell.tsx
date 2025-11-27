@@ -85,7 +85,7 @@ export function HomeShell({ initialReminders }: HomeShellProps) {
       {/* Page Header */}
       <div className="mb-2">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
-          Home
+          Your Daily Start
         </h1>
       </div>
 

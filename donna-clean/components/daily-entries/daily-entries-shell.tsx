@@ -513,7 +513,7 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
     <div className="flex flex-col gap-4 text-white">
       {/* Page Header */}
       <div className="mb-2">
-        <h1 className="text-2xl md:text-3xl font-bold text-white">Daily Entries</h1>
+        <h1 className="text-2xl md:text-3xl font-bold text-white">Record what happened today</h1>
       </div>
 
       <section className="rounded-xl md:rounded-2xl border border-border bg-card/60 p-3 md:p-6 shadow-2xl shadow-black/40">
