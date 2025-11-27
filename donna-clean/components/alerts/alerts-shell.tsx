@@ -141,7 +141,7 @@ export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) 
         {/* Page Header */}
         <div className="flex items-center justify-between mt-2 mb-3">
           <h1 className="text-2xl md:text-3xl font-bold text-white">
-            Alerts & Reminders
+            Need your Attention
           </h1>
 
           {/* Add Button */}

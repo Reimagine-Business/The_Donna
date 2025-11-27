@@ -341,7 +341,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
       {/* Page Header - Title and Date Filter on Same Line */}
       <div className="flex items-center justify-between mt-2 mb-3">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
-          Profit Lens
+          See what you earned
         </h1>
 
         {/* Date Filter */}
