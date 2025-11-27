@@ -475,7 +475,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
   };
 
   return (
-    <div className="flex flex-col gap-4 text-white">
+    <div className="flex flex-col gap-3 md:gap-4 text-white">
       {/* Page Header - Title and Date Filter on Same Line */}
       <div className="flex items-center justify-between mt-2 mb-3">
         <h1 className="text-2xl md:text-3xl font-bold text-white">
@@ -542,57 +542,57 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
         </div>
       )}
 
-        {/* Cash Balance - Main Element */}
-        <section className="rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/40 to-purple-800/40 p-6 md:p-8 shadow-2xl shadow-black/40">
+        {/* Cash Balance - Compact on Mobile */}
+        <section className="rounded-lg md:rounded-2xl border border-purple-500/30 bg-gradient-to-br from-purple-900/40 to-purple-800/40 p-4 md:p-6 lg:p-8 shadow-xl md:shadow-2xl shadow-black/40">
           <div className="flex flex-col items-center text-center">
-            <div className="flex items-center gap-3 mb-4">
-              <Wallet className="w-8 h-8 md:w-10 md:h-10 text-purple-400" />
-              <p className="text-sm md:text-base uppercase tracking-[0.3em] text-purple-300 font-semibold">
+            <div className="flex items-center gap-2 md:gap-3 mb-2 md:mb-4">
+              <Wallet className="w-5 h-5 md:w-8 md:h-8 lg:w-10 lg:h-10 text-purple-400" />
+              <p className="text-xs md:text-sm uppercase tracking-[0.2em] md:tracking-[0.3em] text-purple-300 font-semibold">
                 Cash Balance
               </p>
             </div>
-            <p className="text-5xl md:text-7xl font-bold text-white mb-2">
+            <p className="text-3xl md:text-5xl lg:text-7xl font-bold text-white mb-1 md:mb-2">
               {currencyFormatter.format(net)}
             </p>
-            <p className="text-lg md:text-xl text-purple-200 font-medium">
+            <p className="text-sm md:text-lg lg:text-xl text-purple-200 font-medium">
               {formatAmountInWordsShort(net)}
             </p>
-            <p className="text-sm text-purple-400 mt-3">
+            <p className="text-xs md:text-sm text-purple-400 mt-1 md:mt-3">
               {dateRangeLabel}
             </p>
           </div>
         </section>
 
-        {/* CASH IN and CASH OUT - Side by Side */}
-        <section className="grid gap-3 md:gap-4 md:grid-cols-2">
+        {/* CASH IN and CASH OUT - Compact on Mobile */}
+        <section className="grid grid-cols-2 gap-2 md:gap-4">
           {/* CASH IN - Green Border */}
-          <div className="rounded-xl border-2 border-green-500 bg-gradient-to-br from-green-900/20 to-green-800/10 p-5 md:p-6 shadow-xl shadow-black/40">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingUp className="w-5 h-5 md:w-6 md:h-6 text-green-400" />
-              <p className="text-sm md:text-base uppercase tracking-[0.2em] text-green-300 font-semibold">
+          <div className="rounded-lg md:rounded-xl border-2 border-green-500 bg-gradient-to-br from-green-900/20 to-green-800/10 p-3 md:p-5 lg:p-6 shadow-lg md:shadow-xl shadow-black/40">
+            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-4">
+              <TrendingUp className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-green-400" />
+              <p className="text-xs md:text-sm lg:text-base uppercase tracking-[0.15em] md:tracking-[0.2em] text-green-300 font-semibold">
                 CASH IN
               </p>
             </div>
-            <p className="text-3xl md:text-4xl font-bold text-white mb-2">
+            <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-0.5 md:mb-2">
               {currencyFormatter.format(inflow)}
             </p>
-            <p className="text-base md:text-lg text-green-200 font-medium">
+            <p className="text-xs md:text-base lg:text-lg text-green-200 font-medium">
               {formatAmountInWordsShort(inflow)}
             </p>
           </div>
 
           {/* CASH OUT - Red Border */}
-          <div className="rounded-xl border-2 border-red-500 bg-gradient-to-br from-red-900/20 to-red-800/10 p-5 md:p-6 shadow-xl shadow-black/40">
-            <div className="flex items-center gap-2 mb-4">
-              <TrendingDown className="w-5 h-5 md:w-6 md:h-6 text-red-400" />
-              <p className="text-sm md:text-base uppercase tracking-[0.2em] text-red-300 font-semibold">
+          <div className="rounded-lg md:rounded-xl border-2 border-red-500 bg-gradient-to-br from-red-900/20 to-red-800/10 p-3 md:p-5 lg:p-6 shadow-lg md:shadow-xl shadow-black/40">
+            <div className="flex items-center gap-1 md:gap-2 mb-1 md:mb-4">
+              <TrendingDown className="w-4 h-4 md:w-5 md:h-5 lg:w-6 lg:h-6 text-red-400" />
+              <p className="text-xs md:text-sm lg:text-base uppercase tracking-[0.15em] md:tracking-[0.2em] text-red-300 font-semibold">
                 CASH OUT
               </p>
             </div>
-            <p className="text-3xl md:text-4xl font-bold text-white mb-2">
+            <p className="text-2xl md:text-3xl lg:text-4xl font-bold text-white mb-0.5 md:mb-2">
               {currencyFormatter.format(outflow)}
             </p>
-            <p className="text-base md:text-lg text-red-200 font-medium">
+            <p className="text-xs md:text-base lg:text-lg text-red-200 font-medium">
               {formatAmountInWordsShort(outflow)}
             </p>
           </div>
@@ -921,17 +921,17 @@ type ChannelCardProps = {
 
 function ChannelCard({ method, value, amount }: ChannelCardProps) {
   return (
-    <div className="rounded-lg md:rounded-2xl border border-purple-500/30 bg-purple-900/20 p-4 md:p-5 shadow-lg shadow-black/30">
+    <div className="rounded-lg md:rounded-2xl border border-purple-500/30 bg-purple-900/20 p-3 md:p-4 lg:p-5 shadow-lg shadow-black/30">
       <div className="flex flex-col">
-        <div className="flex items-center justify-between mb-2">
-          <p className="text-xs md:text-sm font-medium text-purple-300 uppercase tracking-[0.2em]">
+        <div className="flex items-center justify-between mb-1 md:mb-2">
+          <p className="text-xs md:text-sm font-medium text-purple-300 uppercase tracking-[0.15em] md:tracking-[0.2em]">
             {method}
           </p>
         </div>
-        <p className="text-2xl md:text-3xl font-bold text-white mb-1">
+        <p className="text-xl md:text-2xl lg:text-3xl font-bold text-white mb-0.5 md:mb-1">
           {value}
         </p>
-        <p className="text-sm md:text-base text-purple-200 font-medium">
+        <p className="text-xs md:text-sm lg:text-base text-purple-200 font-medium">
           {formatAmountInWordsShort(amount)}
         </p>
       </div>
