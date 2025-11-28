@@ -6,11 +6,11 @@ import { useRouter } from 'next/navigation'
 import { SiteHeader } from '@/components/site-header'
 import { BottomNav } from '@/components/navigation/bottom-nav'
 import { TopNavMobile } from '@/components/navigation/top-nav-mobile'
-import { User, Building2, MapPin, Mail, ImageIcon, Lock } from 'lucide-react'
+import { User, Building2, MapPin, Mail, ImageIcon, Lock, LogOut } from 'lucide-react'
 import { EditProfileModal } from '@/components/profile/edit-profile-modal'
 import { ChangePasswordModal } from '@/components/profile/change-password-modal'
 import { UploadLogoModal } from '@/components/profile/upload-logo-modal'
-import { showError } from '@/lib/toast'
+import { showError, showSuccess } from '@/lib/toast'
 import { ProfileSkeleton } from '@/components/skeletons/profile-skeleton'
 import type { User as SupabaseUser } from '@supabase/supabase-js'
 
@@ -27,6 +27,8 @@ export default function ProfilePage() {
   const [user, setUser] = useState<SupabaseUser | null>(null)
   const [loading, setLoading] = useState(true)
   const [editingField, setEditingField] = useState<string | null>(null)
+  const [isLoggingOut, setIsLoggingOut] = useState(false)
+  const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
 
   const supabase = createClient()
   const router = useRouter()
@@ -88,6 +90,33 @@ export default function ProfilePage() {
       console.error('❌ Failed to update profile:', error)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'
       showError(`Failed to update profile: ${errorMessage}`)
+    }
+  }
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true)
+
+      // Sign out from Supabase
+      const { error } = await supabase.auth.signOut()
+
+      if (error) {
+        showError('Failed to logout: ' + error.message)
+        return
+      }
+
+      // Show success message
+      showSuccess('Logged out successfully')
+
+      // Redirect to login page
+      router.push('/auth/login')
+
+    } catch (error: unknown) {
+      console.error('Logout error:', error)
+      showError('Failed to logout')
+    } finally {
+      setIsLoggingOut(false)
+      setShowLogoutConfirm(false)
     }
   }
 
@@ -197,8 +226,21 @@ export default function ProfilePage() {
             buttonText="Change"
           />
 
+          {/* Logout Button */}
+          <div className="mt-8">
+            <button
+              onClick={() => setShowLogoutConfirm(true)}
+              disabled={isLoggingOut}
+              className="w-full max-w-md mx-auto px-6 py-3 bg-red-600 hover:bg-red-700 disabled:opacity-50 disabled:cursor-not-allowed text-white rounded-lg flex items-center justify-center gap-2 transition-colors font-medium"
+              aria-label="Logout"
+            >
+              <LogOut className="w-5 h-5" />
+              {isLoggingOut ? 'Logging out...' : 'Logout'}
+            </button>
+          </div>
+
           {/* Account Info */}
-          <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-6">
+          <div className="bg-purple-900/20 border border-purple-500/30 rounded-lg p-6 mt-6">
             <p className="text-purple-300 text-sm">
               Member since {new Date(profile?.created_at || '').toLocaleDateString('en-IN', {
                 day: 'numeric',
@@ -211,6 +253,44 @@ export default function ProfilePage() {
       </div>
 
       <BottomNav />
+
+      {/* Logout Confirmation Dialog */}
+      {showLogoutConfirm && (
+        <div
+          className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4"
+          onClick={(e) => {
+            if (e.target === e.currentTarget) {
+              setShowLogoutConfirm(false)
+            }
+          }}
+        >
+          <div className="bg-[#1a1a2e] border border-purple-500/30 rounded-lg max-w-md w-full p-6">
+            <h2 className="text-xl font-bold text-white mb-4">
+              Confirm Logout
+            </h2>
+            <p className="text-purple-200 mb-6">
+              Are you sure you want to logout?
+            </p>
+            <div className="flex gap-3">
+              <button
+                onClick={() => setShowLogoutConfirm(false)}
+                disabled={isLoggingOut}
+                className="flex-1 px-4 py-2 bg-purple-900/30 hover:bg-purple-900/50 text-white rounded-lg transition-colors disabled:opacity-50"
+              >
+                Cancel
+              </button>
+              <button
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="flex-1 px-4 py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg transition-colors disabled:opacity-50 font-medium"
+              >
+                {isLoggingOut ? 'Logging out...' : 'Logout'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
 
       {/* Edit Modals */}
       {editingField && editingField !== 'password' && editingField !== 'logo' && (
