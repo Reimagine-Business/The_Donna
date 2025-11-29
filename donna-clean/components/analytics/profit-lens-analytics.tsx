@@ -3,12 +3,10 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { TrendingUp, TrendingDown, DollarSign, Lightbulb, Download, RefreshCw } from 'lucide-react'
-import { Bar, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, Line, ComposedChart } from 'recharts'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { type Entry } from '@/app/entries/actions'
 import {
   getProfitMetrics,
-  getProfitTrend,
   getExpenseBreakdown,
   getRecommendations,
 } from '@/lib/profit-calculations-new'
@@ -29,7 +27,7 @@ function formatCurrency(amount: number): string {
 
 export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
   const router = useRouter()
-  const [dateRange, setDateRange] = useState<'month' | '3months' | '6months' | 'all'>('all')
+  const [dateRange, setDateRange] = useState<'month' | '3months' | '6months' | 'all'>('month')
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Log received data
@@ -113,7 +111,6 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
     return getProfitMetrics(entries, lastMonthStart, lastMonthEnd)
   }, [entries])
 
-  const profitTrend = useMemo(() => getProfitTrend(entries, dateRange === 'month' ? 3 : dateRange === '3months' ? 6 : dateRange === 'all' ? 12 : 12), [entries, dateRange])
   const expenseBreakdown = useMemo(() => getExpenseBreakdown(entries, startDate, endDate), [entries, startDate, endDate])
   const recommendations = useMemo(() => getRecommendations(entries, startDate, endDate), [entries, startDate, endDate])
 
@@ -246,26 +243,6 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
           percentage={currentMetrics.revenue > 0 ? (currentMetrics.grossProfit / currentMetrics.revenue) * 100 : 0}
           color="text-green-400"
         />
-      </div>
-
-      {/* Profit Trend Chart */}
-      <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Profit Trend</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <ComposedChart data={profitTrend}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#4c1d95" />
-            <XAxis dataKey="month" stroke="#a78bfa" style={{ fontSize: '12px' }} />
-            <YAxis yAxisId="left" stroke="#a78bfa" style={{ fontSize: '12px' }} />
-            <YAxis yAxisId="right" orientation="right" stroke="#10b981" style={{ fontSize: '12px' }} />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #7c3aed', borderRadius: '8px' }}
-              labelStyle={{ color: '#a78bfa' }}
-            />
-            <Legend />
-            <Bar yAxisId="left" dataKey="profit" fill="#8b5cf6" name="Profit" />
-            <Line yAxisId="right" type="monotone" dataKey="margin" stroke="#10b981" strokeWidth={2} name="Margin %" />
-          </ComposedChart>
-        </ResponsiveContainer>
       </div>
 
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">

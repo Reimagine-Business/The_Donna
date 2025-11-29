@@ -3,15 +3,12 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Download, RefreshCw } from 'lucide-react'
-import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, PieChart, Pie, Cell } from 'recharts'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { type Entry } from '@/app/entries/actions'
 import {
   calculateCashBalance,
   getTotalIncome,
   getTotalExpenses,
-  getExpensesByCategory,
-  getCashFlowTrend,
   getMonthlyComparison,
   getEntryCount,
 } from '@/lib/analytics-new'
@@ -20,8 +17,6 @@ import { showSuccess } from '@/lib/toast'
 interface CashPulseAnalyticsProps {
   entries: Entry[]
 }
-
-const COLORS = ['#8b5cf6', '#06b6d4', '#10b981', '#f59e0b', '#ef4444', '#ec4899']
 
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-IN', {
@@ -35,7 +30,6 @@ function formatCurrency(amount: number): string {
 export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
   const router = useRouter()
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year'>('month')
-  const [chartDays, setChartDays] = useState(30)
   const [isRefreshing, setIsRefreshing] = useState(false)
 
   // Refresh data on mount to ensure latest entries are shown
@@ -62,8 +56,6 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
   const totalIncome = useMemo(() => getTotalIncome(entries, startDate, endDate), [entries, startDate, endDate])
   const totalExpenses = useMemo(() => getTotalExpenses(entries, startDate, endDate), [entries, startDate, endDate])
   const monthlyComparison = useMemo(() => getMonthlyComparison(entries), [entries])
-  const expensesByCategory = useMemo(() => getExpensesByCategory(entries, startDate, endDate).slice(0, 5), [entries, startDate, endDate])
-  const cashFlowData = useMemo(() => getCashFlowTrend(entries, chartDays), [entries, chartDays])
   const incomeCount = useMemo(() => getEntryCount(entries, 'in', startDate, endDate), [entries, startDate, endDate])
   const expenseCount = useMemo(() => getEntryCount(entries, 'out', startDate, endDate), [entries, startDate, endDate])
 
@@ -147,10 +139,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
         <label className="text-purple-300 text-sm">Period:</label>
         <select
           value={dateRange}
-          onChange={(e) => {
-            setDateRange(e.target.value as 'month' | '3months' | 'year')
-            setChartDays(e.target.value === 'month' ? 30 : e.target.value === '3months' ? 90 : 365)
-          }}
+          onChange={(e) => setDateRange(e.target.value as 'month' | '3months' | 'year')}
           className="px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
         >
           <option value="month">This Month</option>
@@ -211,72 +200,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
         </div>
       </div>
 
-      {/* Cash Flow Chart */}
-      <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-6">
-        <h2 className="text-xl font-semibold text-white mb-4">Cash Flow Trend</h2>
-        <ResponsiveContainer width="100%" height={300}>
-          <LineChart data={cashFlowData}>
-            <CartesianGrid strokeDasharray="3 3" stroke="#4c1d95" />
-            <XAxis dataKey="date" stroke="#a78bfa" style={{ fontSize: '12px' }} />
-            <YAxis stroke="#a78bfa" style={{ fontSize: '12px' }} />
-            <Tooltip
-              contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #7c3aed', borderRadius: '8px' }}
-              labelStyle={{ color: '#a78bfa' }}
-            />
-            <Legend />
-            <Line type="monotone" dataKey="income" stroke="#10b981" strokeWidth={2} name="Income" />
-            <Line type="monotone" dataKey="expenses" stroke="#ef4444" strokeWidth={2} name="Expenses" />
-            <Line type="monotone" dataKey="net" stroke="#8b5cf6" strokeWidth={2} name="Net" />
-          </LineChart>
-        </ResponsiveContainer>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-        {/* Category Breakdown */}
-        <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-6">
-          <h2 className="text-xl font-semibold text-white mb-4">Expense by Category</h2>
-          {expensesByCategory.length > 0 ? (
-            <>
-              <ResponsiveContainer width="100%" height={250}>
-                <PieChart>
-                  <Pie
-                    data={expensesByCategory}
-                    cx="50%"
-                    cy="50%"
-                    labelLine={false}
-                    label={(entry) => `${entry.category} (${entry.percentage.toFixed(0)}%)`}
-                    outerRadius={80}
-                    fill="#8884d8"
-                    dataKey="amount"
-                  >
-                    {expensesByCategory.map((entry, index) => (
-                      <Cell key={`cell-${index}`} fill={COLORS[index % COLORS.length]} />
-                    ))}
-                  </Pie>
-                  <Tooltip
-                    contentStyle={{ backgroundColor: '#1a1a2e', border: '1px solid #7c3aed', borderRadius: '8px' }}
-                    formatter={(value: number) => formatCurrency(value)}
-                  />
-                </PieChart>
-              </ResponsiveContainer>
-              <div className="mt-4 space-y-2">
-                {expensesByCategory.map((cat, idx) => (
-                  <div key={cat.category} className="flex items-center justify-between text-sm">
-                    <div className="flex items-center gap-2">
-                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: COLORS[idx % COLORS.length] }} />
-                      <span className="text-purple-300">{cat.category}</span>
-                    </div>
-                    <span className="text-white font-medium">{formatCurrency(cat.amount)}</span>
-                  </div>
-                ))}
-              </div>
-            </>
-          ) : (
-            <p className="text-center text-purple-400 py-8">No expense data available</p>
-          )}
-        </div>
-
-        {/* Recent Transactions */}
+      {/* Recent Transactions */}
         <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-6">
           <h2 className="text-xl font-semibold text-white mb-4">Recent Transactions</h2>
           <div className="space-y-2 max-h-[350px] overflow-y-auto">
@@ -310,7 +234,6 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
             )}
           </div>
         </div>
-      </div>
     </div>
   )
 }
