@@ -14,7 +14,7 @@ import {
   getCashFlowTrend,
   getMonthlyComparison,
   getEntryCount,
-} from '@/lib/analytics'
+} from '@/lib/analytics-new'
 import { showSuccess } from '@/lib/toast'
 
 interface CashPulseAnalyticsProps {
@@ -64,8 +64,8 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
   const monthlyComparison = useMemo(() => getMonthlyComparison(entries), [entries])
   const expensesByCategory = useMemo(() => getExpensesByCategory(entries, startDate, endDate).slice(0, 5), [entries, startDate, endDate])
   const cashFlowData = useMemo(() => getCashFlowTrend(entries, chartDays), [entries, chartDays])
-  const incomeCount = useMemo(() => getEntryCount(entries, 'income', startDate, endDate), [entries, startDate, endDate])
-  const expenseCount = useMemo(() => getEntryCount(entries, 'expense', startDate, endDate), [entries, startDate, endDate])
+  const incomeCount = useMemo(() => getEntryCount(entries, 'in', startDate, endDate), [entries, startDate, endDate])
+  const expenseCount = useMemo(() => getEntryCount(entries, 'out', startDate, endDate), [entries, startDate, endDate])
 
   // Recent transactions
   const recentTransactions = useMemo(() => {
@@ -183,10 +183,10 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
           <div className="text-3xl font-bold text-white mb-2">{formatCurrency(totalIncome)}</div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-green-200">{incomeCount} entries</span>
-            {monthlyComparison.percentChange.income !== 0 && (
-              <span className={`text-sm flex items-center gap-1 ${monthlyComparison.percentChange.income >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-                {monthlyComparison.percentChange.income >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {Math.abs(monthlyComparison.percentChange.income).toFixed(1)}%
+            {monthlyComparison.percentChange.cashIn !== 0 && (
+              <span className={`text-sm flex items-center gap-1 ${monthlyComparison.percentChange.cashIn >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+                {monthlyComparison.percentChange.cashIn >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                {Math.abs(monthlyComparison.percentChange.cashIn).toFixed(1)}%
               </span>
             )}
           </div>
@@ -201,10 +201,10 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
           <div className="text-3xl font-bold text-white mb-2">{formatCurrency(totalExpenses)}</div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-red-200">{expenseCount} entries</span>
-            {monthlyComparison.percentChange.expenses !== 0 && (
-              <span className={`text-sm flex items-center gap-1 ${monthlyComparison.percentChange.expenses >= 0 ? 'text-red-400' : 'text-green-400'}`}>
-                {monthlyComparison.percentChange.expenses >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
-                {Math.abs(monthlyComparison.percentChange.expenses).toFixed(1)}%
+            {monthlyComparison.percentChange.cashOut !== 0 && (
+              <span className={`text-sm flex items-center gap-1 ${monthlyComparison.percentChange.cashOut >= 0 ? 'text-red-400' : 'text-green-400'}`}>
+                {monthlyComparison.percentChange.cashOut >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
+                {Math.abs(monthlyComparison.percentChange.cashOut).toFixed(1)}%
               </span>
             )}
           </div>
