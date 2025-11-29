@@ -34,8 +34,8 @@ export type CategoryExpense = {
 // - UNSETTLED Advance entries do NOT affect Profit Lens (not yet earned/incurred)
 // - Assets do NOT affect Profit Lens (not an expense)
 //
-// *CRITICAL: Cash IN/OUT entries from Credit settlements are EXCLUDED to prevent
-//  double-counting (P&L already recorded when Credit entry was created)
+// *CRITICAL: Cash IN/OUT entries with notes starting "Settlement of" are EXCLUDED
+//  to prevent double-counting (P&L already recorded when original entry was created)
 //
 // Settlement Logic:
 // - Credit entries: Create new Cash IN/OUT when settled (for Cash Pulse only, NOT P&L)
@@ -61,8 +61,8 @@ export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: D
   let filtered = entries.filter(e =>
     e.category === 'Sales' &&
     (
-      // Cash IN ONLY if NOT a Credit settlement (prevents double-counting)
-      (e.entry_type === 'Cash IN' && !e.notes?.startsWith('Settlement of Credit')) ||
+      // Cash IN ONLY if NOT a settlement entry (prevents double-counting)
+      (e.entry_type === 'Cash IN' && !e.notes?.startsWith('Settlement of')) ||
       e.entry_type === 'Credit' ||
       (e.entry_type === 'Advance' && e.settled === true)  // ✅ Include settled Advance
     )
@@ -103,8 +103,8 @@ export function calculateCOGS(entries: Entry[], startDate?: Date, endDate?: Date
   let filtered = entries.filter(e =>
     e.category === 'COGS' &&
     (
-      // Cash OUT ONLY if NOT a Credit settlement (prevents double-counting)
-      (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of Credit')) ||
+      // Cash OUT ONLY if NOT a settlement entry (prevents double-counting)
+      (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of')) ||
       e.entry_type === 'Credit' ||
       (e.entry_type === 'Advance' && e.settled === true)  // ✅ Include settled Advance
     )
@@ -146,8 +146,8 @@ export function calculateOperatingExpenses(entries: Entry[], startDate?: Date, e
   let filtered = entries.filter(e =>
     e.category === 'Opex' &&
     (
-      // Cash OUT ONLY if NOT a Credit settlement (prevents double-counting)
-      (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of Credit')) ||
+      // Cash OUT ONLY if NOT a settlement entry (prevents double-counting)
+      (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of')) ||
       e.entry_type === 'Credit' ||
       (e.entry_type === 'Advance' && e.settled === true)  // ✅ Include settled Advance
     )
@@ -209,13 +209,13 @@ export function getProfitTrend(entries: Entry[], months: number = 6): ProfitTren
 
     const revenue = calculateRevenue(entries, monthStart, monthEnd)
 
-    // Total expenses = COGS + Opex (excluding Credit settlements to avoid double-counting)
+    // Total expenses = COGS + Opex (excluding ALL settlements to avoid double-counting)
     const totalExpenses = entries
       .filter(e =>
         ['COGS', 'Opex'].includes(e.category) &&
         (
-          // Cash OUT ONLY if NOT a Credit settlement (prevents double-counting)
-          (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of Credit')) ||
+          // Cash OUT ONLY if NOT a settlement entry (prevents double-counting)
+          (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of')) ||
           e.entry_type === 'Credit' ||
           (e.entry_type === 'Advance' && e.settled === true)  // ✅ Include settled Advance
         )
@@ -242,12 +242,12 @@ export function getProfitTrend(entries: Entry[], months: number = 6): ProfitTren
 // Get expense breakdown by category with percentages (COGS + Opex only, NO Sales, NO Assets)
 export function getExpenseBreakdown(entries: Entry[], startDate?: Date, endDate?: Date): CategoryExpense[] {
   // CRITICAL FIX for Bug B8: Only include COGS and Opex, NEVER Sales or Assets
-  // Exclude Credit settlements to avoid double-counting
+  // Exclude ALL settlement entries to avoid double-counting
   let filtered = entries.filter(e =>
     ['COGS', 'Opex'].includes(e.category) &&
     (
-      // Cash OUT ONLY if NOT a Credit settlement (prevents double-counting)
-      (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of Credit')) ||
+      // Cash OUT ONLY if NOT a settlement entry (prevents double-counting)
+      (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of')) ||
       e.entry_type === 'Credit' ||
       (e.entry_type === 'Advance' && e.settled === true)  // Include settled Advance
     )
