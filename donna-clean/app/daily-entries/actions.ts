@@ -79,7 +79,7 @@ export async function addEntry(data: AddEntryInput) {
     .limit(1);
 
   revalidatePath("/daily-entries");
-  revalidatePath("/cashpulse");
+  revalidatePath("/analytics/cashpulse");
   revalidatePath("/analytics/profitlens");
 
   return { success: true };
@@ -149,7 +149,7 @@ export async function updateEntry(entryId: string, data: UpdateEntryInput) {
   }
 
   revalidatePath("/daily-entries");
-  revalidatePath("/cashpulse");
+  revalidatePath("/analytics/cashpulse");
   revalidatePath("/analytics/profitlens");
 
   return { success: true };
@@ -182,7 +182,7 @@ export async function deleteEntry(entryId: string) {
   }
 
   revalidatePath("/daily-entries");
-  revalidatePath("/cashpulse");
+  revalidatePath("/analytics/cashpulse");
   revalidatePath("/analytics/profitlens");
 
   return { success: true };
