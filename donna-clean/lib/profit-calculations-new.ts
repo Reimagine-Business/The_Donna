@@ -28,18 +28,26 @@ export type CategoryExpense = {
 // PROFIT LENS LOGIC (Accrual-basis accounting)
 // ═══════════════════════════════════════════════════════════
 // Profit Lens tracks revenue and expenses when earned/incurred:
-// - Revenue: Cash Inflow (Sales) + Credit (Sales) ONLY
-// - COGS: Cash Outflow (COGS) + Credit (COGS) ONLY
-// - OpEx: Cash Outflow (Opex) + Credit (Opex) ONLY
-// - Advance entries do NOT affect Profit Lens
+// - Revenue: Cash IN (Sales) + Credit (Sales) + SETTLED Advance (Sales)
+// - COGS: Cash OUT (COGS) + Credit (COGS) + SETTLED Advance (COGS)
+// - OpEx: Cash OUT (Opex) + Credit (Opex) + SETTLED Advance (Opex)
+// - UNSETTLED Advance entries do NOT affect Profit Lens (not yet earned/incurred)
 // - Assets do NOT affect Profit Lens (not an expense)
+//
+// Settlement Logic:
+// - Credit entries: Create new Cash IN/OUT when settled (P&L already recorded)
+// - Advance entries: Mark as settled (P&L recorded ONLY when settled)
 // ═══════════════════════════════════════════════════════════
 
-// Calculate revenue (Sales from Cash Inflow + Credit only)
+// Calculate revenue (Sales from Cash IN + Credit + Settled Advance)
 export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: Date): number {
   let filtered = entries.filter(e =>
     e.category === 'Sales' &&
-    (e.entry_type === 'Cash IN' || e.entry_type === 'Credit')
+    (
+      e.entry_type === 'Cash IN' ||
+      e.entry_type === 'Credit' ||
+      (e.entry_type === 'Advance' && e.settled === true)  // ✅ FIX B6: Include settled Advance
+    )
   )
 
   if (startDate) {
@@ -52,11 +60,15 @@ export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: D
   return filtered.reduce((sum, e) => sum + e.amount, 0)
 }
 
-// Calculate COGS (Cost of Goods Sold from Cash Outflow + Credit only)
+// Calculate COGS (Cost of Goods Sold from Cash OUT + Credit + Settled Advance)
 export function calculateCOGS(entries: Entry[], startDate?: Date, endDate?: Date): number {
   let filtered = entries.filter(e =>
     e.category === 'COGS' &&
-    (e.entry_type === 'Cash OUT' || e.entry_type === 'Credit')
+    (
+      e.entry_type === 'Cash OUT' ||
+      e.entry_type === 'Credit' ||
+      (e.entry_type === 'Advance' && e.settled === true)  // ✅ FIX B7: Include settled Advance
+    )
   )
 
   if (startDate) {
@@ -74,11 +86,15 @@ export function calculateGrossProfit(revenue: number, cogs: number): number {
   return revenue - cogs
 }
 
-// Calculate Operating Expenses (Opex from Cash Outflow + Credit only, NO Assets)
+// Calculate Operating Expenses (Opex from Cash OUT + Credit + Settled Advance, NO Assets)
 export function calculateOperatingExpenses(entries: Entry[], startDate?: Date, endDate?: Date): number {
   let filtered = entries.filter(e =>
     e.category === 'Opex' &&
-    (e.entry_type === 'Cash OUT' || e.entry_type === 'Credit')
+    (
+      e.entry_type === 'Cash OUT' ||
+      e.entry_type === 'Credit' ||
+      (e.entry_type === 'Advance' && e.settled === true)  // ✅ FIX B7: Include settled Advance
+    )
   )
 
   if (startDate) {
@@ -132,11 +148,15 @@ export function getProfitTrend(entries: Entry[], months: number = 6): ProfitTren
 
     const revenue = calculateRevenue(entries, monthStart, monthEnd)
 
-    // Total expenses = COGS + Opex (from Cash Outflow + Credit only)
+    // Total expenses = COGS + Opex (from Cash OUT + Credit + Settled Advance)
     const totalExpenses = entries
       .filter(e =>
         ['COGS', 'Opex'].includes(e.category) &&
-        (e.entry_type === 'Cash OUT' || e.entry_type === 'Credit')
+        (
+          e.entry_type === 'Cash OUT' ||
+          e.entry_type === 'Credit' ||
+          (e.entry_type === 'Advance' && e.settled === true)  // ✅ FIX B7: Include settled Advance
+        )
       )
       .filter(e => {
         const entryDate = new Date(e.entry_date)
@@ -160,9 +180,14 @@ export function getProfitTrend(entries: Entry[], months: number = 6): ProfitTren
 // Get expense breakdown by category with percentages (COGS + Opex only, NO Sales, NO Assets)
 export function getExpenseBreakdown(entries: Entry[], startDate?: Date, endDate?: Date): CategoryExpense[] {
   // CRITICAL FIX for Bug B8: Only include COGS and Opex, NEVER Sales or Assets
+  // ✅ FIX B7: Include settled Advance entries
   let filtered = entries.filter(e =>
     ['COGS', 'Opex'].includes(e.category) &&
-    (e.entry_type === 'Cash OUT' || e.entry_type === 'Credit')
+    (
+      e.entry_type === 'Cash OUT' ||
+      e.entry_type === 'Credit' ||
+      (e.entry_type === 'Advance' && e.settled === true)  // Include settled Advance
+    )
   )
 
   if (startDate) {
