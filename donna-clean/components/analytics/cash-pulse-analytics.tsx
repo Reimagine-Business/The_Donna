@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Banknote, Building2, Clock, Download, RefreshCw } from 'lucide-react'
+import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Banknote, Building2, Clock, Download, RefreshCw, Trash2, DollarSign, Receipt } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { type Entry } from '@/app/entries/actions'
 import {
@@ -12,12 +12,14 @@ import {
   getMonthlyComparison,
   getEntryCount,
 } from '@/lib/analytics-new'
-import { showSuccess } from '@/lib/toast'
+import { showSuccess, showError } from '@/lib/toast'
+import { deleteSettlement } from '@/lib/settlements'
 
 interface CashPulseAnalyticsProps {
   entries: Entry[]
 }
 
+// Standard currency formatter
 function formatCurrency(amount: number): string {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -27,10 +29,27 @@ function formatCurrency(amount: number): string {
   }).format(amount)
 }
 
+// Lakhs formatter (1,00,000 style) for large amounts
+function formatCurrencyLakhs(amount: number): string {
+  const absAmount = Math.abs(amount)
+  const sign = amount < 0 ? '-' : ''
+
+  if (absAmount >= 10000000) { // 1 Crore or more
+    const crores = absAmount / 10000000
+    return `${sign}₹${crores.toFixed(2)} Cr`
+  } else if (absAmount >= 100000) { // 1 Lakh or more
+    const lakhs = absAmount / 100000
+    return `${sign}₹${lakhs.toFixed(2)} L`
+  } else {
+    return formatCurrency(amount)
+  }
+}
+
 export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
   const router = useRouter()
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year'>('month')
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [deletingSettlement, setDeletingSettlement] = useState<string | null>(null)
 
   // Refresh data on mount to ensure latest entries are shown
   useEffect(() => {
@@ -94,6 +113,50 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
     return { count, amount }
   }, [entries])
 
+  // Calculate Pending Bills (unsettled Advance entries where category is COGS/Opex/Assets)
+  const pendingBills = useMemo(() => {
+    const unsettledAdvances = entries.filter(
+      e => e.entry_type === 'Advance' &&
+      !e.settled &&
+      ['COGS', 'Opex', 'Assets'].includes(e.category)
+    )
+    const count = unsettledAdvances.length
+    const amount = unsettledAdvances.reduce((sum, e) => sum + (e.remaining_amount || e.amount), 0)
+    return { count, amount }
+  }, [entries])
+
+  // Calculate Advance metrics (all Advance type entries)
+  const advanceMetrics = useMemo(() => {
+    const advanceEntries = entries.filter(e => e.entry_type === 'Advance')
+    const totalAdvances = advanceEntries.length
+
+    // Advances given (Sales category)
+    const advancesGiven = advanceEntries.filter(e => e.category === 'Sales')
+    const givenCount = advancesGiven.length
+    const givenAmount = advancesGiven.reduce((sum, e) => sum + e.amount, 0)
+    const givenUnsettled = advancesGiven.filter(e => !e.settled).reduce((sum, e) => sum + (e.remaining_amount || e.amount), 0)
+
+    // Advances taken (COGS/Opex/Assets categories)
+    const advancesTaken = advanceEntries.filter(e => ['COGS', 'Opex', 'Assets'].includes(e.category))
+    const takenCount = advancesTaken.length
+    const takenAmount = advancesTaken.reduce((sum, e) => sum + e.amount, 0)
+    const takenUnsettled = advancesTaken.filter(e => !e.settled).reduce((sum, e) => sum + (e.remaining_amount || e.amount), 0)
+
+    return {
+      total: totalAdvances,
+      given: { count: givenCount, amount: givenAmount, unsettled: givenUnsettled },
+      taken: { count: takenCount, amount: takenAmount, unsettled: takenUnsettled }
+    }
+  }, [entries])
+
+  // Get Settlement History (settled Credit and Advance entries)
+  const settlementHistory = useMemo(() => {
+    return entries
+      .filter(e => (e.entry_type === 'Credit' || e.entry_type === 'Advance') && e.settled && e.settled_at)
+      .sort((a, b) => new Date(b.settled_at!).getTime() - new Date(a.settled_at!).getTime())
+      .slice(0, 10) // Show last 10 settlements
+  }, [entries])
+
   // Manual refresh
   const handleRefresh = async () => {
     setIsRefreshing(true)
@@ -130,6 +193,25 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
     document.body.removeChild(a)
     window.URL.revokeObjectURL(url)
     showSuccess('Exported to CSV successfully!')
+  }
+
+  // Delete settlement
+  const handleDeleteSettlement = async (entryId: string) => {
+    if (!confirm('Are you sure you want to delete this settlement? This will mark the entry as unsettled.')) {
+      return
+    }
+
+    setDeletingSettlement(entryId)
+    try {
+      await deleteSettlement(entryId)
+      showSuccess('Settlement deleted successfully!')
+      router.refresh()
+    } catch (error) {
+      showError('Failed to delete settlement')
+      console.error('Error deleting settlement:', error)
+    } finally {
+      setDeletingSettlement(null)
+    }
   }
 
   return (
@@ -174,32 +256,41 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
         </select>
       </div>
 
-      {/* Top Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {/* Cash Balance */}
-        <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 border border-purple-500/30 rounded-lg p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Wallet className="w-5 h-5 text-purple-400" />
-            <span className="text-sm text-purple-300 uppercase tracking-wider">Cash Balance</span>
+      {/* SECTION 1: Cash Balance - Large prominent card */}
+      <div className="bg-gradient-to-br from-purple-900/60 to-purple-800/60 border-2 border-purple-500/40 rounded-xl p-8 shadow-2xl">
+        <div className="flex items-center gap-3 mb-4">
+          <div className="p-3 bg-purple-500/20 rounded-lg">
+            <Wallet className="w-8 h-8 text-purple-300" />
           </div>
-          <div className="text-3xl font-bold text-white mb-2">{formatCurrency(cashBalance)}</div>
-          <div className={`flex items-center gap-1 text-sm ${cashBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
-            {cashBalance >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
-            <span>{cashBalance >= 0 ? 'Positive' : 'Negative'}</span>
+          <div>
+            <span className="text-sm text-purple-300 uppercase tracking-wider">Total Cash Balance</span>
+            <p className="text-xs text-purple-400 mt-1">As of {format(new Date(), 'dd MMM yyyy')}</p>
           </div>
         </div>
+        <div className="text-5xl md:text-6xl font-bold text-white mb-4">
+          {formatCurrencyLakhs(cashBalance)}
+        </div>
+        <div className={`flex items-center gap-2 text-lg ${cashBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+          {cashBalance >= 0 ? <TrendingUp className="w-5 h-5" /> : <TrendingDown className="w-5 h-5" />}
+          <span className="font-semibold">{cashBalance >= 0 ? 'Positive Cash Flow' : 'Negative Cash Flow'}</span>
+        </div>
+      </div>
 
+      {/* SECTION 2: Cash IN and Cash OUT - Side by side cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Cash IN */}
-        <div className="bg-gradient-to-br from-green-900/20 to-green-800/10 border-2 border-green-500 rounded-lg p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowUpRight className="w-5 h-5 text-green-400" />
-            <span className="text-sm text-green-300 uppercase tracking-wider">Cash IN</span>
+        <div className="bg-gradient-to-br from-green-900/30 to-green-800/20 border-2 border-green-500/50 rounded-lg p-6 shadow-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-green-500/20 rounded-lg">
+              <ArrowUpRight className="w-6 h-6 text-green-400" />
+            </div>
+            <span className="text-base text-green-300 uppercase tracking-wider font-semibold">Cash IN</span>
           </div>
-          <div className="text-3xl font-bold text-white mb-2">{formatCurrency(totalCashIn)}</div>
+          <div className="text-4xl font-bold text-white mb-3">{formatCurrencyLakhs(totalCashIn)}</div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-green-200">{cashInCount} entries</span>
             {monthlyComparison.percentChange.cashIn !== 0 && (
-              <span className={`text-sm flex items-center gap-1 ${monthlyComparison.percentChange.cashIn >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+              <span className={`text-sm flex items-center gap-1 font-semibold ${monthlyComparison.percentChange.cashIn >= 0 ? 'text-green-400' : 'text-red-400'}`}>
                 {monthlyComparison.percentChange.cashIn >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                 {Math.abs(monthlyComparison.percentChange.cashIn).toFixed(1)}%
               </span>
@@ -208,16 +299,18 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
         </div>
 
         {/* Cash OUT */}
-        <div className="bg-gradient-to-br from-red-900/20 to-red-800/10 border-2 border-red-500 rounded-lg p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <ArrowDownRight className="w-5 h-5 text-red-400" />
-            <span className="text-sm text-red-300 uppercase tracking-wider">Cash OUT</span>
+        <div className="bg-gradient-to-br from-red-900/30 to-red-800/20 border-2 border-red-500/50 rounded-lg p-6 shadow-lg">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-red-500/20 rounded-lg">
+              <ArrowDownRight className="w-6 h-6 text-red-400" />
+            </div>
+            <span className="text-base text-red-300 uppercase tracking-wider font-semibold">Cash OUT</span>
           </div>
-          <div className="text-3xl font-bold text-white mb-2">{formatCurrency(totalCashOut)}</div>
+          <div className="text-4xl font-bold text-white mb-3">{formatCurrencyLakhs(totalCashOut)}</div>
           <div className="flex items-center justify-between">
             <span className="text-sm text-red-200">{cashOutCount} entries</span>
             {monthlyComparison.percentChange.cashOut !== 0 && (
-              <span className={`text-sm flex items-center gap-1 ${monthlyComparison.percentChange.cashOut >= 0 ? 'text-red-400' : 'text-green-400'}`}>
+              <span className={`text-sm flex items-center gap-1 font-semibold ${monthlyComparison.percentChange.cashOut >= 0 ? 'text-red-400' : 'text-green-400'}`}>
                 {monthlyComparison.percentChange.cashOut >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
                 {Math.abs(monthlyComparison.percentChange.cashOut).toFixed(1)}%
               </span>
@@ -226,51 +319,199 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
         </div>
       </div>
 
-      {/* Cash vs Bank Breakdown */}
+      {/* SECTION 3: Cash vs Bank Breakdown */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Cash */}
-        <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Banknote className="w-5 h-5 text-purple-400" />
-            <span className="text-sm text-purple-300 uppercase tracking-wider">Cash</span>
+        <div className="bg-purple-900/20 border-2 border-purple-500/30 rounded-lg p-6 shadow-md">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <Banknote className="w-6 h-6 text-purple-400" />
+            </div>
+            <span className="text-base text-purple-300 uppercase tracking-wider font-semibold">Cash</span>
           </div>
-          <div className="text-3xl font-bold text-white">{formatCurrency(cashAmount)}</div>
+          <div className="text-3xl font-bold text-white">{formatCurrencyLakhs(cashAmount)}</div>
+          <p className="text-xs text-purple-400 mt-2">Physical cash on hand</p>
         </div>
 
         {/* Bank */}
-        <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-6">
-          <div className="flex items-center gap-2 mb-2">
-            <Building2 className="w-5 h-5 text-purple-400" />
-            <span className="text-sm text-purple-300 uppercase tracking-wider">Bank</span>
+        <div className="bg-purple-900/20 border-2 border-purple-500/30 rounded-lg p-6 shadow-md">
+          <div className="flex items-center gap-2 mb-3">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <Building2 className="w-6 h-6 text-purple-400" />
+            </div>
+            <span className="text-base text-purple-300 uppercase tracking-wider font-semibold">Bank</span>
           </div>
-          <div className="text-3xl font-bold text-white">{formatCurrency(bankAmount)}</div>
+          <div className="text-3xl font-bold text-white">{formatCurrencyLakhs(bankAmount)}</div>
+          <p className="text-xs text-purple-400 mt-2">Bank account balance</p>
         </div>
       </div>
 
-      {/* Pending Collections */}
-      <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-6">
+      {/* SECTION 4: Pending Collections */}
+      <div className="bg-yellow-900/10 border-2 border-yellow-500/30 rounded-lg p-6 shadow-md">
         <div className="flex items-center gap-2 mb-4">
-          <Clock className="w-5 h-5 text-yellow-400" />
+          <div className="p-2 bg-yellow-500/20 rounded-lg">
+            <Clock className="w-6 h-6 text-yellow-400" />
+          </div>
           <h2 className="text-xl font-semibold text-white">Pending Collections</h2>
         </div>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          <div>
-            <p className="text-sm text-purple-300 mb-1">No of Pending</p>
-            <p className="text-2xl font-bold text-white">{pendingCollections.count}</p>
+          <div className="bg-purple-900/20 rounded-lg p-4">
+            <p className="text-sm text-purple-300 mb-2">No of Pending</p>
+            <p className="text-3xl font-bold text-white">{pendingCollections.count}</p>
           </div>
-          <div>
-            <p className="text-sm text-purple-300 mb-1">Amount to Collect</p>
-            <p className="text-2xl font-bold text-yellow-400">{formatCurrency(pendingCollections.amount)}</p>
+          <div className="bg-purple-900/20 rounded-lg p-4">
+            <p className="text-sm text-purple-300 mb-2">Amount to Collect</p>
+            <p className="text-3xl font-bold text-yellow-400">{formatCurrencyLakhs(pendingCollections.amount)}</p>
           </div>
           <div className="flex items-end">
             <button
               onClick={() => router.push('/daily-entries')}
-              className="px-4 py-2 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors w-full md:w-auto"
+              className="px-6 py-3 bg-yellow-600 hover:bg-yellow-700 text-white rounded-lg transition-colors w-full font-semibold shadow-md"
             >
               Settle Collections
             </button>
           </div>
         </div>
+      </div>
+
+      {/* SECTION 5: Pending Bills */}
+      <div className="bg-orange-900/10 border-2 border-orange-500/30 rounded-lg p-6 shadow-md">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-2 bg-orange-500/20 rounded-lg">
+            <Receipt className="w-6 h-6 text-orange-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-white">Pending Bills</h2>
+        </div>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+          <div className="bg-purple-900/20 rounded-lg p-4">
+            <p className="text-sm text-purple-300 mb-2">No of Pending</p>
+            <p className="text-3xl font-bold text-white">{pendingBills.count}</p>
+          </div>
+          <div className="bg-purple-900/20 rounded-lg p-4">
+            <p className="text-sm text-purple-300 mb-2">Amount to Pay</p>
+            <p className="text-3xl font-bold text-orange-400">{formatCurrencyLakhs(pendingBills.amount)}</p>
+          </div>
+          <div className="flex items-end">
+            <button
+              onClick={() => router.push('/daily-entries')}
+              className="px-6 py-3 bg-orange-600 hover:bg-orange-700 text-white rounded-lg transition-colors w-full font-semibold shadow-md"
+            >
+              Settle Bills
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 6: Advance */}
+      <div className="bg-blue-900/10 border-2 border-blue-500/30 rounded-lg p-6 shadow-md">
+        <div className="flex items-center gap-2 mb-4">
+          <div className="p-2 bg-blue-500/20 rounded-lg">
+            <DollarSign className="w-6 h-6 text-blue-400" />
+          </div>
+          <h2 className="text-xl font-semibold text-white">Advance</h2>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+          {/* Advance Given (Sales) */}
+          <div className="bg-purple-900/20 rounded-lg p-4 border border-green-500/20">
+            <p className="text-sm text-green-300 mb-3 font-semibold">Advance Given (Sales)</p>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-purple-300">Total Count:</span>
+                <span className="text-lg font-bold text-white">{advanceMetrics.given.count}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-purple-300">Total Amount:</span>
+                <span className="text-lg font-bold text-white">{formatCurrency(advanceMetrics.given.amount)}</span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-purple-500/20">
+                <span className="text-xs text-yellow-300">Unsettled:</span>
+                <span className="text-xl font-bold text-yellow-400">{formatCurrency(advanceMetrics.given.unsettled)}</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Advance Taken (COGS/Opex/Assets) */}
+          <div className="bg-purple-900/20 rounded-lg p-4 border border-red-500/20">
+            <p className="text-sm text-red-300 mb-3 font-semibold">Advance Taken (Expenses)</p>
+            <div className="space-y-2">
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-purple-300">Total Count:</span>
+                <span className="text-lg font-bold text-white">{advanceMetrics.taken.count}</span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-purple-300">Total Amount:</span>
+                <span className="text-lg font-bold text-white">{formatCurrency(advanceMetrics.taken.amount)}</span>
+              </div>
+              <div className="flex justify-between items-center pt-2 border-t border-purple-500/20">
+                <span className="text-xs text-orange-300">Unsettled:</span>
+                <span className="text-xl font-bold text-orange-400">{formatCurrency(advanceMetrics.taken.unsettled)}</span>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <div className="bg-purple-900/20 rounded-lg p-4">
+          <div className="flex justify-between items-center">
+            <span className="text-sm text-purple-300">Total Advance Entries:</span>
+            <span className="text-2xl font-bold text-blue-400">{advanceMetrics.total}</span>
+          </div>
+        </div>
+      </div>
+
+      {/* SECTION 7: Settlement History */}
+      <div className="bg-purple-900/10 border-2 border-purple-500/30 rounded-lg p-6 shadow-md">
+        <div className="flex items-center justify-between mb-4">
+          <div className="flex items-center gap-2">
+            <div className="p-2 bg-purple-500/20 rounded-lg">
+              <TrendingUp className="w-6 h-6 text-purple-400" />
+            </div>
+            <h2 className="text-xl font-semibold text-white">Settlement History</h2>
+          </div>
+          <span className="text-sm text-purple-400">Last 10 settlements</span>
+        </div>
+
+        {settlementHistory.length === 0 ? (
+          <div className="text-center py-8 text-purple-400">
+            No settlements found
+          </div>
+        ) : (
+          <div className="space-y-3">
+            {settlementHistory.map((entry) => (
+              <div
+                key={entry.id}
+                className="bg-purple-900/20 rounded-lg p-4 flex items-center justify-between hover:bg-purple-900/30 transition-colors"
+              >
+                <div className="flex-1">
+                  <div className="flex items-center gap-3 mb-2">
+                    <span className={`px-3 py-1 rounded-full text-xs font-semibold ${
+                      entry.entry_type === 'Credit'
+                        ? 'bg-green-500/20 text-green-300'
+                        : 'bg-blue-500/20 text-blue-300'
+                    }`}>
+                      {entry.entry_type}
+                    </span>
+                    <span className="text-white font-semibold">{formatCurrency(entry.amount)}</span>
+                    <span className="text-purple-400 text-sm">{entry.category}</span>
+                  </div>
+                  <div className="flex items-center gap-4 text-xs text-purple-400">
+                    <span>Entry: {format(new Date(entry.entry_date), 'dd MMM yyyy')}</span>
+                    <span>Settled: {entry.settled_at ? format(new Date(entry.settled_at), 'dd MMM yyyy') : 'N/A'}</span>
+                    {entry.notes && <span className="truncate max-w-xs">{entry.notes}</span>}
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleDeleteSettlement(entry.id)}
+                  disabled={deletingSettlement === entry.id}
+                  className="ml-4 p-2 bg-red-900/30 hover:bg-red-900/50 text-red-400 rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                  aria-label="Delete settlement"
+                >
+                  <Trash2 className={`w-5 h-5 ${deletingSettlement === entry.id ? 'animate-pulse' : ''}`} />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
       </div>
     </div>
   )
