@@ -1,11 +1,33 @@
-import { NextResponse } from 'next/server'
+'use server'
+
 import { createSupabaseServerClient } from '@/utils/supabase/server'
 
-/**
- * Admin API endpoint to migrate entry types
- * POST /admin/migrate-entry-types
- */
-export async function POST() {
+export type MigrationResult = {
+  success: boolean
+  error?: string
+  results?: {
+    before: {
+      cashInflow: number
+      cashOutflow: number
+    }
+    updated: {
+      cashIn: number
+      cashOut: number
+    }
+    after: {
+      cashIN: number
+      cashOUT: number
+      credit: number
+      advance: number
+    }
+    remaining: {
+      oldCashInflow: number
+      oldCashOutflow: number
+    }
+  }
+}
+
+export async function runMigration(): Promise<MigrationResult> {
   try {
     const supabase = await createSupabaseServerClient()
 
@@ -34,10 +56,10 @@ export async function POST() {
 
     if (inflowError) {
       console.error('Error updating Cash Inflow entries:', inflowError)
-      return NextResponse.json(
-        { error: 'Failed to update Cash Inflow entries', details: inflowError },
-        { status: 500 }
-      )
+      return {
+        success: false,
+        error: `Failed to update Cash Inflow entries: ${inflowError.message}`
+      }
     }
 
     console.log(`✓ Updated ${inflowData?.length || 0} Cash Inflow entries to Cash IN`)
@@ -51,10 +73,10 @@ export async function POST() {
 
     if (outflowError) {
       console.error('Error updating Cash Outflow entries:', outflowError)
-      return NextResponse.json(
-        { error: 'Failed to update Cash Outflow entries', details: outflowError },
-        { status: 500 }
-      )
+      return {
+        success: false,
+        error: `Failed to update Cash Outflow entries: ${outflowError.message}`
+      }
     }
 
     console.log(`✓ Updated ${outflowData?.length || 0} Cash Outflow entries to Cash OUT`)
@@ -91,9 +113,8 @@ export async function POST() {
       .select('*', { count: 'exact', head: true })
       .eq('entry_type', 'Cash Outflow')
 
-    return NextResponse.json({
+    return {
       success: true,
-      message: 'Migration completed successfully',
       results: {
         before: {
           cashInflow: beforeInflowCount || 0,
@@ -114,13 +135,13 @@ export async function POST() {
           oldCashOutflow: remainingOutflowCount || 0
         }
       }
-    })
+    }
 
   } catch (error) {
     console.error('Migration error:', error)
-    return NextResponse.json(
-      { error: 'Migration failed', details: error instanceof Error ? error.message : 'Unknown error' },
-      { status: 500 }
-    )
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error occurred'
+    }
   }
 }
