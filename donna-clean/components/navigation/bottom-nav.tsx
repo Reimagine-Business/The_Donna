@@ -9,7 +9,7 @@ const navItems = [
   { href: "/home", label: "Home", icon: Home },
   { href: "/daily-entries", label: "Entries", icon: Edit3 },
   { href: "/cashpulse", label: "Cashpulse", icon: TrendingUp },
-  { href: "/profit-lens", label: "Profit Lens", icon: Search },
+  { href: "/analytics/profitlens", label: "Profit Lens", icon: Search },
   { href: "/alerts", label: "Alerts", icon: Bell },
 ];
 

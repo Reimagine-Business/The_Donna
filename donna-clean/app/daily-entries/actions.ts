@@ -80,7 +80,7 @@ export async function addEntry(data: AddEntryInput) {
 
   revalidatePath("/daily-entries");
   revalidatePath("/cashpulse");
-  revalidatePath("/profit-lens");
+  revalidatePath("/analytics/profitlens");
 
   return { success: true };
 }
@@ -150,7 +150,7 @@ export async function updateEntry(entryId: string, data: UpdateEntryInput) {
 
   revalidatePath("/daily-entries");
   revalidatePath("/cashpulse");
-  revalidatePath("/profit-lens");
+  revalidatePath("/analytics/profitlens");
 
   return { success: true };
 }
@@ -183,7 +183,7 @@ export async function deleteEntry(entryId: string) {
 
   revalidatePath("/daily-entries");
   revalidatePath("/cashpulse");
-  revalidatePath("/profit-lens");
+  revalidatePath("/analytics/profitlens");
 
   return { success: true };
 }
