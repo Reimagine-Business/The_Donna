@@ -339,7 +339,6 @@ export async function createEntry(input: CreateEntryInput) {
 
   console.log('🔄 [CREATE ENTRY] REVALIDATING PATHS...')
   revalidatePath('/entries')
-  revalidatePath('/cashpulse')
   revalidatePath('/analytics/cashpulse')
   revalidatePath('/analytics/profitlens')
   revalidatePath('/home')
@@ -430,7 +429,6 @@ export async function updateEntry(id: string, input: UpdateEntryInput) {
 
   console.log('🔄 [UPDATE ENTRY] REVALIDATING PATHS...')
   revalidatePath('/entries')
-  revalidatePath('/cashpulse')
   revalidatePath('/analytics/cashpulse')
   revalidatePath('/analytics/profitlens')
   revalidatePath('/home')
@@ -460,7 +458,6 @@ export async function deleteEntry(id: string) {
 
   console.log('🔄 [DELETE ENTRY] REVALIDATING PATHS...')
   revalidatePath('/entries')
-  revalidatePath('/cashpulse')
   revalidatePath('/analytics/cashpulse')
   revalidatePath('/analytics/profitlens')
   revalidatePath('/home')
