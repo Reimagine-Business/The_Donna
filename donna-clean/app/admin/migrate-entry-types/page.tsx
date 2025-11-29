@@ -1,35 +1,24 @@
 'use client'
 
 import { useState } from 'react'
+import { runMigration, type MigrationResult } from './actions'
 
 export default function MigrateEntryTypesPage() {
   const [loading, setLoading] = useState(false)
-  const [result, setResult] = useState<any>(null)
-  const [error, setError] = useState<string | null>(null)
+  const [result, setResult] = useState<MigrationResult | null>(null)
 
-  const runMigration = async () => {
+  const handleMigration = async () => {
     setLoading(true)
-    setError(null)
     setResult(null)
 
     try {
-      const response = await fetch('/admin/migrate-entry-types', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-      })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        setError(data.error || 'Migration failed')
-        return
-      }
-
-      setResult(data)
+      const migrationResult = await runMigration()
+      setResult(migrationResult)
     } catch (err) {
-      setError(err instanceof Error ? err.message : 'Unknown error')
+      setResult({
+        success: false,
+        error: err instanceof Error ? err.message : 'Unknown error'
+      })
     } finally {
       setLoading(false)
     }
@@ -49,7 +38,7 @@ export default function MigrateEntryTypesPage() {
           </ul>
 
           <button
-            onClick={runMigration}
+            onClick={handleMigration}
             disabled={loading}
             className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
@@ -57,14 +46,14 @@ export default function MigrateEntryTypesPage() {
           </button>
         </div>
 
-        {error && (
+        {result && !result.success && (
           <div className="bg-red-900/20 border border-red-500/30 rounded-lg p-6 mb-6">
             <h3 className="text-xl font-semibold text-red-400 mb-2">Error</h3>
-            <p className="text-red-300">{error}</p>
+            <p className="text-red-300">{result.error}</p>
           </div>
         )}
 
-        {result && (
+        {result && result.success && result.results && (
           <div className="bg-green-900/20 border border-green-500/30 rounded-lg p-6">
             <h3 className="text-xl font-semibold text-green-400 mb-4">Migration Successful!</h3>
 
