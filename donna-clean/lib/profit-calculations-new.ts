@@ -43,79 +43,72 @@ export type CategoryExpense = {
 // ═══════════════════════════════════════════════════════════
 
 // Calculate revenue (Sales from Cash IN + Credit + Settled Advance)
+// RULES (user's custom business logic):
+// - Credit Sales: ALL (settled + unsettled) → YES
+// - Advance Sales: ONLY settled → YES
+// - Cash IN Sales: YES, except 'Settlement of' entries → YES
 export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: Date): number {
   console.log('🔍 [REVENUE] ==================== START ====================')
   console.log('🔍 [REVENUE] Total entries received:', entries.length)
-  console.log('🔍 [REVENUE] Date filter:', { startDate, endDate })
 
-  // Log all Sales entries to debug
-  const allSalesEntries = entries.filter(e => e.category === 'Sales')
-  console.log('🔍 [REVENUE] Sales entries found:', allSalesEntries.length)
+  // STEP 1: Get all Sales entries
+  let salesEntries = entries.filter(e => e.category === 'Sales')
+  console.log('🔍 [REVENUE] Total Sales entries:', salesEntries.length)
 
-  // Breakdown by type and settled status
-  const salesByType = {
-    cashIn: allSalesEntries.filter(e => e.entry_type === 'Cash IN'),
-    credit: allSalesEntries.filter(e => e.entry_type === 'Credit'),
-    advance: allSalesEntries.filter(e => e.entry_type === 'Advance'),
-  }
+  // STEP 2: Apply entry type rules
+  let revenueEntries = salesEntries.filter(e => {
+    // RULE 1: Credit Sales - Include ALL (settled + unsettled)
+    if (e.entry_type === 'Credit') {
+      console.log('  ✅ Including Credit Sale:', e.amount, 'settled:', e.settled)
+      return true
+    }
 
-  console.log('🔍 [REVENUE] Sales by type:', {
-    cashIn: { count: salesByType.cashIn.length, total: salesByType.cashIn.reduce((sum, e) => sum + e.amount, 0) },
-    cashInSettlements: salesByType.cashIn.filter(e => e.notes?.startsWith('Settlement of')).length,
-    credit: { count: salesByType.credit.length, total: salesByType.credit.reduce((sum, e) => sum + e.amount, 0) },
-    creditSettled: salesByType.credit.filter(e => e.settled).length,
-    creditUnsettled: salesByType.credit.filter(e => !e.settled).length,
-    advance: { count: salesByType.advance.length, total: salesByType.advance.reduce((sum, e) => sum + e.amount, 0) },
-    advanceSettled: salesByType.advance.filter(e => e.settled).length,
-    advanceUnsettled: salesByType.advance.filter(e => !e.settled).length,
+    // RULE 2: Advance Sales - Include ONLY settled
+    if (e.entry_type === 'Advance') {
+      const include = e.settled === true
+      console.log(`  ${include ? '✅' : '❌'} Advance Sale:`, e.amount, 'settled:', e.settled)
+      return include
+    }
+
+    // RULE 3: Cash IN Sales - Include, but exclude settlements
+    if (e.entry_type === 'Cash IN') {
+      const isSettlement = e.notes?.startsWith('Settlement of')
+      const include = !isSettlement
+      console.log(`  ${include ? '✅' : '❌'} Cash IN Sale:`, e.amount, 'isSettlement:', isSettlement)
+      return include
+    }
+
+    // Exclude all other types
+    console.log('  ❌ Excluding:', e.entry_type)
+    return false
   })
 
-  console.log('🔍 [REVENUE] Sample Sales entries:', allSalesEntries.slice(0, 5).map(e => ({
-    id: e.id.substring(0, 8),
-    type: e.entry_type,
-    amount: e.amount,
-    settled: e.settled,
-    notes: e.notes?.substring(0, 30),
-    date: e.entry_date
-  })))
-
-  let filtered = entries.filter(e =>
-    e.category === 'Sales' &&
-    (
-      // Cash IN ONLY if NOT a settlement entry (prevents double-counting)
-      (e.entry_type === 'Cash IN' && !e.notes?.startsWith('Settlement of')) ||
-      e.entry_type === 'Credit' ||
-      (e.entry_type === 'Advance' && e.settled === true)  // ✅ Include settled Advance
-    )
-  )
-
-  console.log('🔍 [REVENUE] After type filter:', filtered.length)
-  console.log('🔍 [REVENUE] Breakdown after type filter:', {
-    cashIn: filtered.filter(e => e.entry_type === 'Cash IN').length,
-    credit: filtered.filter(e => e.entry_type === 'Credit').length,
-    creditUnsettled: filtered.filter(e => e.entry_type === 'Credit' && !e.settled).length,
-    advanceSettled: filtered.filter(e => e.entry_type === 'Advance' && e.settled).length,
+  console.log('🔍 [REVENUE] After type filter:', revenueEntries.length)
+  console.log('🔍 [REVENUE] Breakdown:', {
+    credit: revenueEntries.filter(e => e.entry_type === 'Credit').length,
+    creditAmount: revenueEntries.filter(e => e.entry_type === 'Credit').reduce((sum, e) => sum + e.amount, 0),
+    advance: revenueEntries.filter(e => e.entry_type === 'Advance').length,
+    advanceAmount: revenueEntries.filter(e => e.entry_type === 'Advance').reduce((sum, e) => sum + e.amount, 0),
+    cashIn: revenueEntries.filter(e => e.entry_type === 'Cash IN').length,
+    cashInAmount: revenueEntries.filter(e => e.entry_type === 'Cash IN').reduce((sum, e) => sum + e.amount, 0),
   })
 
+  // STEP 3: Apply date filters
   if (startDate) {
-    const beforeDateFilter = filtered.length
-    filtered = filtered.filter(e => new Date(e.entry_date) >= startDate)
-    console.log(`🔍 [REVENUE] After startDate filter (${startDate.toISOString()}):`, filtered.length, `(removed ${beforeDateFilter - filtered.length})`)
-  }
-  if (endDate) {
-    const beforeDateFilter = filtered.length
-    filtered = filtered.filter(e => new Date(e.entry_date) <= endDate)
-    console.log(`🔍 [REVENUE] After endDate filter (${endDate.toISOString()}):`, filtered.length, `(removed ${beforeDateFilter - filtered.length})`)
+    const before = revenueEntries.length
+    revenueEntries = revenueEntries.filter(e => new Date(e.entry_date) >= startDate)
+    console.log(`🔍 [REVENUE] After startDate (${startDate.toISOString().split('T')[0]}):`, revenueEntries.length, `(removed ${before - revenueEntries.length})`)
   }
 
-  const total = filtered.reduce((sum, e) => sum + e.amount, 0)
-  console.log('🔍 [REVENUE] FINAL REVENUE:', total.toLocaleString('en-IN'))
-  console.log('🔍 [REVENUE] Final breakdown:', {
-    cashIn: filtered.filter(e => e.entry_type === 'Cash IN').reduce((sum, e) => sum + e.amount, 0),
-    credit: filtered.filter(e => e.entry_type === 'Credit').reduce((sum, e) => sum + e.amount, 0),
-    creditUnsettled: filtered.filter(e => e.entry_type === 'Credit' && !e.settled).reduce((sum, e) => sum + e.amount, 0),
-    advanceSettled: filtered.filter(e => e.entry_type === 'Advance' && e.settled).reduce((sum, e) => sum + e.amount, 0),
-  })
+  if (endDate) {
+    const before = revenueEntries.length
+    revenueEntries = revenueEntries.filter(e => new Date(e.entry_date) <= endDate)
+    console.log(`🔍 [REVENUE] After endDate (${endDate.toISOString().split('T')[0]}):`, revenueEntries.length, `(removed ${before - revenueEntries.length})`)
+  }
+
+  // STEP 4: Calculate total
+  const total = revenueEntries.reduce((sum, e) => sum + e.amount, 0)
+  console.log('🔍 [REVENUE] FINAL REVENUE:', total.toLocaleString('en-IN'), `(₹${total})`)
   console.log('🔍 [REVENUE] ==================== END ====================')
 
   return total
