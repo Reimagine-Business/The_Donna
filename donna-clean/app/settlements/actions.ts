@@ -85,7 +85,7 @@ export async function createSettlement(
     // Revalidate all affected pages
     revalidatePath("/daily-entries");
     revalidatePath("/cashpulse");
-    revalidatePath("/profit-lens");
+    revalidatePath("/analytics/profitlens");
 
     return { success: true };
   } catch (error) {

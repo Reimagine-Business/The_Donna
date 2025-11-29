@@ -8,7 +8,7 @@ const navItems = [
   { href: "/home", label: "Home" },
   { href: "/daily-entries", label: "Entries" },
   { href: "/cashpulse", label: "Cashpulse" },
-  { href: "/profit-lens", label: "Profit Lens" },
+  { href: "/analytics/profitlens", label: "Profit Lens" },
   { href: "/alerts", label: "Alerts" },
 ];
 
