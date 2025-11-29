@@ -422,9 +422,25 @@ function buildProfitStats(entries: Entry[]): ProfitStats {
   let opex = 0;
 
   entries.forEach((entry) => {
-    if (entry.entry_type === "Cash IN" && entry.category === "Sales") {
-      sales += entry.amount;
-    } else if (entry.entry_type === "Cash OUT") {
+    // SALES CALCULATION - Following business rules from user specification
+    if (entry.category === "Sales") {
+      // Rule 1: Cash IN Sales (excluding settlements)
+      if (entry.entry_type === "Cash IN") {
+        if (!entry.notes?.startsWith('Settlement')) {
+          sales += entry.amount;
+        }
+      }
+      // Rule 2: ALL Credit Sales (both settled AND unsettled)
+      else if (entry.entry_type === "Credit") {
+        sales += entry.amount;
+      }
+      // Rule 3: ONLY settled Advance Sales
+      else if (entry.entry_type === "Advance" && entry.settled === true) {
+        sales += entry.amount;
+      }
+    }
+    // EXPENSES CALCULATION - Only Cash OUT entries count
+    else if (entry.entry_type === "Cash OUT") {
       if (entry.category === "COGS") {
         cogs += entry.amount;
       } else if (entry.category === "Opex") {
