@@ -550,7 +550,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
                 const entryType = entryTypeMatch?.[1] || 'Unknown';
 
                 return (
-                  <div key={settlement.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md">
+                  <div key={settlement.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md relative">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
                         <span className={`px-2 py-0.5 text-xs font-medium rounded ${
@@ -572,24 +572,37 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
                     </div>
                     <button
                       onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        console.log('🗑️ [DELETE_BUTTON_CLICKED]')
                         console.log('🖱️ [BUTTON] Delete button clicked!')
                         console.log('🖱️ [BUTTON] Event:', e)
-                        console.log('🖱️ [BUTTON] originalEntryId:', originalEntryId)
+                        console.log('🔍 Settlement:', settlement)
+                        console.log('🆔 Original Entry ID:', originalEntryId)
                         console.log('🖱️ [BUTTON] Button disabled?', deletingId === originalEntryId || !originalEntryId)
 
-                        if (originalEntryId) {
-                          console.log('✅ [BUTTON] Calling handleDeleteSettlement with ID:', originalEntryId)
-                          handleDeleteSettlement(originalEntryId)
-                        } else {
+                        if (!originalEntryId) {
                           console.error('❌ [BUTTON] No originalEntryId, cannot delete!')
+                          alert('Cannot delete: Original entry ID not found in settlement notes')
+                          return
                         }
+
+                        if (deletingId === originalEntryId) {
+                          console.log('⏳ Already deleting this settlement...')
+                          return
+                        }
+
+                        console.log('✅ [BUTTON] Calling handleDeleteSettlement with ID:', originalEntryId)
+                        handleDeleteSettlement(originalEntryId)
                       }}
                       disabled={deletingId === originalEntryId || !originalEntryId}
-                      className="p-2 text-red-500 hover:bg-red-500/10 rounded-md transition-colors disabled:opacity-50"
+                      className="p-2 text-red-500 hover:bg-red-500/10 rounded-md transition-colors disabled:opacity-50 relative z-10 cursor-pointer"
+                      style={{ pointerEvents: 'auto' }}
+                      type="button"
                       aria-label="Delete settlement"
                       title={!originalEntryId ? 'Cannot delete: Original entry ID not found' : 'Delete settlement'}
                     >
-                      <Trash2 className="w-4 h-4" />
+                      <Trash2 className="w-4 h-4 pointer-events-none" />
                     </button>
                   </div>
                 )
