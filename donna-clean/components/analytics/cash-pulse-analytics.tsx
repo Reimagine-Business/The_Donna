@@ -208,25 +208,48 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
   }
 
   const handleDeleteSettlement = async (settlementId: string) => {
+    console.log('🔴 [DELETE] Button clicked!')
+    console.log('🔴 [DELETE] Settlement ID:', settlementId)
+    console.log('🔴 [DELETE] Settlement ID type:', typeof settlementId)
+    console.log('🔴 [DELETE] Settlement ID length:', settlementId?.length)
+
     if (!confirm('Are you sure you want to delete this settlement? The original entry will be marked as unsettled.')) {
+      console.log('❌ [DELETE] User cancelled confirmation')
       return
     }
 
+    console.log('✅ [DELETE] User confirmed, proceeding...')
     setDeletingId(settlementId)
+
     try {
+      console.log('⏳ [DELETE] Calling deleteSettlement action...')
       const result = await deleteSettlement(settlementId)
 
+      console.log('📊 [DELETE] Result received:', result)
+      console.log('📊 [DELETE] Result.success:', result.success)
+      console.log('📊 [DELETE] Result.error:', 'error' in result ? result.error : 'none')
+
       if (!result.success) {
-        showError(result.error || 'Failed to delete settlement')
+        const errorMsg = 'error' in result ? result.error : 'Failed to delete settlement'
+        console.error('❌ [DELETE] Action returned failure:', errorMsg)
+        showError(errorMsg || 'Failed to delete settlement')
         return
       }
 
+      console.log('✅ [DELETE] Action succeeded, showing success message')
       showSuccess('Settlement deleted successfully!')
+
+      console.log('🔄 [DELETE] Refreshing router...')
       router.refresh()
+
+      console.log('✅ [DELETE] Complete!')
     } catch (error) {
-      console.error('Failed to delete settlement:', error)
+      console.error('❌ [DELETE] Exception caught:', error)
+      console.error('❌ [DELETE] Error type:', typeof error)
+      console.error('❌ [DELETE] Error message:', error instanceof Error ? error.message : String(error))
       showError('Failed to delete settlement')
     } finally {
+      console.log('🧹 [DELETE] Cleaning up, setting deletingId to null')
       setDeletingId(null)
     }
   }
@@ -512,6 +535,16 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
                                          settlement.notes?.match(/\(([a-f0-9-]{36})\)/);
                 const originalEntryId = originalEntryMatch?.[1];
 
+                // 🔍 DIAGNOSTIC: Log settlement data
+                console.log('🔍 [RENDER] Settlement item:', {
+                  settlementId: settlement.id,
+                  settlementType: settlement.entry_type,
+                  notes: settlement.notes,
+                  originalEntryMatch: originalEntryMatch,
+                  originalEntryId: originalEntryId,
+                  isDisabled: deletingId === originalEntryId || !originalEntryId
+                })
+
                 // Parse entry type for display
                 const entryTypeMatch = settlement.notes?.match(/Settlement of (.*?) \(/);
                 const entryType = entryTypeMatch?.[1] || 'Unknown';
@@ -538,7 +571,19 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
                       </div>
                     </div>
                     <button
-                      onClick={() => originalEntryId && handleDeleteSettlement(originalEntryId)}
+                      onClick={(e) => {
+                        console.log('🖱️ [BUTTON] Delete button clicked!')
+                        console.log('🖱️ [BUTTON] Event:', e)
+                        console.log('🖱️ [BUTTON] originalEntryId:', originalEntryId)
+                        console.log('🖱️ [BUTTON] Button disabled?', deletingId === originalEntryId || !originalEntryId)
+
+                        if (originalEntryId) {
+                          console.log('✅ [BUTTON] Calling handleDeleteSettlement with ID:', originalEntryId)
+                          handleDeleteSettlement(originalEntryId)
+                        } else {
+                          console.error('❌ [BUTTON] No originalEntryId, cannot delete!')
+                        }
+                      }}
                       disabled={deletingId === originalEntryId || !originalEntryId}
                       className="p-2 text-red-500 hover:bg-red-500/10 rounded-md transition-colors disabled:opacity-50"
                       aria-label="Delete settlement"
