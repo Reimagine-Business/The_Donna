@@ -196,22 +196,22 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
       </div>
 
       {/* Sales Overview */}
-      <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/40 border-2 border-blue-500 rounded-lg p-8 text-center">
+      <div className="bg-gradient-to-br from-blue-900/40 to-blue-800/40 border-2 border-blue-500 rounded-lg p-6 text-center">
         <div className="flex items-center justify-center gap-2 mb-2">
-          <TrendingUpIcon className="w-8 h-8 text-blue-400" />
-          <span className="text-sm text-purple-300 uppercase tracking-wider">SALES</span>
+          <TrendingUpIcon className="w-5 h-5 text-blue-400" />
+          <span className="text-sm text-purple-300 uppercase tracking-wider font-medium">SALES</span>
         </div>
-        <div className="text-5xl font-bold mb-2 text-blue-400">
+        <div className="text-3xl font-bold mb-2 text-blue-400">
           {formatCurrency(currentMetrics.revenue)}
         </div>
-        <div className="flex items-center justify-center gap-4 text-sm">
+        <div className="flex items-center justify-center gap-3 text-xs">
           <span className="text-purple-200">
             100.0% of revenue
           </span>
           {marginChange !== 0 && (
             <span className={`flex items-center gap-1 ${marginChange >= 0 ? 'text-green-400' : 'text-red-400'}`}>
               Margin: {currentMetrics.profitMargin.toFixed(1)}%
-              {marginChange >= 0 ? <TrendingUp className="w-4 h-4" /> : <TrendingDown className="w-4 h-4" />}
+              {marginChange >= 0 ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
               {Math.abs(marginChange).toFixed(1)}% vs last month
             </span>
           )}
@@ -221,12 +221,12 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
       {/* Summary Cards */}
       <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
         {/* Total Expenses */}
-        <div className="bg-orange-900/20 border-2 border-orange-500/50 rounded-lg p-6">
-          <div className="text-sm text-orange-300 mb-2 uppercase tracking-wider">TOTAL EXPENSES</div>
-          <div className="text-4xl font-bold mb-2 text-orange-400">
+        <div className="bg-orange-900/20 border-2 border-orange-500/50 rounded-lg p-4">
+          <div className="text-sm text-orange-300 mb-2 uppercase tracking-wider font-medium">TOTAL EXPENSES</div>
+          <div className="text-2xl font-bold mb-1 text-orange-400">
             {formatCurrency(currentMetrics.cogs + currentMetrics.operatingExpenses)}
           </div>
-          <div className="text-sm text-orange-200">
+          <div className="text-xs text-orange-200">
             {currentMetrics.revenue > 0
               ? (((currentMetrics.cogs + currentMetrics.operatingExpenses) / currentMetrics.revenue) * 100).toFixed(1)
               : '0.0'}% of sales
@@ -234,12 +234,12 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
         </div>
 
         {/* Profit */}
-        <div className={`${currentMetrics.netProfit >= 0 ? 'bg-green-900/20 border-green-500/50' : 'bg-red-900/20 border-red-500/50'} border-2 rounded-lg p-6`}>
-          <div className={`text-sm mb-2 uppercase tracking-wider ${currentMetrics.netProfit >= 0 ? 'text-green-300' : 'text-red-300'}`}>PROFIT</div>
-          <div className={`text-4xl font-bold mb-2 ${currentMetrics.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
+        <div className={`${currentMetrics.netProfit >= 0 ? 'bg-green-900/20 border-green-500/50' : 'bg-red-900/20 border-red-500/50'} border-2 rounded-lg p-4`}>
+          <div className={`text-sm mb-2 uppercase tracking-wider font-medium ${currentMetrics.netProfit >= 0 ? 'text-green-300' : 'text-red-300'}`}>PROFIT</div>
+          <div className={`text-2xl font-bold mb-1 ${currentMetrics.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {formatCurrency(currentMetrics.netProfit)}
           </div>
-          <div className={`text-sm ${currentMetrics.netProfit >= 0 ? 'text-green-200' : 'text-red-200'}`}>
+          <div className={`text-xs ${currentMetrics.netProfit >= 0 ? 'text-green-200' : 'text-red-200'}`}>
             {currentMetrics.revenue > 0
               ? ((currentMetrics.netProfit / currentMetrics.revenue) * 100).toFixed(1)
               : '0.0'}% of sales
