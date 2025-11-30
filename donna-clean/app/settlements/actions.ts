@@ -98,8 +98,11 @@ export async function createSettlement(
 }
 
 /**
- * Deletes a settlement by marking the entry as unsettled
- * and resetting settlement metadata.
+ * Deletes a settlement by:
+ * 1. For Credit entries: Deletes the Cash IN/OUT entry that was created during settlement
+ * 2. Marks the original entry as unsettled and restores the remaining_amount
+ *
+ * This properly reverses all effects of the settlement.
  */
 export async function deleteSettlement(entryId: string): Promise<SettleEntryResult> {
   const ctx = "settlements/deleteSettlement";
@@ -123,7 +126,7 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
     // Get the entry to verify ownership and get original amount
     const { data: entry, error: fetchError } = await supabase
       .from("entries")
-      .select("id, user_id, amount, settled, entry_type")
+      .select("id, user_id, amount, settled, entry_type, category")
       .eq("id", entryId)
       .single();
 
@@ -146,7 +149,25 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
       return { success: false, error: "Only Credit and Advance settlement deletions are supported." };
     }
 
-    // Mark as unsettled and restore remaining_amount to original amount
+    // For Credit entries, delete the Cash IN/OUT entry that was created during settlement
+    if (entry.entry_type === "Credit") {
+      // Find and delete the settlement Cash entry
+      // It will have notes like "Settlement of credit sales (original_entry_id)"
+      const settlementNotePattern = `Settlement of credit ${entry.category.toLowerCase()} (${entryId})`;
+
+      const { error: deleteError } = await supabase
+        .from("entries")
+        .delete()
+        .eq("user_id", user.id)
+        .eq("notes", settlementNotePattern);
+
+      if (deleteError) {
+        console.error("Failed to delete settlement cash entry", deleteError);
+        // Continue anyway - we'll still mark the original as unsettled
+      }
+    }
+
+    // Mark original entry as unsettled and restore remaining_amount to original amount
     const { error: updateError } = await supabase
       .from("entries")
       .update({
@@ -157,7 +178,7 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
       .eq("id", entryId);
 
     if (updateError) {
-      console.error("Failed to delete settlement", updateError);
+      console.error("Failed to update original entry", updateError);
       return { success: false, error: updateError.message };
     }
 

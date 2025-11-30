@@ -14,6 +14,7 @@ import {
 } from '@/lib/analytics-new'
 import { showSuccess, showError } from '@/lib/toast'
 import { deleteSettlement } from '@/app/settlements/actions'
+import { SettlementModal } from '@/components/settlement/settlement-modal'
 
 interface CashPulseAnalyticsProps {
   entries: Entry[]
@@ -43,11 +44,14 @@ function formatCurrencyLakhs(amount: number): string {
   }
 }
 
+type SettlementModalType = 'credit-sales' | 'credit-bills' | 'advance-sales' | 'advance-expenses' | null;
+
 export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
   const router = useRouter()
   const [dateRange, setDateRange] = useState<'month' | '3months' | 'year'>('month')
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
+  const [settlementModalType, setSettlementModalType] = useState<SettlementModalType>(null)
 
   useEffect(() => {
     router.refresh()
@@ -113,6 +117,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
       !e.settled
     )
     return {
+      items: pending,
       count: pending.length,
       amount: pending.reduce((sum, e) => sum + e.amount, 0)
     }
@@ -126,6 +131,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
       !e.settled
     )
     return {
+      items: pending,
       count: pending.length,
       amount: pending.reduce((sum, e) => sum + e.amount, 0)
     }
@@ -145,10 +151,12 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
     )
     return {
       received: {
+        items: received,
         count: received.length,
         amount: received.reduce((sum, e) => sum + e.amount, 0)
       },
       paid: {
+        items: paid,
         count: paid.length,
         amount: paid.reduce((sum, e) => sum + e.amount, 0)
       }
@@ -386,7 +394,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
 
           {pendingCollections.count > 0 && (
             <button
-              onClick={() => router.push('/entries?filter=pending-collections')}
+              onClick={() => setSettlementModalType('credit-sales')}
               className="w-full mt-3 px-4 py-2 bg-orange-500 hover:bg-orange-600 text-white rounded-md text-sm font-medium transition-colors"
             >
               Settle Collections →
@@ -423,7 +431,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
 
           {pendingBills.count > 0 && (
             <button
-              onClick={() => router.push('/entries?filter=pending-bills')}
+              onClick={() => setSettlementModalType('credit-bills')}
               className="w-full mt-3 px-4 py-2 bg-red-500 hover:bg-red-600 text-white rounded-md text-sm font-medium transition-colors"
             >
               Settle Bills →
@@ -464,12 +472,20 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
             </div>
           </div>
 
-          {(advance.received.count > 0 || advance.paid.count > 0) && (
+          {advance.received.count > 0 && (
             <button
-              onClick={() => router.push('/entries?filter=pending-advance')}
+              onClick={() => setSettlementModalType('advance-sales')}
               className="w-full mt-3 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md text-sm font-medium transition-colors"
             >
-              Settle Advance →
+              Settle Advance (Sales) →
+            </button>
+          )}
+          {advance.paid.count > 0 && (
+            <button
+              onClick={() => setSettlementModalType('advance-expenses')}
+              className="w-full mt-3 px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-md text-sm font-medium transition-colors"
+            >
+              Settle Advance (Expenses) →
             </button>
           )}
         </div>
@@ -538,6 +554,25 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
           )}
         </div>
       </div>
+
+      {/* Settlement Modal */}
+      {settlementModalType && (
+        <SettlementModal
+          type={settlementModalType}
+          pendingItems={
+            settlementModalType === 'credit-sales' ? pendingCollections.items :
+            settlementModalType === 'credit-bills' ? pendingBills.items :
+            settlementModalType === 'advance-sales' ? advance.received.items :
+            settlementModalType === 'advance-expenses' ? advance.paid.items :
+            []
+          }
+          onClose={() => setSettlementModalType(null)}
+          onSuccess={() => {
+            setSettlementModalType(null);
+            router.refresh();
+          }}
+        />
+      )}
     </div>
   )
 }
