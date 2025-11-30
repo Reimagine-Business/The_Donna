@@ -52,6 +52,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [deletingId, setDeletingId] = useState<string | null>(null)
   const [settlementModalType, setSettlementModalType] = useState<SettlementModalType>(null)
+  const [visibleSettlements, setVisibleSettlements] = useState(10)
 
   useEffect(() => {
     router.refresh()
@@ -163,12 +164,12 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
     }
   }, [entries])
 
-  // Get Settlement History (last 10 settlements)
+  // Get Settlement History (all settlements, display limited by visibleSettlements)
   const settlementHistory = useMemo(() => {
     return entries
       .filter(e => e.notes && e.notes.startsWith('Settlement of'))
       .sort((a, b) => new Date(b.created_at || '').getTime() - new Date(a.created_at || '').getTime())
-      .slice(0, 10)
+      // No slice here - we'll slice in the render based on visibleSettlements
   }, [entries])
 
   const handleRefresh = async () => {
@@ -528,21 +529,23 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
 
           {settlementHistory.length > 0 ? (
             <div className="space-y-2">
-              {settlementHistory.map((settlement) => {
+              {settlementHistory.slice(0, visibleSettlements).map((settlement, index) => {
                 // Parse the original entry ID from notes
                 // Pattern: "Settlement of Credit Sales (ID: xxx)" or "Settlement of credit sales (xxx)"
                 const originalEntryMatch = settlement.notes?.match(/\(ID:\s*([^)]+)\)/) ||
                                          settlement.notes?.match(/\(([a-f0-9-]{36})\)/);
                 const originalEntryId = originalEntryMatch?.[1];
 
-                // 🔍 DIAGNOSTIC: Log settlement data
-                console.log('🔍 [RENDER] Settlement item:', {
+                // 🔍 DIAGNOSTIC: Log settlement data with index
+                console.log(`🔍 [RENDER] Settlement item #${index}:`, {
+                  index: index,
                   settlementId: settlement.id,
                   settlementType: settlement.entry_type,
                   notes: settlement.notes,
                   originalEntryMatch: originalEntryMatch,
                   originalEntryId: originalEntryId,
-                  isDisabled: deletingId === originalEntryId || !originalEntryId
+                  isDisabled: deletingId === originalEntryId || !originalEntryId,
+                  willBeDisabled: !originalEntryId
                 })
 
                 // Parse entry type for display
@@ -574,8 +577,9 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
                       onClick={(e) => {
                         e.preventDefault()
                         e.stopPropagation()
-                        console.log('🗑️ [DELETE_BUTTON_CLICKED]')
+                        console.log(`🗑️ [DELETE_BUTTON_CLICKED] Index: ${index}`)
                         console.log('🖱️ [BUTTON] Delete button clicked!')
+                        console.log('🖱️ [BUTTON] Item index:', index)
                         console.log('🖱️ [BUTTON] Event:', e)
                         console.log('🔍 Settlement:', settlement)
                         console.log('🆔 Original Entry ID:', originalEntryId)
@@ -612,12 +616,18 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
             <p className="text-sm text-muted-foreground">No settlement history</p>
           )}
 
-          {settlementHistory.length >= 10 && (
+          {settlementHistory.length > visibleSettlements && (
             <button
-              onClick={() => router.push('/settlements')}
+              onClick={() => {
+                console.log('📊 [LOAD_MORE] Clicked - showing more settlements')
+                console.log('📊 Current visible:', visibleSettlements)
+                console.log('📊 Total available:', settlementHistory.length)
+                setVisibleSettlements(prev => prev + 10)
+              }}
               className="w-full mt-3 px-4 py-2 border border-border rounded-md text-sm font-medium text-white hover:bg-muted/50 transition-colors"
+              type="button"
             >
-              Load More
+              Load More ({settlementHistory.length - visibleSettlements} more)
             </button>
           )}
         </div>
