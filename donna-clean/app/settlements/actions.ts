@@ -151,19 +151,48 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
 
     // For Credit entries, delete the Cash IN/OUT entry that was created during settlement
     if (entry.entry_type === "Credit") {
-      // Find and delete the settlement Cash entry
-      // It will have notes like "Settlement of credit sales (original_entry_id)"
-      const settlementNotePattern = `Settlement of credit ${entry.category.toLowerCase()} (${entryId})`;
+      // Try multiple note patterns to handle different migration versions
+      // Pattern 1: "Settlement of credit sales (uuid)" (older migrations)
+      // Pattern 2: "Settlement of Credit Sales (ID: uuid)" (newer migration)
+      const patterns = [
+        `Settlement of credit ${entry.category.toLowerCase()} (${entryId})`,
+        `Settlement of Credit ${entry.category} (ID: ${entryId})`,
+        `Settlement of credit ${entry.category} (${entryId})`, // mixed case fallback
+      ];
 
-      const { error: deleteError } = await supabase
-        .from("entries")
-        .delete()
-        .eq("user_id", user.id)
-        .eq("notes", settlementNotePattern);
+      let deleted = false;
+      for (const pattern of patterns) {
+        const { data, error: deleteError } = await supabase
+          .from("entries")
+          .delete()
+          .eq("user_id", user.id)
+          .eq("notes", pattern)
+          .select();
 
-      if (deleteError) {
-        console.error("Failed to delete settlement cash entry", deleteError);
-        // Continue anyway - we'll still mark the original as unsettled
+        if (!deleteError && data && data.length > 0) {
+          console.log(`✅ Deleted settlement entry with pattern: ${pattern}`);
+          deleted = true;
+          break;
+        }
+      }
+
+      if (!deleted) {
+        console.error("Failed to delete settlement cash entry - no matching pattern found");
+        // Try one more approach: search by notes containing the entry ID
+        const { error: deleteError } = await supabase
+          .from("entries")
+          .delete()
+          .eq("user_id", user.id)
+          .like("notes", `%${entryId}%`)
+          .like("notes", `%Settlement%`)
+          .in("entry_type", ["Cash IN", "Cash OUT"]);
+
+        if (deleteError) {
+          console.error("Failed to delete settlement cash entry", deleteError);
+          // Continue anyway - we'll still mark the original as unsettled
+        } else {
+          console.log("✅ Deleted settlement entry using LIKE search");
+        }
       }
     }
 
