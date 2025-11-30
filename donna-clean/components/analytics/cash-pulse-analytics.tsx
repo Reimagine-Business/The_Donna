@@ -332,8 +332,8 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
           <Wallet className="w-5 h-5 text-purple-300" />
           <span className="text-xs text-purple-300 uppercase tracking-wider font-medium">Total Cash Balance</span>
         </div>
-        <div className="text-4xl font-bold text-white mb-1">
-          {formatCurrencyLakhs(cashBalance)}
+        <div className="text-3xl font-bold text-white mb-1">
+          {formatCurrency(cashBalance)}
         </div>
         <div className="flex items-center justify-between">
           <div className={`flex items-center gap-1 text-sm ${cashBalance >= 0 ? 'text-green-400' : 'text-red-400'}`}>
@@ -352,7 +352,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
             <ArrowUpRight className="w-4 h-4 text-green-400" />
             <span className="text-xs text-green-300 uppercase tracking-wider font-medium">Cash IN</span>
           </div>
-          <div className="text-2xl font-bold text-white mb-1">{formatCurrencyLakhs(totalCashIn)}</div>
+          <div className="text-xl font-bold text-white mb-1">{formatCurrency(totalCashIn)}</div>
           <div className="flex items-center justify-between">
             <span className="text-xs text-green-200">{cashInCount} entries</span>
             {monthlyComparison.percentChange.cashIn !== 0 && (
@@ -370,7 +370,7 @@ export function CashPulseAnalytics({ entries }: CashPulseAnalyticsProps) {
             <ArrowDownRight className="w-4 h-4 text-red-400" />
             <span className="text-xs text-red-300 uppercase tracking-wider font-medium">Cash OUT</span>
           </div>
-          <div className="text-2xl font-bold text-white mb-1">{formatCurrencyLakhs(totalCashOut)}</div>
+          <div className="text-xl font-bold text-white mb-1">{formatCurrency(totalCashOut)}</div>
           <div className="flex items-center justify-between">
             <span className="text-xs text-red-200">{cashOutCount} entries</span>
             {monthlyComparison.percentChange.cashOut !== 0 && (

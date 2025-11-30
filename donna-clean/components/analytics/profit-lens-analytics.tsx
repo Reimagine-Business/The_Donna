@@ -162,31 +162,19 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
       <div className="flex items-center justify-between">
         <h1 className="text-2xl font-bold text-white">See what you earned!</h1>
 
+        {/* Period Dropdown */}
         <div className="flex items-center gap-2">
-          {/* Period Dropdown */}
-          <div className="flex items-center gap-2">
-            <span className="text-sm text-muted-foreground">Period:</span>
-            <select
-              value={dateRange}
-              onChange={(e) => setDateRange(e.target.value as 'month' | '3months' | '6months' | 'all')}
-              className="px-3 py-1.5 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-            >
-              <option value="month">This Month</option>
-              <option value="3months">Last 3 Months</option>
-              <option value="6months">Last 6 Months</option>
-              <option value="all">All Time</option>
-            </select>
-          </div>
-
-          {/* Export Button */}
-          <button
-            onClick={handleExportCSV}
-            className="px-4 py-2 bg-purple-500 text-white rounded-md text-sm font-medium flex items-center gap-2 hover:bg-purple-600 transition-colors"
-            aria-label="Export CSV"
+          <span className="text-sm text-muted-foreground">Period:</span>
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value as 'month' | '3months' | '6months' | 'all')}
+            className="px-3 py-1.5 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
-            <Download className="w-4 h-4" />
-            Export CSV
-          </button>
+            <option value="month">This Month</option>
+            <option value="3months">Last 3 Months</option>
+            <option value="6months">Last 6 Months</option>
+            <option value="all">All Time</option>
+          </select>
         </div>
       </div>
 
