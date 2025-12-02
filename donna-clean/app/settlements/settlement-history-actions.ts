@@ -6,9 +6,8 @@ export type SettlementHistoryRecord = {
   id: string;
   user_id: string;
   original_entry_id: string;
-  settlement_entry_id: string | null;
   settlement_type: 'credit' | 'advance';
-  entry_type: 'Credit' | 'Advance';
+  entry_type: string;
   category: string;
   amount: number;
   settlement_date: string;
@@ -18,7 +17,7 @@ export type SettlementHistoryRecord = {
 
 /**
  * Fetches all settlement history records for the current user
- * from the settlement_history table.
+ * from the entries table where is_settlement = true.
  *
  * This includes both Credit and Advance settlements.
  */
@@ -37,12 +36,13 @@ export async function getSettlementHistory(): Promise<{
       return { settlementHistory: [], error: "Unauthorized" };
     }
 
-    // Fetch settlement history from the new table
+    // Fetch settlement entries from entries table
     const { data, error } = await supabase
-      .from("settlement_history")
-      .select("*")
+      .from("entries")
+      .select("id, user_id, original_entry_id, settlement_type, entry_type, category, amount, entry_date, notes, created_at")
       .eq("user_id", user.id)
-      .order("settlement_date", { ascending: false })
+      .eq("is_settlement", true)
+      .order("entry_date", { ascending: false })
       .order("created_at", { ascending: false });
 
     if (error) {
@@ -50,7 +50,21 @@ export async function getSettlementHistory(): Promise<{
       return { settlementHistory: [], error: error.message };
     }
 
-    return { settlementHistory: data || [] };
+    // Map to SettlementHistoryRecord format
+    const settlementHistory = (data || []).map(entry => ({
+      id: entry.id,
+      user_id: entry.user_id,
+      original_entry_id: entry.original_entry_id || '',
+      settlement_type: entry.settlement_type as 'credit' | 'advance',
+      entry_type: entry.entry_type,
+      category: entry.category,
+      amount: entry.amount,
+      settlement_date: entry.entry_date,
+      notes: entry.notes,
+      created_at: entry.created_at,
+    }));
+
+    return { settlementHistory };
   } catch (error) {
     console.error("Exception in getSettlementHistory:", error);
     return {
@@ -61,16 +75,12 @@ export async function getSettlementHistory(): Promise<{
 }
 
 /**
- * Deletes a settlement from settlement_history and reverses all effects.
+ * Deletes a settlement entry and reverses all effects.
  *
- * For Credit settlements:
- * - Deletes the Cash IN/OUT entry (if it exists)
+ * For both Credit and Advance settlements:
+ * - Deletes the settlement tracking entry (Cash IN/OUT for Credit, or Advance Settlement for Advance)
  * - Marks original entry as unsettled
- * - Deletes settlement history record
- *
- * For Advance settlements:
- * - Marks original entry as unsettled
- * - Deletes settlement history record
+ * - Restores remaining_amount to original amount
  */
 export async function deleteSettlementHistory(settlementId: string): Promise<{
   success: boolean;
@@ -87,12 +97,13 @@ export async function deleteSettlementHistory(settlementId: string): Promise<{
       return { success: false, error: "Unauthorized" };
     }
 
-    // Get the settlement record
+    // Get the settlement entry
     const { data: settlement, error: fetchError } = await supabase
-      .from("settlement_history")
+      .from("entries")
       .select("*")
       .eq("id", settlementId)
       .eq("user_id", user.id)
+      .eq("is_settlement", true)
       .single();
 
     if (fetchError || !settlement) {
@@ -100,18 +111,16 @@ export async function deleteSettlementHistory(settlementId: string): Promise<{
       return { success: false, error: "Settlement not found" };
     }
 
-    // For Credit settlements, delete the Cash IN/OUT entry
-    if (settlement.settlement_type === 'credit' && settlement.settlement_entry_id) {
-      const { error: deleteEntryError } = await supabase
-        .from("entries")
-        .delete()
-        .eq("id", settlement.settlement_entry_id)
-        .eq("user_id", user.id);
+    // Delete the settlement tracking entry (both Credit and Advance)
+    const { error: deleteEntryError } = await supabase
+      .from("entries")
+      .delete()
+      .eq("id", settlementId)
+      .eq("user_id", user.id);
 
-      if (deleteEntryError) {
-        console.error("Failed to delete settlement entry:", deleteEntryError);
-        // Continue anyway - we'll still mark original as unsettled
-      }
+    if (deleteEntryError) {
+      console.error("Failed to delete settlement entry:", deleteEntryError);
+      return { success: false, error: deleteEntryError.message };
     }
 
     // Mark original entry as unsettled (both Credit and Advance)
@@ -129,18 +138,6 @@ export async function deleteSettlementHistory(settlementId: string): Promise<{
     if (updateError) {
       console.error("Failed to update original entry:", updateError);
       return { success: false, error: updateError.message };
-    }
-
-    // Delete the settlement history record
-    const { error: deleteHistoryError } = await supabase
-      .from("settlement_history")
-      .delete()
-      .eq("id", settlementId)
-      .eq("user_id", user.id);
-
-    if (deleteHistoryError) {
-      console.error("Failed to delete settlement history:", deleteHistoryError);
-      return { success: false, error: deleteHistoryError.message };
     }
 
     return { success: true };

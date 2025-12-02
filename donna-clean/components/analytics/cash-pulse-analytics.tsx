@@ -274,17 +274,15 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
   const handleExportSettlements = () => {
     console.log('📥 [EXPORT] Exporting settlement history...')
 
-    // Prepare CSV data from settlement_history table
+    // Prepare CSV data from settlement entries
     const csvData = settlementHistory.map(item => {
       return {
         Date: format(new Date(item.settlement_date), 'dd MMM yyyy'),
-        Type: `${item.entry_type} ${item.category}`,  // e.g., "Credit Sales" or "Advance Sales"
-        'Settlement Type': item.settlement_type,  // 'credit' or 'advance'
+        Type: item.settlement_type === 'credit' ? 'Credit' : 'Advance',
         Category: item.category,
         Amount: item.amount,
         'Settled On': format(new Date(item.created_at), 'dd MMM yyyy'),
         'Original Entry ID': item.original_entry_id,
-        'Settlement Entry ID': item.settlement_entry_id || 'N/A',  // NULL for Advance
         Notes: item.notes || ''
       }
     })
@@ -587,13 +585,13 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
                   <div key={settlement.id} className="flex items-center justify-between p-3 bg-muted/50 rounded-md relative">
                     <div className="flex-1">
                       <div className="flex items-center gap-2 mb-1 flex-wrap">
-                        {/* ✅ NEW: Badge shows Credit (green) vs Advance (purple) */}
+                        {/* ✅ Badge shows Credit (green) vs Advance (purple) */}
                         <span className={`px-2 py-0.5 text-xs font-medium rounded ${
                           settlement.settlement_type === 'credit'
                             ? 'bg-green-500/20 text-green-500'
                             : 'bg-purple-500/20 text-purple-500'
                         }`}>
-                          {settlement.entry_type} {settlement.category}
+                          {settlement.settlement_type === 'credit' ? 'Credit' : 'Advance'} {settlement.category}
                         </span>
                         <span className="text-sm font-medium text-white">{formatCurrency(settlement.amount)}</span>
                       </div>
