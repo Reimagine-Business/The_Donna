@@ -180,9 +180,9 @@ export function ProfitCashDashboard({ entries }: ProfitCashDashboardProps) {
         </div>
 
         {/* Profit Card */}
-        <div className="bg-gradient-to-br from-blue-900/30 to-blue-800/20 border border-blue-500/30 rounded-xl p-4">
+        <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/30 border border-purple-500/30 rounded-xl p-4">
           <div className="text-xs sm:text-sm text-gray-400 mb-1">📊 PROFIT</div>
-          <div className="text-2xl sm:text-3xl font-bold text-blue-400">
+          <div className="text-2xl sm:text-3xl font-bold text-purple-400">
             {formatCurrency(dashboardData.profit)}
           </div>
           <div className="text-xs text-gray-500 mt-1">What you earned</div>
