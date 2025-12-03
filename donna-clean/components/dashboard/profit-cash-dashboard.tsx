@@ -1,8 +1,11 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import { startOfMonth, endOfMonth, subMonths } from "date-fns";
 import { type Entry } from "@/app/entries/actions";
+import { calculateCashBalance } from "@/lib/analytics-new";
+import { getProfitMetrics } from "@/lib/profit-calculations-new";
 
 interface ProfitCashDashboardProps {
   entries: Entry[];
@@ -19,29 +22,65 @@ function formatCurrency(amount: number): string {
 
 export function ProfitCashDashboard({ entries }: ProfitCashDashboardProps) {
   const router = useRouter();
+  const [dateRange, setDateRange] = useState<'this-month' | 'last-month' | 'this-year' | 'last-year' | 'all-time'>('all-time');
+
+  // Calculate date range for filtering
+  const { startDate, endDate } = useMemo(() => {
+    const now = new Date();
+    const currentYear = now.getFullYear();
+
+    switch (dateRange) {
+      case 'this-month':
+        return {
+          startDate: startOfMonth(now),
+          endDate: endOfMonth(now)
+        };
+      case 'last-month':
+        return {
+          startDate: startOfMonth(subMonths(now, 1)),
+          endDate: endOfMonth(subMonths(now, 1))
+        };
+      case 'this-year':
+        return {
+          startDate: new Date(currentYear, 0, 1),
+          endDate: now
+        };
+      case 'last-year':
+        return {
+          startDate: new Date(currentYear - 1, 0, 1),
+          endDate: new Date(currentYear - 1, 11, 31)
+        };
+      case 'all-time':
+        return {
+          startDate: undefined,
+          endDate: undefined
+        };
+      default:
+        return {
+          startDate: undefined,
+          endDate: undefined
+        };
+    }
+  }, [dateRange]);
+
+  // Filter entries by date range
+  const filteredEntries = useMemo(() => {
+    if (!startDate || !endDate) return entries;
+
+    return entries.filter(entry => {
+      const entryDate = new Date(entry.entry_date);
+      return entryDate >= startDate && entryDate <= endDate;
+    });
+  }, [entries, startDate, endDate]);
 
   const dashboardData = useMemo(() => {
-    // PROFIT CALCULATION (from Profit Lens logic)
-    const sales = entries
-      .filter(e => e.category === 'Sales' && e.entry_type !== 'Advance')
-      .reduce((sum, e) => sum + e.amount, 0);
+    // Use EXACT calculation logic from Cash Pulse and Profit Lens
+    // CASH: Uses all-time data (not filtered by period)
+    const cash = calculateCashBalance(entries);
 
-    const expenses = entries
-      .filter(e => ['COGS', 'Opex'].includes(e.category) && e.entry_type !== 'Advance')
-      .reduce((sum, e) => sum + e.amount, 0);
-
-    const profit = sales - expenses;
-
-    // CASH CALCULATION (from Cash Pulse logic)
-    const cashIn = entries
-      .filter(e => e.entry_type === 'Cash IN' || (e.entry_type === 'Advance' && e.category === 'Sales'))
-      .reduce((sum, e) => sum + e.amount, 0);
-
-    const cashOut = entries
-      .filter(e => e.entry_type === 'Cash OUT' || (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category)))
-      .reduce((sum, e) => sum + e.amount, 0);
-
-    const cash = cashIn - cashOut;
+    // PROFIT: Uses getProfitMetrics with date filtering
+    const profitMetrics = getProfitMetrics(filteredEntries, startDate, endDate);
+    const profit = profitMetrics.netProfit;
 
     // WHAT YOU OWN
     const pendingCollections = entries
@@ -94,7 +133,7 @@ export function ProfitCashDashboard({ entries }: ProfitCashDashboardProps) {
         assetsPurchased,
       },
     };
-  }, [entries]);
+  }, [entries, filteredEntries, startDate, endDate]);
 
   const difference = dashboardData.cash - dashboardData.profit;
   const totalOwn = dashboardData.whatYouOwn.pendingCollections +
@@ -105,10 +144,28 @@ export function ProfitCashDashboard({ entries }: ProfitCashDashboardProps) {
 
   return (
     <div className="space-y-6">
-      {/* Header */}
-      <div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-white">Your Business Today</h1>
-        <p className="text-sm text-gray-400 mt-1">Understanding your profit and cash</p>
+      {/* Header with Period Filter */}
+      <div className="flex items-center justify-between">
+        <div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-white">Your Business Today</h1>
+          <p className="text-sm text-gray-400 mt-1">Understanding your profit and cash</p>
+        </div>
+
+        {/* Period Dropdown */}
+        <div className="flex items-center gap-2">
+          <span className="text-sm text-muted-foreground">Period:</span>
+          <select
+            value={dateRange}
+            onChange={(e) => setDateRange(e.target.value as 'this-month' | 'last-month' | 'this-year' | 'last-year' | 'all-time')}
+            className="px-3 py-1.5 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            <option value="this-month">This Month</option>
+            <option value="last-month">Last Month</option>
+            <option value="this-year">This Year</option>
+            <option value="last-year">Last Year</option>
+            <option value="all-time">All Time</option>
+          </select>
+        </div>
       </div>
 
       {/* Profit vs Cash Cards */}
