@@ -7,9 +7,9 @@ import { validateEntry } from "@/lib/validation"
 import {
   sanitizeString,
   sanitizeAmount,
-  sanitizeDate,
-  isRateLimited
+  sanitizeDate
 } from "@/lib/sanitization"
+import { checkRateLimit, RateLimitError } from "@/lib/rate-limit"
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 export type EntryType = 'Cash IN' | 'Cash OUT' | 'Credit' | 'Advance'
@@ -294,10 +294,15 @@ export async function createEntry(input: CreateEntryInput) {
     return { success: false, error: "Not authenticated" }
   }
 
-  // Rate limiting: 100 entries per day per user
-  const rateLimitKey = `create-entry:${user.id}`
-  if (isRateLimited(rateLimitKey, 100, 24 * 60 * 60 * 1000)) {
-    return { success: false, error: "Rate limit exceeded. Maximum 100 entries per day." }
+  // Rate limiting: 100 entries per day per user (using Vercel KV)
+  try {
+    await checkRateLimit(user.id, 'create-entry')
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { success: false, error: error.message }
+    }
+    // If rate limit check fails (e.g., KV down), allow the request
+    console.error('Rate limit check failed:', error)
   }
 
   // Sanitize inputs
@@ -361,10 +366,14 @@ export async function updateEntry(id: string, input: UpdateEntryInput) {
     return { success: false, error: "Not authenticated" }
   }
 
-  // Rate limiting: 1000 updates per hour per user
-  const rateLimitKey = `update-entry:${user.id}`
-  if (isRateLimited(rateLimitKey, 1000, 60 * 60 * 1000)) {
-    return { success: false, error: "Rate limit exceeded. Maximum 1000 updates per hour." }
+  // Rate limiting: 200 updates per hour per user (using Vercel KV)
+  try {
+    await checkRateLimit(user.id, 'update-entry')
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { success: false, error: error.message }
+    }
+    console.error('Rate limit check failed:', error)
   }
 
   // Sanitize inputs
