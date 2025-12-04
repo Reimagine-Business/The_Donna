@@ -401,28 +401,28 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         {/* Cash */}
         <div className="space-y-1 mb-2">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-green-200">Cash</span>
+            <span className="text-sm text-white">Cash</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-green-400">{formatCurrency(cashAmount)}</span>
-              <span className="text-xs text-green-400">{cashPercentage.toFixed(1)}%</span>
+              <span className="text-sm font-medium text-white">{formatCurrency(cashAmount)}</span>
+              <span className="text-xs text-white">{cashPercentage.toFixed(1)}%</span>
             </div>
           </div>
           <div className="w-full bg-green-900/30 rounded-full h-2">
-            <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${cashPercentage}%` }}></div>
+            <div className="bg-green-500 h-2 rounded-full transition-all" style={{ width: `${Math.min(cashPercentage, 100)}%` }}></div>
           </div>
         </div>
 
         {/* Bank */}
         <div className="space-y-1">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-green-200">Bank</span>
+            <span className="text-sm text-white">Bank</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-green-400">{formatCurrency(bankAmount)}</span>
-              <span className="text-xs text-green-400">{bankPercentage.toFixed(1)}%</span>
+              <span className="text-sm font-medium text-white">{formatCurrency(bankAmount)}</span>
+              <span className="text-xs text-white">{bankPercentage.toFixed(1)}%</span>
             </div>
           </div>
           <div className="w-full bg-green-900/30 rounded-full h-2">
-            <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${bankPercentage}%` }}></div>
+            <div className="bg-blue-500 h-2 rounded-full transition-all" style={{ width: `${Math.min(bankPercentage, 100)}%` }}></div>
           </div>
         </div>
       </div>
