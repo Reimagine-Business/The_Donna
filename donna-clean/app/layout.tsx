@@ -1,6 +1,7 @@
 import "./globals.css";
 import ClientProviders from "./client-providers";
 import { Toaster } from "@/components/ui/toaster";
+import { ErrorBoundary } from "@/components/error-boundary";
 import type { Viewport } from 'next';
 
 export const viewport: Viewport = {
@@ -19,9 +20,11 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body className="min-h-screen bg-background font-sans">
         <Toaster />
-        <ClientProviders>
-          {children}
-        </ClientProviders>
+        <ErrorBoundary>
+          <ClientProviders>
+            {children}
+          </ClientProviders>
+        </ErrorBoundary>
       </body>
     </html>
   );
