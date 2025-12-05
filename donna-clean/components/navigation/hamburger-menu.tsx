@@ -10,6 +10,7 @@ import { DeployButton } from "@/components/deploy-button";
 interface HamburgerMenuProps {
   businessName?: string;
   userEmail?: string;
+  onClose?: () => void;
 }
 
 const menuItems = [
