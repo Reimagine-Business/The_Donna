@@ -2,7 +2,7 @@
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
-import { type Entry } from "@/app/entries/actions";
+import { type Entry } from "@/lib/entries";
 import { calculateCashBalance } from "@/lib/analytics-new";
 import { getProfitMetrics } from "@/lib/profit-calculations-new";
 import { calculateHealthScore } from "@/lib/calculate-health-score";
