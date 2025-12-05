@@ -476,8 +476,8 @@ const buildProfitStats = (entries: Entry[]): ProfitStats => {
   let opex = 0;
 
   entries.forEach((entry) => {
-    const isCashInflow = entry.entry_type === "Cash Inflow";
-    const isCashOutflow = entry.entry_type === "Cash Outflow";
+    const isCashInflow = entry.entry_type === "Cash IN";
+    const isCashOutflow = entry.entry_type === "Cash OUT";
     const isCredit = entry.entry_type === "Credit";
     const isSettledAdvance = entry.entry_type === "Advance" && entry.settled;
 

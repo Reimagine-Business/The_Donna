@@ -84,7 +84,7 @@ const CASH_PAYMENT_METHOD_OPTIONS = PAYMENT_METHODS as readonly PaymentMethod[];
 const entryTypeIsCredit = (type: EntryType): boolean => type === "Credit";
 
 const entryTypeRequiresCashMovement = (type: EntryType): boolean =>
-  type === "Cash Inflow" || type === "Cash Outflow" || type === "Advance";
+  type === "Cash IN" || type === "Cash OUT" || type === "Advance";
 
 const enforcePaymentMethodForType = (
   entryType: EntryType,
@@ -775,8 +775,8 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
                     <span
                       className={cn(
                         "rounded-full px-2 py-1 text-xs font-semibold",
-                        entry.entry_type === "Cash Inflow" && "bg-emerald-500/20 text-emerald-300",
-                        entry.entry_type === "Cash Outflow" && "bg-rose-500/20 text-rose-300",
+                        entry.entry_type === "Cash IN" && "bg-emerald-500/20 text-emerald-300",
+                        entry.entry_type === "Cash OUT" && "bg-rose-500/20 text-rose-300",
                         entry.entry_type === "Credit" && "bg-amber-500/20 text-amber-200",
                         entry.entry_type === "Advance" && "bg-sky-500/20 text-sky-200",
                       )}
