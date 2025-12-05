@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { startOfMonth, endOfMonth, subMonths } from "date-fns";
-import { type Entry } from "@/app/entries/actions";
+import { type Entry } from "@/lib/entries";
 import { calculateCashBalance } from "@/lib/analytics-new";
 import { getProfitMetrics } from "@/lib/profit-calculations-new";
 
@@ -278,7 +278,7 @@ export function ProfitCashDashboard({ entries }: ProfitCashDashboardProps) {
             </button>
 
             <button
-              onClick={() => router.push('/entries')}
+              onClick={() => router.push('/daily-entries')}
               className="w-full flex justify-between items-center p-3 bg-red-900/20 hover:bg-red-900/30 border border-red-500/20 rounded-lg transition-colors text-left"
             >
               <div>
