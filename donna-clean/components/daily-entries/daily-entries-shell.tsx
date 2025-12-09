@@ -428,17 +428,15 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
         : "Use Cash or Bank to match how money moved";
 
   return (
-    <div className="flex flex-col gap-10 text-white">
-      <div className="space-y-4">
-        <h1 className="text-3xl font-semibold tracking-tight">Daily Entries</h1>
-        <p className="text-sm text-slate-300">
-          Record every inflow/outflow with supporting receipts to keep Donna in sync.
-        </p>
+    <div className="flex flex-col gap-6 text-white">
+      {/* Compact Header */}
+      <div className="flex items-center justify-between">
+        <h1 className="text-2xl font-bold text-white">Record what happen today!</h1>
       </div>
 
-      <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-6 shadow-2xl shadow-black/40">
-        <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid gap-5 md:grid-cols-2">
+      <section className="rounded-2xl border border-white/10 bg-slate-900/60 p-4 shadow-2xl shadow-black/40">
+        <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid gap-4 md:grid-cols-2">
             <div className="space-y-2">
               <Label className="text-sm uppercase text-slate-400">Entry Type</Label>
                 <select
@@ -735,9 +733,9 @@ export function DailyEntriesShell({ initialEntries, userId }: DailyEntriesShellP
         </div>
       </section>
 
-      <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-6">
-        <div className="mb-4 flex items-center justify-between gap-4">
-          <h2 className="text-lg font-semibold">Transaction History</h2>
+      <section className="rounded-2xl border border-white/10 bg-slate-900/40 p-4">
+        <div className="mb-3 flex items-center justify-between gap-4">
+          <h2 className="text-lg font-bold">Transaction History</h2>
           <p className="text-sm text-slate-400">
             Showing <span className="font-semibold text-white">{filteredEntries.length}</span>{" "}
             {filteredEntries.length === 1 ? "entry" : "entries"}
