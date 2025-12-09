@@ -2,7 +2,7 @@ import { redirect } from "next/navigation";
 
 import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/navigation/bottom-nav";
-import { HamburgerMenu } from "@/components/navigation/hamburger-menu";
+import { TopNavMobile } from "@/components/navigation/top-nav-mobile";
 import {
   Card,
   CardContent,
@@ -108,13 +108,7 @@ export default async function DashboardPage() {
     <main className="min-h-screen bg-slate-950 text-white">
       <div className="flex flex-col">
         {/* Mobile Header */}
-        <header className="sticky top-0 z-30 border-b border-slate-800 bg-slate-900 md:hidden">
-          <div className="flex items-center justify-between px-4 py-3">
-            <HamburgerMenu businessName={profile?.business_name || "Donna Clean"} userEmail={user.email || undefined} />
-            <h1 className="text-lg font-semibold">Dashboard</h1>
-            <div className="w-10" /> {/* Spacer for alignment */}
-          </div>
-        </header>
+        <TopNavMobile />
 
         {/* Desktop Header */}
         <div className="hidden md:block">
