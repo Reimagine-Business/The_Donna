@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { getEntries } from '@/app/entries/actions'
+import { getEntries } from '@/app/daily-entries/actions'
 
 export default function DiagnosticsPage() {
   const [entries, setEntries] = useState<any[]>([])
@@ -14,11 +14,9 @@ export default function DiagnosticsPage() {
 
   const loadData = async () => {
     setLoading(true)
-    const result = await getEntries()
-    if (!result.error) {
-      setEntries(result.entries)
-      calculateStats(result.entries)
-    }
+    const entries = await getEntries()
+    setEntries(entries)
+    calculateStats(entries)
     setLoading(false)
   }
 

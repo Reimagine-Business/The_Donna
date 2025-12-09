@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp } from "lucide-react";
-import { type Entry } from "@/app/entries/actions";
+import { type Entry } from "@/app/daily-entries/actions";
 import { calculateCashBalance } from "@/lib/analytics-new";
 import { getProfitMetrics } from "@/lib/profit-calculations-new";
 import { PeriodFilter, getDateRangeForPeriod, type PeriodType } from "@/components/common/period-filter";

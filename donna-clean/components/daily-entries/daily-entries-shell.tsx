@@ -22,7 +22,7 @@ import {
   normalizeEntry,
 } from "@/lib/entries";
 import { SettleEntryDialog } from "@/components/settlements/settle-entry-dialog";
-import { PartySelector } from "@/components/entries/party-selector";
+import { PartySelector } from "@/components/daily-entries/party-selector";
 import { addEntry as addEntryAction, updateEntry as updateEntryAction, deleteEntry as deleteEntryAction } from "@/app/daily-entries/actions";
 import { showError, showWarning } from "@/lib/toast";
 

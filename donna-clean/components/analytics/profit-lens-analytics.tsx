@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { TrendingUp, TrendingDown, Download, RefreshCw, TrendingUpIcon } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import { type Entry } from '@/app/entries/actions'
+import { type Entry } from '@/app/daily-entries/actions'
 import {
   getProfitMetrics,
   getExpenseBreakdown,

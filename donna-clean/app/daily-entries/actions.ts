@@ -3,9 +3,12 @@
 import { redirect } from "next/navigation";
 import { revalidatePath } from "next/cache";
 
-import { type EntryType, type CategoryType, type PaymentMethod } from "@/lib/entries";
+import { type EntryType, type CategoryType, type PaymentMethod, normalizeEntry, type Entry } from "@/lib/entries";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
+
+// Re-export Entry type for convenience
+export type { Entry } from "@/lib/entries";
 
 const entryTypeIsCredit = (type: EntryType): boolean => type === "Credit";
 
@@ -190,4 +193,40 @@ export async function deleteEntry(entryId: string) {
   revalidatePath("/analytics/profitlens");
 
   return { success: true };
+}
+
+export async function getEntries(): Promise<Entry[]> {
+  const supabase = await createSupabaseServerClient();
+
+  const { user, initialError } = await getOrRefreshUser(supabase);
+
+  if (!user) {
+    console.error(
+      `[Auth Fail] No user in daily-entries/getEntries${
+        initialError ? ` – error: ${initialError.message}` : ""
+      }`,
+      initialError ?? undefined,
+    );
+    redirect("/auth/login");
+  }
+
+  // Fetch entries for this specific user with party information
+  const { data, error } = await supabase
+    .from("entries")
+    .select(`
+      id, user_id, entry_type, category, payment_method, amount, remaining_amount,
+      entry_date, notes, image_url, settled, settled_at, created_at, party_id,
+      party:parties(name)
+    `)
+    .eq("user_id", user.id)
+    .order("entry_date", { ascending: false })
+    .order("created_at", { ascending: false });
+
+  if (error) {
+    console.error('❌ [SERVER] Error fetching entries:', error);
+    return [];
+  }
+
+  const entries: Entry[] = data?.map((entry) => normalizeEntry(entry as any)) ?? [];
+  return entries;
 }

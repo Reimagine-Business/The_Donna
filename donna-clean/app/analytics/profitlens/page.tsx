@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getEntries } from '@/app/entries/actions'
+import { getEntries } from '@/app/daily-entries/actions'
 import { ProfitLensAnalytics } from '@/components/analytics/profit-lens-analytics'
 import { EntryListSkeleton } from '@/components/skeletons/entry-skeleton'
 import { SiteHeader } from '@/components/site-header'
@@ -14,9 +14,7 @@ export default async function ProfitLensAnalyticsPage() {
   let error: string | null = null
 
   try {
-    const result = await getEntries()
-    entries = result.entries || []
-    error = result.error
+    entries = await getEntries()
   } catch (e) {
     console.error('❌ [PROFIT_LENS_PAGE] Fatal error:', e)
     error = e instanceof Error ? e.message : 'Failed to load data'
