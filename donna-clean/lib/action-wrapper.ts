@@ -21,6 +21,7 @@
 import { checkRateLimit, RateLimitError } from './rate-limit';
 import { validateAmount, validateDate } from './validation';
 import { sanitizeString } from './sanitization';
+import * as Sentry from '@sentry/nextjs';
 
 type ActionConfig = {
   rateLimitKey: string;
@@ -75,8 +76,18 @@ export async function protectedAction<T>(
     };
 
   } catch (error) {
-    // 4. Error Handling
+    // 4. Error Handling with Sentry
     console.error(`[protectedAction] Error in ${config.rateLimitKey}:`, error);
+
+    Sentry.captureException(error, {
+      tags: {
+        action: config.rateLimitKey,
+        userId
+      },
+      extra: {
+        timestamp: new Date().toISOString()
+      }
+    });
 
     return {
       success: false,

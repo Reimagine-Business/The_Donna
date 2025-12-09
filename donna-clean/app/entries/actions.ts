@@ -25,7 +25,6 @@ export type CreateEntryInput = {
   notes?: string
   settled?: boolean
   image_url?: string
-  party_id?: string
 }
 
 export type UpdateEntryInput = Partial<CreateEntryInput>
@@ -316,7 +315,6 @@ export async function createEntry(input: CreateEntryInput) {
     notes: input.notes ? sanitizeString(input.notes, 1000) : undefined,
     settled: input.settled || false,
     image_url: input.image_url,
-    party_id: input.party_id,
   }
 
   // Comprehensive validation
@@ -336,14 +334,11 @@ export async function createEntry(input: CreateEntryInput) {
     notes: sanitizedData.notes || null,
     settled: sanitizedData.settled,
     image_url: sanitizedData.image_url || null,
-    party_id: sanitizedData.party_id || null,
   }
 
-  const { data, error } = await supabase
+  const { error } = await supabase
     .from('entries')
     .insert(payload)
-    .select()
-    .single()
 
   if (error) {
     console.error('Failed to create entry:', error)
