@@ -4,7 +4,6 @@ import { headers } from "next/headers";
 import { redirect } from "next/navigation";
 
 import { createSupabaseServerClient } from "@/lib/supabase/server";
-import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
 import { sanitizeString } from "@/lib/sanitization";
 
 type AuthState = {
@@ -31,17 +30,6 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
 
   // Sanitize email to prevent injection attacks
   const sanitizedEmail = sanitizeString(email).trim().toLowerCase();
-
-  // CRITICAL: Strict rate limiting for login (10 attempts per hour per email)
-  try {
-    await checkRateLimit(sanitizedEmail, 'auth-signin');
-  } catch (error) {
-    if (error instanceof RateLimitError) {
-      return { error: `Too many login attempts. Please try again in ${Math.ceil(error.retryAfter / 60)} minutes.` };
-    }
-    // If rate limit check fails, log but don't block
-    console.error('Rate limit check failed:', error);
-  }
 
   try {
     const supabase = await createSupabaseServerClient();
@@ -95,16 +83,6 @@ export async function signUpAction(_: AuthState, formData: FormData): Promise<Au
   // Sanitize email
   const sanitizedEmail = sanitizeString(email).trim().toLowerCase();
 
-  // CRITICAL: Strict rate limiting for signup (5 attempts per hour per email)
-  try {
-    await checkRateLimit(sanitizedEmail, 'auth-signup');
-  } catch (error) {
-    if (error instanceof RateLimitError) {
-      return { error: `Too many signup attempts. Please try again in ${Math.ceil(error.retryAfter / 60)} minutes.` };
-    }
-    console.error('Rate limit check failed:', error);
-  }
-
   try {
     const supabase = await createSupabaseServerClient();
     const origin = await getOrigin();
@@ -137,16 +115,6 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
 
   // Sanitize email
   const sanitizedEmail = sanitizeString(email).trim().toLowerCase();
-
-  // CRITICAL: Rate limiting for password reset (3 attempts per hour)
-  try {
-    await checkRateLimit(sanitizedEmail, 'auth-forgot-password');
-  } catch (error) {
-    if (error instanceof RateLimitError) {
-      return { error: `Too many password reset attempts. Please try again in ${Math.ceil(error.retryAfter / 60)} minutes.` };
-    }
-    console.error('Rate limit check failed:', error);
-  }
 
   try {
     const supabase = await createSupabaseServerClient();
