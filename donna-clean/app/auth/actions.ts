@@ -6,7 +6,6 @@ import { redirect } from "next/navigation";
 import { createSupabaseServerClient } from "@/lib/supabase/server";
 import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
 import { sanitizeString } from "@/lib/sanitization";
-import * as Sentry from '@sentry/nextjs';
 
 type AuthState = {
   error?: string | null;
@@ -38,17 +37,10 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
     await checkRateLimit(sanitizedEmail, 'auth-signin');
   } catch (error) {
     if (error instanceof RateLimitError) {
-      Sentry.captureMessage(`Login rate limit exceeded for ${sanitizedEmail}`, {
-        level: 'warning',
-        tags: { action: 'login', email: sanitizedEmail }
-      });
       return { error: `Too many login attempts. Please try again in ${Math.ceil(error.retryAfter / 60)} minutes.` };
     }
     // If rate limit check fails, log but don't block
     console.error('Rate limit check failed:', error);
-    Sentry.captureException(error, {
-      tags: { action: 'login-ratelimit-fail' }
-    });
   }
 
   try {
@@ -59,10 +51,6 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
     });
 
     if (error) {
-      Sentry.captureMessage('Failed login attempt', {
-        level: 'info',
-        tags: { email: sanitizedEmail, errorCode: error.code }
-      });
       return { error: "Invalid credentials" };
     }
 
@@ -82,10 +70,6 @@ export async function loginAction(_: AuthState, formData: FormData): Promise<Aut
     redirect("/home");
   } catch (error) {
     console.error('Login error:', error);
-    Sentry.captureException(error, {
-      tags: { action: 'login' },
-      extra: { email: sanitizedEmail }
-    });
     return { error: "An error occurred during login. Please try again." };
   }
 }
@@ -116,16 +100,9 @@ export async function signUpAction(_: AuthState, formData: FormData): Promise<Au
     await checkRateLimit(sanitizedEmail, 'auth-signup');
   } catch (error) {
     if (error instanceof RateLimitError) {
-      Sentry.captureMessage(`Signup rate limit exceeded for ${sanitizedEmail}`, {
-        level: 'warning',
-        tags: { action: 'signup', email: sanitizedEmail }
-      });
       return { error: `Too many signup attempts. Please try again in ${Math.ceil(error.retryAfter / 60)} minutes.` };
     }
     console.error('Rate limit check failed:', error);
-    Sentry.captureException(error, {
-      tags: { action: 'signup-ratelimit-fail' }
-    });
   }
 
   try {
@@ -141,20 +118,12 @@ export async function signUpAction(_: AuthState, formData: FormData): Promise<Au
     });
 
     if (error) {
-      Sentry.captureException(error, {
-        tags: { action: 'signup' },
-        extra: { email: sanitizedEmail, errorCode: error.code }
-      });
       return { error: error.message };
     }
 
     redirect("/auth/sign-up-success");
   } catch (error) {
     console.error('Signup error:', error);
-    Sentry.captureException(error, {
-      tags: { action: 'signup' },
-      extra: { email: sanitizedEmail }
-    });
     return { error: "An error occurred during signup. Please try again." };
   }
 }
@@ -174,10 +143,6 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     await checkRateLimit(sanitizedEmail, 'auth-forgot-password');
   } catch (error) {
     if (error instanceof RateLimitError) {
-      Sentry.captureMessage(`Password reset rate limit exceeded for ${sanitizedEmail}`, {
-        level: 'warning',
-        tags: { action: 'forgot-password', email: sanitizedEmail }
-      });
       return { error: `Too many password reset attempts. Please try again in ${Math.ceil(error.retryAfter / 60)} minutes.` };
     }
     console.error('Rate limit check failed:', error);
@@ -192,20 +157,12 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     });
 
     if (error) {
-      Sentry.captureException(error, {
-        tags: { action: 'forgot-password' },
-        extra: { email: sanitizedEmail }
-      });
       return { error: error.message };
     }
 
     return { success: true };
   } catch (error) {
     console.error('Forgot password error:', error);
-    Sentry.captureException(error, {
-      tags: { action: 'forgot-password' },
-      extra: { email: sanitizedEmail }
-    });
     return { error: "An error occurred. Please try again." };
   }
 }
