@@ -1,5 +1,6 @@
 "use server";
 
+import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 
 export type SettlementHistoryRecord = {
@@ -111,6 +112,22 @@ export async function deleteSettlementHistory(settlementId: string): Promise<{
       return { success: false, error: "Settlement not found" };
     }
 
+    // Get the original entry to restore its amount
+    const { data: originalEntry, error: originalError } = await supabase
+      .from("entries")
+      .select("amount, remaining_amount")
+      .eq("id", settlement.original_entry_id)
+      .eq("user_id", user.id)
+      .single();
+
+    if (originalError || !originalEntry) {
+      console.error("Original entry not found:", originalError);
+      return { success: false, error: "Original entry not found" };
+    }
+
+    // Calculate the restored remaining_amount by adding back the settlement amount
+    const restoredAmount = (originalEntry.remaining_amount || 0) + settlement.amount;
+
     // Delete the settlement tracking entry (both Credit and Advance)
     const { error: deleteEntryError } = await supabase
       .from("entries")
@@ -123,14 +140,13 @@ export async function deleteSettlementHistory(settlementId: string): Promise<{
       return { success: false, error: deleteEntryError.message };
     }
 
-    // Mark original entry as unsettled (both Credit and Advance)
+    // Mark original entry as unsettled and restore remaining_amount (both Credit and Advance)
     const { error: updateError } = await supabase
       .from("entries")
       .update({
         settled: false,
         settled_at: null,
-        // Restore remaining_amount to full amount
-        // Note: This assumes full settlement. Partial settlements would need more logic.
+        remaining_amount: restoredAmount, // Restore remaining_amount by adding back the settlement amount
       })
       .eq("id", settlement.original_entry_id)
       .eq("user_id", user.id);
@@ -139,6 +155,11 @@ export async function deleteSettlementHistory(settlementId: string): Promise<{
       console.error("Failed to update original entry:", updateError);
       return { success: false, error: updateError.message };
     }
+
+    // Revalidate all affected pages
+    revalidatePath("/daily-entries");
+    revalidatePath("/analytics/cashpulse");
+    revalidatePath("/analytics/profitlens");
 
     return { success: true };
   } catch (error) {
