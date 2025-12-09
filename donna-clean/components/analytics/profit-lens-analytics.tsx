@@ -220,7 +220,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
           <div className="text-2xl font-bold mb-1 text-red-400">
             {formatCurrency(currentMetrics.cogs + currentMetrics.operatingExpenses)}
           </div>
-          <div className="text-xs text-white">
+          <div className="text-xs text-red-200">
             {currentMetrics.revenue > 0
               ? (((currentMetrics.cogs + currentMetrics.operatingExpenses) / currentMetrics.revenue) * 100).toFixed(1)
               : '0.0'}% of sales
@@ -233,7 +233,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
           <div className={`text-2xl font-bold mb-1 ${currentMetrics.netProfit >= 0 ? 'text-green-400' : 'text-red-400'}`}>
             {formatCurrency(currentMetrics.netProfit)}
           </div>
-          <div className="text-xs text-white">
+          <div className={`text-xs ${currentMetrics.netProfit >= 0 ? 'text-green-200' : 'text-red-200'}`}>
             {currentMetrics.revenue > 0
               ? ((currentMetrics.netProfit / currentMetrics.revenue) * 100).toFixed(1)
               : '0.0'}% of sales

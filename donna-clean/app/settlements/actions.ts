@@ -87,7 +87,7 @@ export async function createSettlement(
     }
 
     // Revalidate all affected pages
-    revalidatePath("/entries");
+    revalidatePath("/daily-entries");
     revalidatePath("/analytics/cashpulse");
     revalidatePath("/analytics/profitlens");
 
@@ -229,7 +229,7 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
     }
 
     // Revalidate all affected pages
-    revalidatePath("/entries");
+    revalidatePath("/daily-entries");
     revalidatePath("/analytics/cashpulse");
     revalidatePath("/analytics/profitlens");
 
