@@ -115,9 +115,6 @@ export async function markReminderDone(reminderId: string) {
         status: "pending",
         parent_reminder_id: reminderId,
       });
-      console.log("✅ Created next recurring reminder:", { title: reminder.title, nextDueDate });
-    } else {
-      console.log("⚠️ Next occurrence already exists, skipping:", { title: reminder.title, nextDueDate });
     }
   }
 

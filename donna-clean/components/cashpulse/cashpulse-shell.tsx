@@ -712,11 +712,7 @@ const accentText: Record<PendingCardProps["accent"], string> = {
 function PendingCard({ title, description, info, accent, onSettle }: PendingCardProps) {
   const accentColor = accentText[accent];
   useEffect(() => {
-    if (info.entries.length === 0) {
-      console.log(
-        `[Pending Empty] ${title}: filter unsettled Credit/Advance with remaining >0 by category (Sales=Collections, COGS/Opex=Bills, all for Advances).`,
-      );
-    }
+    // No entries to display
   }, [info.entries.length, title]);
   return (
     <div className="rounded-2xl border border-white/10 bg-slate-900/40 p-5">
