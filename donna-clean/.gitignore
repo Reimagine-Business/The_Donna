@@ -42,3 +42,5 @@ build-*.log
 *.tsbuildinfo
 next-env.d.ts
 *.old
+build-output.log
+*.log
