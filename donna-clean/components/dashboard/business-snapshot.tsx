@@ -3,11 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { ChevronDown, ChevronUp } from "lucide-react";
-<<<<<<< Updated upstream
-import { type Entry } from "@/app/daily-entries/actions";
-=======
 import { type Entry } from "@/app/entries/actions";
->>>>>>> Stashed changes
 import { calculateCashBalance } from "@/lib/analytics-new";
 import { getProfitMetrics } from "@/lib/profit-calculations-new";
 import { PeriodFilter, getDateRangeForPeriod, type PeriodType } from "@/components/common/period-filter";
@@ -113,13 +109,8 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
           className="w-full p-4 flex items-center justify-between hover:bg-green-900/10 transition-colors"
         >
           <div className="text-left">
-<<<<<<< Updated upstream
             <div className="text-sm text-white mb-1">💰 WHAT YOU OWN</div>
             <div className="text-3xl font-bold text-white">
-=======
-            <div className="text-sm text-gray-400 mb-1">💰 WHAT YOU OWN</div>
-            <div className="text-3xl font-bold text-green-400">
->>>>>>> Stashed changes
               ₹{snapshotData.totalOwn.toLocaleString('en-IN')}
             </div>
           </div>
@@ -133,41 +124,25 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
         {expandedOwn && (
           <div className="px-4 pb-4 space-y-3 border-t border-green-500/20">
             <div className="flex justify-between items-center pt-3">
-<<<<<<< Updated upstream
               <span className="text-sm text-white">Cash in Bank/Hand</span>
-=======
-              <span className="text-sm text-gray-300">Cash in Bank/Hand</span>
->>>>>>> Stashed changes
               <span className="text-lg font-semibold text-green-400">
                 ₹{snapshotData.cash.toLocaleString('en-IN')}
               </span>
             </div>
             <div className="flex justify-between items-center">
-<<<<<<< Updated upstream
               <span className="text-sm text-white">Money to Collect (Receivables)</span>
-=======
-              <span className="text-sm text-gray-300">Money to Collect (Receivables)</span>
->>>>>>> Stashed changes
               <span className="text-lg font-semibold text-green-400">
                 ₹{snapshotData.receivables.toLocaleString('en-IN')}
               </span>
             </div>
             <div className="flex justify-between items-center">
-<<<<<<< Updated upstream
               <span className="text-sm text-white">Advances Paid (Prepaid)</span>
-=======
-              <span className="text-sm text-gray-300">Advances Paid (Prepaid)</span>
->>>>>>> Stashed changes
               <span className="text-lg font-semibold text-green-400">
                 ₹{snapshotData.prepaid.toLocaleString('en-IN')}
               </span>
             </div>
             <div className="flex justify-between items-center">
-<<<<<<< Updated upstream
               <span className="text-sm text-white">Fixed Assets</span>
-=======
-              <span className="text-sm text-gray-300">Fixed Assets</span>
->>>>>>> Stashed changes
               <span className="text-lg font-semibold text-green-400">
                 ₹{snapshotData.fixedAssets.toLocaleString('en-IN')}
               </span>
@@ -183,13 +158,9 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
           className="w-full p-4 flex items-center justify-between hover:bg-red-900/10 transition-colors"
         >
           <div className="text-left">
-<<<<<<< Updated upstream
             <div className="text-sm text-white mb-1">📋 WHAT YOU OWE</div>
             <div className="text-3xl font-bold text-white">
-=======
-            <div className="text-sm text-gray-400 mb-1">📋 WHAT YOU OWE</div>
             <div className="text-3xl font-bold text-red-400">
->>>>>>> Stashed changes
               ₹{snapshotData.totalOwe.toLocaleString('en-IN')}
             </div>
           </div>
@@ -203,21 +174,13 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
         {expandedOwe && (
           <div className="px-4 pb-4 space-y-3 border-t border-red-500/20">
             <div className="flex justify-between items-center pt-3">
-<<<<<<< Updated upstream
               <span className="text-sm text-white">Bills to Pay (Credit)</span>
-=======
-              <span className="text-sm text-gray-300">Bills to Pay (Credit)</span>
->>>>>>> Stashed changes
               <span className="text-lg font-semibold text-red-400">
                 ₹{snapshotData.creditBills.toLocaleString('en-IN')}
               </span>
             </div>
             <div className="flex justify-between items-center">
-<<<<<<< Updated upstream
               <span className="text-sm text-white">Customer Advances</span>
-=======
-              <span className="text-sm text-gray-300">Customer Advances</span>
->>>>>>> Stashed changes
               <span className="text-lg font-semibold text-red-400">
                 ₹{snapshotData.customerAdvances.toLocaleString('en-IN')}
               </span>
@@ -228,7 +191,6 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
 
       {/* Total Profit */}
       <div className="bg-purple-900/20 border border-purple-500/30 rounded-xl p-4">
-<<<<<<< Updated upstream
         <div className="text-sm text-white mb-1">
           📊 TOTAL PROFIT ({period === "all-time" ? "All Time" : selectedYear})
         </div>
@@ -236,15 +198,7 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
           ₹{snapshotData.profit.toLocaleString('en-IN')}
         </div>
         <div className="text-xs text-white mt-1">What you earned in selected period</div>
-=======
-        <div className="text-sm text-gray-400 mb-1">
-          📊 TOTAL PROFIT ({period === "all-time" ? "All Time" : selectedYear})
-        </div>
-        <div className={`text-3xl font-bold ${snapshotData.profit >= 0 ? 'text-purple-400' : 'text-red-400'}`}>
-          ₹{snapshotData.profit.toLocaleString('en-IN')}
-        </div>
-        <div className="text-xs text-gray-500 mt-1">What you earned in selected period</div>
->>>>>>> Stashed changes
+      </div>
 
         {period !== "all-time" && (
           <div className="mt-3 p-2 bg-blue-900/20 border border-blue-500/30 rounded text-xs text-blue-200">
