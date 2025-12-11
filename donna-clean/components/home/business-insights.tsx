@@ -169,7 +169,7 @@ export function BusinessInsights({ entries, alerts = [] }: BusinessInsightsProps
     // 9. Recent settlements (last 7 days) - SUCCESS
     const lastWeek = new Date(Date.now() - 7 * 86400000).toISOString().split('T')[0];
     const recentSettlements = entries.filter(e =>
-      e.is_settlement &&
+      e.is_settlement === true &&
       e.entry_date >= lastWeek
     );
     if (recentSettlements.length > 0) {
