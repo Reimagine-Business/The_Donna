@@ -11,6 +11,8 @@ import {
 } from "@/lib/sanitization"
 import { checkRateLimit, RateLimitError } from "@/lib/rate-limit"
 import type { SupabaseClient } from "@supabase/supabase-js"
+// Re-export Entry type from canonical location
+import type { Entry as LibEntry } from "@/lib/entries"
 
 export type EntryType = 'Cash IN' | 'Cash OUT' | 'Credit' | 'Advance'
 export type CategoryType = 'Sales' | 'COGS' | 'Opex' | 'Assets'
@@ -29,23 +31,8 @@ export type CreateEntryInput = {
 
 export type UpdateEntryInput = Partial<CreateEntryInput>
 
-export type Entry = {
-  id: string
-  user_id: string
-  entry_type: EntryType
-  category: CategoryType
-  amount: number
-  remaining_amount: number
-  entry_date: string
-  payment_method: PaymentMethodType
-  notes: string | null
-  image_url: string | null
-  settled: boolean
-  settled_at: string | null
-  party_id: string | null
-  party?: { name: string } | null
-  created_at: string
-  updated_at: string
+// Re-export Entry type with optional is_settlement field for settlements
+export type Entry = LibEntry & {
   is_settlement?: boolean
 }
 

@@ -3,7 +3,7 @@
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
 import { startOfMonth, endOfMonth, subMonths } from "date-fns";
-import { type Entry } from "@/app/daily-entries/actions";
+import { type Entry } from "@/lib/entries";
 import { calculateCashBalance } from "@/lib/analytics-new";
 import { getProfitMetrics } from "@/lib/profit-calculations-new";
 

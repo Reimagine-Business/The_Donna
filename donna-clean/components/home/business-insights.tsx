@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo } from "react";
-import type { Entry } from "@/app/entries/actions";
+import type { Entry } from "@/lib/entries";
 
 interface Alert {
   id: string;
