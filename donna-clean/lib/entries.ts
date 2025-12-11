@@ -42,6 +42,7 @@ export type Entry = {
   settled_at: string | null;
   party_id: string | null;
   party?: { name: string } | null;
+  is_settlement?: boolean;
   created_at: string;
   updated_at: string;
 };
