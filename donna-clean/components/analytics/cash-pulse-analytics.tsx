@@ -4,7 +4,7 @@ import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Download, RefreshCw, Trash2 } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
-import { type Entry } from '@/app/daily-entries/actions'
+import { type Entry } from '@/lib/entries'
 import {
   calculateCashBalance,
   getTotalCashIn,
