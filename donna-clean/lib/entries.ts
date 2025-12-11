@@ -132,6 +132,7 @@ export const normalizeEntry = (entry: SupabaseEntry): Entry => {
     settled_at: entry.settled_at ?? null,
     party_id: (entry as any).party_id ?? null,
     party: party,
+    is_settlement: (entry as any).is_settlement ?? false,
     created_at: entry.created_at ?? new Date().toISOString(),
     updated_at: entry.updated_at ?? new Date().toISOString(),
     // ➕ ADDED: Settlement tracking fields
