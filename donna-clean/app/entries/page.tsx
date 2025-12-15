@@ -18,6 +18,7 @@ export default async function EntriesPage() {
         initialEntries={entriesResult.entries}
         categories={categoriesResult.categories}
         error={entriesResult.error || categoriesResult.error}
+        showFormAtTop={true}
       />
     </Suspense>
   )
