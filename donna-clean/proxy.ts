@@ -1,7 +1,13 @@
 import { updateSession } from "@/lib/supabase/middleware";
+import { NextResponse } from "next/server";
 import type { NextRequest } from "next/server";
 
 export async function proxy(request: NextRequest) {
+  // Redirect /daily-entries to /entries
+  if (request.nextUrl.pathname === '/daily-entries') {
+    return NextResponse.redirect(new URL('/entries', request.url));
+  }
+
   return await updateSession(request);
 }
 
