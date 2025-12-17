@@ -1,6 +1,4 @@
-import { redirect } from "next/navigation";
-import { getOrRefreshUser } from "@/lib/supabase/get-user";
-import { createSupabaseServerClient } from "@/utils/supabase/server";
+import { requireAdmin } from "@/lib/admin/check-admin";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -10,22 +8,21 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // Server-side authentication check
-  const supabase = await createSupabaseServerClient();
-  const { user, initialError } = await getOrRefreshUser(supabase);
+  // CRITICAL: Only reimaginebusiness2025@gmail.com can access
+  // This checks both email AND role
+  await requireAdmin();
 
-  if (!user) {
-    console.error(
-      `[Auth Fail] No user in admin layout${
-        initialError ? ` – error: ${initialError.message}` : ""
-      }`,
-      initialError ?? undefined,
-    );
-    redirect("/auth/login");
-  }
-
-  // In a real app, you'd check if user is admin here
-  // For now, we just ensure they're authenticated
-
-  return <>{children}</>;
+  return (
+    <div className="min-h-screen bg-background">
+      <div className="border-b border-border bg-card">
+        <div className="container mx-auto px-4 py-4">
+          <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
+          <p className="text-sm text-muted-foreground">System administration and management</p>
+        </div>
+      </div>
+      <div className="container mx-auto px-4 py-6">
+        {children}
+      </div>
+    </div>
+  );
 }
