@@ -25,8 +25,8 @@ export function CreateUserDirect() {
     username: string;
   } | null>(null);
 
-  const handleGeneratePassword = () => {
-    const newPassword = generatePassword();
+  const handleGeneratePassword = async () => {
+    const newPassword = await generatePassword();
     setFormData(prev => ({ ...prev, password: newPassword }));
     setMessage({
       type: 'info',
