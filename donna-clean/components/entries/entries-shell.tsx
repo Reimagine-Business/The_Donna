@@ -175,6 +175,7 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
         amount: parseFloat(formData.amount),
         entry_date: formData.date,
         payment_method: formData.paymentMethod,
+        party_id: formData.partyId,
         notes: formData.notes || undefined,
       })
 
