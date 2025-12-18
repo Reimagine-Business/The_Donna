@@ -144,8 +144,9 @@ export async function createUserDirect(userData: CreateUserData) {
 
 /**
  * Generate a random secure password
+ * Must be async because it's exported from a server action file
  */
-export function generatePassword(): string {
+export async function generatePassword(): Promise<string> {
   const length = 12;
   const charset = 'abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789!@#$%^&*';
   let password = '';
