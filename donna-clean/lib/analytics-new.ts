@@ -40,27 +40,27 @@ export type MonthlyComparison = {
 // - Cash IN: Cash Inflow entries + Advance Sales + Credit Settlement (Collections)
 // - Cash OUT: Cash Outflow entries + Advance expenses + Credit Settlement (Bills)
 // - Credit entries do NOT affect Cash Pulse (unless settled)
-// - Settlements use descriptive types and ARE included in Cash Pulse
+// - Advance settlements do NOT affect Cash Pulse (cash already counted at creation)
 // ═══════════════════════════════════════════════════════════
 
 // Calculate total cash balance (cash movements only)
 export function calculateCashBalance(entries: Entry[]): number {
-  // Cash IN: Cash IN + Advance Sales + Settlement Collections
+  // Cash IN: Cash IN + Advance Sales + Credit Collections
+  // ❌ EXCLUDES: Advance settlements (cash already counted)
   const cashIn = entries
     .filter(e =>
       e.entry_type === 'Cash IN' ||
       e.entry_type === 'Credit Settlement (Collections)' ||
-      e.entry_type === 'Advance Settlement (Received)' ||
       (e.entry_type === 'Advance' && e.category === 'Sales')
     )
     .reduce((sum, e) => sum + e.amount, 0)
 
-  // Cash OUT: Cash OUT + Advance expenses (COGS, Opex, Assets) + Settlement Bills
+  // Cash OUT: Cash OUT + Advance expenses + Credit Bills
+  // ❌ EXCLUDES: Advance settlements (cash already counted)
   const cashOut = entries
     .filter(e =>
       e.entry_type === 'Cash OUT' ||
       e.entry_type === 'Credit Settlement (Bills)' ||
-      e.entry_type === 'Advance Settlement (Paid)' ||
       (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
     )
     .reduce((sum, e) => sum + e.amount, 0)
@@ -73,8 +73,8 @@ export function getTotalCashIn(entries: Entry[], startDate?: Date, endDate?: Dat
   let filtered = entries.filter(e =>
     e.entry_type === 'Cash IN' ||
     e.entry_type === 'Credit Settlement (Collections)' ||
-    e.entry_type === 'Advance Settlement (Received)' ||
     (e.entry_type === 'Advance' && e.category === 'Sales')
+    // ❌ Excludes: Advance Settlement (Received) - no cash movement
   )
 
   if (startDate) {
@@ -92,8 +92,8 @@ export function getTotalCashOut(entries: Entry[], startDate?: Date, endDate?: Da
   let filtered = entries.filter(e =>
     e.entry_type === 'Cash OUT' ||
     e.entry_type === 'Credit Settlement (Bills)' ||
-    e.entry_type === 'Advance Settlement (Paid)' ||
     (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+    // ❌ Excludes: Advance Settlement (Paid) - no cash movement
   )
 
   if (startDate) {
@@ -111,8 +111,8 @@ export function getCashInByCategory(entries: Entry[], startDate?: Date, endDate?
   let filtered = entries.filter(e =>
     e.entry_type === 'Cash IN' ||
     e.entry_type === 'Credit Settlement (Collections)' ||
-    e.entry_type === 'Advance Settlement (Received)' ||
     (e.entry_type === 'Advance' && e.category === 'Sales')
+    // ❌ Excludes: Advance Settlement (Received)
   )
 
   if (startDate) {
@@ -149,8 +149,8 @@ export function getCashOutByCategory(entries: Entry[], startDate?: Date, endDate
   let filtered = entries.filter(e =>
     e.entry_type === 'Cash OUT' ||
     e.entry_type === 'Credit Settlement (Bills)' ||
-    e.entry_type === 'Advance Settlement (Paid)' ||
     (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+    // ❌ Excludes: Advance Settlement (Paid)
   )
 
   if (startDate) {
@@ -202,8 +202,8 @@ export function getCashFlowTrend(entries: Entry[], days: number = 30): CashFlowD
       .filter(e =>
         e.entry_type === 'Cash IN' ||
         e.entry_type === 'Credit Settlement (Collections)' ||
-        e.entry_type === 'Advance Settlement (Received)' ||
         (e.entry_type === 'Advance' && e.category === 'Sales')
+        // ❌ Excludes: Advance Settlement (Received)
       )
       .reduce((sum, e) => sum + e.amount, 0)
 
@@ -211,8 +211,8 @@ export function getCashFlowTrend(entries: Entry[], days: number = 30): CashFlowD
       .filter(e =>
         e.entry_type === 'Cash OUT' ||
         e.entry_type === 'Credit Settlement (Bills)' ||
-        e.entry_type === 'Advance Settlement (Paid)' ||
         (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+        // ❌ Excludes: Advance Settlement (Paid)
       )
       .reduce((sum, e) => sum + e.amount, 0)
 
@@ -275,15 +275,15 @@ export function getCashEntryCount(entries: Entry[], type?: 'in' | 'out', startDa
     filtered = entries.filter(e =>
       e.entry_type === 'Cash IN' ||
       e.entry_type === 'Credit Settlement (Collections)' ||
-      e.entry_type === 'Advance Settlement (Received)' ||
       (e.entry_type === 'Advance' && e.category === 'Sales')
+      // ❌ Excludes: Advance Settlement (Received)
     )
   } else if (type === 'out') {
     filtered = entries.filter(e =>
       e.entry_type === 'Cash OUT' ||
       e.entry_type === 'Credit Settlement (Bills)' ||
-      e.entry_type === 'Advance Settlement (Paid)' ||
       (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+      // ❌ Excludes: Advance Settlement (Paid)
     )
   } else {
     filtered = entries.filter(e =>
@@ -291,9 +291,8 @@ export function getCashEntryCount(entries: Entry[], type?: 'in' | 'out', startDa
       e.entry_type === 'Cash OUT' ||
       e.entry_type === 'Credit Settlement (Collections)' ||
       e.entry_type === 'Credit Settlement (Bills)' ||
-      e.entry_type === 'Advance Settlement (Received)' ||
-      e.entry_type === 'Advance Settlement (Paid)' ||
       e.entry_type === 'Advance'
+      // ❌ Excludes: Advance Settlement (Received/Paid)
     )
   }
 

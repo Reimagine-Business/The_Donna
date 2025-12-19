@@ -125,15 +125,15 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         if (
           e.entry_type === 'Cash IN' ||
           e.entry_type === 'Credit Settlement (Collections)' ||
-          e.entry_type === 'Advance Settlement (Received)' ||
           (e.entry_type === 'Advance' && e.category === 'Sales')
+          // ❌ Excludes: Advance Settlement (Received) - no cash movement
         ) {
           return sum + e.amount
         } else if (
           e.entry_type === 'Cash OUT' ||
           e.entry_type === 'Credit Settlement (Bills)' ||
-          e.entry_type === 'Advance Settlement (Paid)' ||
           (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+          // ❌ Excludes: Advance Settlement (Paid) - no cash movement
         ) {
           return sum - e.amount
         }
@@ -146,15 +146,15 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         if (
           e.entry_type === 'Cash IN' ||
           e.entry_type === 'Credit Settlement (Collections)' ||
-          e.entry_type === 'Advance Settlement (Received)' ||
           (e.entry_type === 'Advance' && e.category === 'Sales')
+          // ❌ Excludes: Advance Settlement (Received) - no cash movement
         ) {
           return sum + e.amount
         } else if (
           e.entry_type === 'Cash OUT' ||
           e.entry_type === 'Credit Settlement (Bills)' ||
-          e.entry_type === 'Advance Settlement (Paid)' ||
           (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+          // ❌ Excludes: Advance Settlement (Paid) - no cash movement
         ) {
           return sum - e.amount
         }
