@@ -28,30 +28,25 @@ export type CategoryExpense = {
 // PROFIT LENS LOGIC (Accrual-basis accounting)
 // ═══════════════════════════════════════════════════════════
 // Profit Lens tracks revenue and expenses when earned/incurred:
-// - Revenue: Cash IN (Sales)* + Credit (Sales) + SETTLED Advance (Sales)
-// - COGS: Cash OUT (COGS)* + Credit (COGS) + SETTLED Advance (COGS)
-// - OpEx: Cash OUT (Opex)* + Credit (Opex) + SETTLED Advance (Opex)
-// - UNSETTLED Advance entries do NOT affect Profit Lens (not yet earned/incurred)
+// - Revenue: Cash IN (Sales) + Credit (Sales) + Advance Settlement (Received)
+// - COGS: Cash OUT (COGS) + Credit (COGS) + Advance Settlement (Paid, COGS)
+// - OpEx: Cash OUT (Opex) + Credit (Opex) + Advance Settlement (Paid, Opex)
+// - Original Advance entries do NOT affect Profit Lens (not yet earned/incurred)
 // - Assets do NOT affect Profit Lens (not an expense)
 //
-// *CRITICAL: Cash IN/OUT entries with notes starting "Settlement of" are EXCLUDED
-//  to prevent double-counting (P&L already recorded when original entry was created)
-//
-// Settlement Logic:
-// - Credit entries: Create new Cash IN/OUT when settled (for Cash Pulse only, NOT P&L)
-// - Advance entries: Mark as settled (P&L recorded ONLY when settled)
+// Settlement Logic (NEW):
+// - Credit settlements: Create Cash IN/OUT entries (affect Cash Pulse, NOT Profit)
+// - Advance settlements: Create settlement entries with payment_method='None'
+//   → These affect Profit Lens (revenue/expense recognition)
+//   → Do NOT affect Cash Pulse (cash already counted at creation)
 // ═══════════════════════════════════════════════════════════
 
-// Calculate revenue (Sales from Cash IN + Credit + Settled Advance)
-// RULES (user's custom business logic):
-// - Credit Sales: ALL (settled + unsettled) → YES
-// - Advance Sales: ONLY settled → YES
-// - Cash IN Sales: YES, except 'Settlement of' entries → YES
 // Calculate Revenue (Total Sales) for Profit Lens
 // RULES:
-// 1. Cash IN Sales (excluding settlements)
-// 2. ALL Credit Sales (both settled AND unsettled)
-// 3. ONLY settled Advance Sales
+// 1. Cash IN Sales (excluding Credit settlements)
+// 2. ALL Credit Sales (both settled AND unsettled) - recognized immediately
+// 3. Advance Settlement (Received) - revenue recognized when work completed
+// 4. Original Advance Sales - NOT counted (revenue recognized at settlement)
 export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: Date): number {
   let total = 0
   let counted = 0
@@ -73,9 +68,10 @@ export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: D
       continue
     }
 
-    // RULE 1: Cash IN Sales (excluding settlements)
+    // RULE 1: Cash IN Sales (excluding Credit Settlement entries)
     if (entry.entry_type === 'Cash IN') {
-      if (entry.notes?.startsWith('Settlement')) {
+      // Exclude Credit settlements (these are for Cash Pulse, not Profit)
+      if (entry.is_settlement && entry.settlement_type === 'credit') {
         skipped++
       } else {
         total += entry.amount
@@ -85,21 +81,25 @@ export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: D
     }
 
     // RULE 2: ALL Credit Sales (BOTH settled AND unsettled)
-    // CRITICAL: No settled check here!
+    // Credit recognized immediately when invoiced
     if (entry.entry_type === 'Credit') {
       total += entry.amount
       counted++
       continue
     }
 
-    // RULE 3: ONLY settled Advance Sales
+    // RULE 3: ✅ NEW - Advance Settlement (Received)
+    // Revenue recognized when work is completed (settlement date)
+    if (entry.entry_type === 'Advance Settlement (Received)') {
+      total += entry.amount
+      counted++
+      continue
+    }
+
+    // RULE 4: ❌ Original Advance Sales - NOT counted
+    // Revenue will be counted when settlement entry is created
     if (entry.entry_type === 'Advance') {
-      if (entry.settled === true) {
-        total += entry.amount
-        counted++
-      } else {
-        skipped++
-      }
+      skipped++
       continue
     }
 
@@ -110,15 +110,18 @@ export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: D
   return total
 }
 
-// Calculate COGS (Cost of Goods Sold from Cash OUT + Credit + Settled Advance)
+// Calculate COGS (Cost of Goods Sold from Cash OUT + Credit + Advance Settlement)
 export function calculateCOGS(entries: Entry[], startDate?: Date, endDate?: Date): number {
   let filtered = entries.filter(e =>
     e.category === 'COGS' &&
     (
-      // Cash OUT ONLY if NOT a settlement entry (prevents double-counting)
-      (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of')) ||
+      // Cash OUT COGS (excluding Credit settlements)
+      (e.entry_type === 'Cash OUT' && !(e.is_settlement && e.settlement_type === 'credit')) ||
+      // All Credit COGS (recognized immediately)
       e.entry_type === 'Credit' ||
-      (e.entry_type === 'Advance' && e.settled === true)  // ✅ Include settled Advance
+      // ✅ NEW - Advance Settlement (Paid) for COGS - expense recognized at settlement
+      e.entry_type === 'Advance Settlement (Paid)'
+      // ❌ Original Advance COGS - NOT counted (will be counted at settlement)
     )
   )
 
@@ -139,15 +142,18 @@ export function calculateGrossProfit(revenue: number, cogs: number): number {
   return revenue - cogs
 }
 
-// Calculate Operating Expenses (Opex from Cash OUT + Credit + Settled Advance, NO Assets)
+// Calculate Operating Expenses (Opex from Cash OUT + Credit + Advance Settlement, NO Assets)
 export function calculateOperatingExpenses(entries: Entry[], startDate?: Date, endDate?: Date): number {
   let filtered = entries.filter(e =>
     e.category === 'Opex' &&
     (
-      // Cash OUT ONLY if NOT a settlement entry (prevents double-counting)
-      (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of')) ||
+      // Cash OUT Opex (excluding Credit settlements)
+      (e.entry_type === 'Cash OUT' && !(e.is_settlement && e.settlement_type === 'credit')) ||
+      // All Credit Opex (recognized immediately)
       e.entry_type === 'Credit' ||
-      (e.entry_type === 'Advance' && e.settled === true)  // ✅ Include settled Advance
+      // ✅ NEW - Advance Settlement (Paid) for Opex - expense recognized at settlement
+      e.entry_type === 'Advance Settlement (Paid)'
+      // ❌ Original Advance Opex - NOT counted (will be counted at settlement)
     )
   )
 
@@ -204,15 +210,18 @@ export function getProfitTrend(entries: Entry[], months: number = 6): ProfitTren
 
     const revenue = calculateRevenue(entries, monthStart, monthEnd)
 
-    // Total expenses = COGS + Opex (excluding ALL settlements to avoid double-counting)
+    // Total expenses = COGS + Opex
     const totalExpenses = entries
       .filter(e =>
         ['COGS', 'Opex'].includes(e.category) &&
         (
-          // Cash OUT ONLY if NOT a settlement entry (prevents double-counting)
-          (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of')) ||
+          // Cash OUT (excluding Credit settlements)
+          (e.entry_type === 'Cash OUT' && !(e.is_settlement && e.settlement_type === 'credit')) ||
+          // All Credit (recognized immediately)
           e.entry_type === 'Credit' ||
-          (e.entry_type === 'Advance' && e.settled === true)  // ✅ Include settled Advance
+          // ✅ Advance Settlement (Paid) - expense recognized at settlement
+          e.entry_type === 'Advance Settlement (Paid)'
+          // ❌ Original Advance - NOT counted
         )
       )
       .filter(e => {
@@ -236,15 +245,17 @@ export function getProfitTrend(entries: Entry[], months: number = 6): ProfitTren
 
 // Get expense breakdown by category with percentages (COGS + Opex only, NO Sales, NO Assets)
 export function getExpenseBreakdown(entries: Entry[], startDate?: Date, endDate?: Date): CategoryExpense[] {
-  // CRITICAL FIX for Bug B8: Only include COGS and Opex, NEVER Sales or Assets
-  // Exclude ALL settlement entries to avoid double-counting
+  // Only include COGS and Opex, NEVER Sales or Assets
   let filtered = entries.filter(e =>
     ['COGS', 'Opex'].includes(e.category) &&
     (
-      // Cash OUT ONLY if NOT a settlement entry (prevents double-counting)
-      (e.entry_type === 'Cash OUT' && !e.notes?.startsWith('Settlement of')) ||
+      // Cash OUT (excluding Credit settlements)
+      (e.entry_type === 'Cash OUT' && !(e.is_settlement && e.settlement_type === 'credit')) ||
+      // All Credit (recognized immediately)
       e.entry_type === 'Credit' ||
-      (e.entry_type === 'Advance' && e.settled === true)  // Include settled Advance
+      // ✅ Advance Settlement (Paid) - expense recognized at settlement
+      e.entry_type === 'Advance Settlement (Paid)'
+      // ❌ Original Advance - NOT counted
     )
   )
 
