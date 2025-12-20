@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
 import { MoreVertical, Edit2, Trash2, Eye } from "lucide-react";
 import { type Entry, type Category } from "@/app/entries/actions";
@@ -14,13 +14,48 @@ interface EntryListProps {
   onRefresh: () => void;
 }
 
+interface MenuPosition {
+  top: number;
+  right: number;
+}
+
 export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
   const [openMenuId, setOpenMenuId] = useState<string | null>(null);
   const [editingEntry, setEditingEntry] = useState<Entry | null>(null);
   const [deletingEntry, setDeletingEntry] = useState<Entry | null>(null);
   const [viewingEntry, setViewingEntry] = useState<Entry | null>(null);
+  const [menuPosition, setMenuPosition] = useState<MenuPosition>({ top: 0, right: 0 });
+  const buttonRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
 
   const handleCloseMenu = () => setOpenMenuId(null);
+
+  const handleOpenMenu = (entryId: string) => {
+    const button = buttonRefs.current[entryId];
+    if (button) {
+      const rect = button.getBoundingClientRect();
+      const menuWidth = 192; // w-48 = 12rem = 192px
+      const viewportWidth = window.innerWidth;
+      const viewportHeight = window.innerHeight;
+
+      // Calculate position
+      let top = rect.bottom + 4; // 4px gap below button
+      let right = viewportWidth - rect.right;
+
+      // If menu would go off bottom of screen, show it above the button
+      const menuHeight = 150; // Approximate height
+      if (top + menuHeight > viewportHeight) {
+        top = rect.top - menuHeight - 4;
+      }
+
+      // Ensure menu doesn't go off screen on the right
+      if (right < 0) {
+        right = 8; // 8px from edge
+      }
+
+      setMenuPosition({ top, right });
+      setOpenMenuId(entryId);
+    }
+  };
 
   const handleEdit = (entry: Entry) => {
     setEditingEntry(entry);
@@ -162,41 +197,17 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 </div>
 
                 {/* Actions */}
-                <div className="relative flex justify-center items-center">
+                <div className="flex justify-center items-center">
                   <button
+                    ref={(el) => { buttonRefs.current[entry.id] = el; }}
                     onClick={() =>
-                      setOpenMenuId(isMenuOpen ? null : entry.id)
+                      isMenuOpen ? handleCloseMenu() : handleOpenMenu(entry.id)
                     }
                     className="p-1 hover:bg-purple-600/30 text-purple-300 rounded transition-colors"
                     title="Actions"
                   >
                     <MoreVertical className="w-3 h-3" />
                   </button>
-
-                  {isMenuOpen && (
-                    <>
-                      <div
-                        className="fixed inset-0 z-10"
-                        onClick={handleCloseMenu}
-                      />
-                      <div className="absolute right-0 top-6 z-20 w-32 bg-[#1a1a2e] border border-purple-500/30 rounded-lg shadow-lg overflow-hidden">
-                        <button
-                          onClick={() => handleEdit(entry)}
-                          className="w-full px-2 py-1.5 text-left text-[10px] text-white hover:bg-purple-900/30 transition-colors flex items-center gap-1.5"
-                        >
-                          <Edit2 className="w-2.5 h-2.5" />
-                          Edit
-                        </button>
-                        <button
-                          onClick={() => handleDelete(entry)}
-                          className="w-full px-2 py-1.5 text-left text-[10px] text-red-400 hover:bg-red-900/20 transition-colors flex items-center gap-1.5 border-t border-purple-500/20"
-                        >
-                          <Trash2 className="w-2.5 h-2.5" />
-                          Delete
-                        </button>
-                      </div>
-                    </>
-                  )}
                 </div>
               </div>
             );
@@ -288,58 +299,72 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
 
                 {/* Actions Menu - Fixed 50px */}
                 <div className="flex items-center justify-end">
-                  <div className="relative">
-                    <button
-                      onClick={() =>
-                        setOpenMenuId(isMenuOpen ? null : entry.id)
-                      }
-                      className="p-2 hover:bg-purple-900/50 rounded-md transition-colors text-purple-300"
-                    >
-                      <MoreVertical className="h-4 w-4" />
-                    </button>
-
-                    {/* Dropdown Menu */}
-                    {isMenuOpen && (
-                      <>
-                        {/* Backdrop to close menu */}
-                        <div
-                          className="fixed inset-0 z-10"
-                          onClick={handleCloseMenu}
-                        />
-
-                        {/* Menu */}
-                        <div className="absolute right-0 top-10 z-20 w-48 bg-[#1a1a2e] border border-purple-500/30 rounded-lg shadow-lg overflow-hidden">
-                          <button
-                            onClick={() => handleView(entry)}
-                            className="w-full px-4 py-3 text-left text-sm text-white hover:bg-purple-900/30 transition-colors flex items-center gap-3"
-                          >
-                            <Eye className="w-4 h-4" />
-                            View Details
-                          </button>
-                          <button
-                            onClick={() => handleEdit(entry)}
-                            className="w-full px-4 py-3 text-left text-sm text-white hover:bg-purple-900/30 transition-colors flex items-center gap-3 border-t border-purple-500/20"
-                          >
-                            <Edit2 className="w-4 h-4" />
-                            Edit Entry
-                          </button>
-                          <button
-                            onClick={() => handleDelete(entry)}
-                            className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-red-900/20 transition-colors flex items-center gap-3 border-t border-purple-500/20"
-                          >
-                            <Trash2 className="w-4 h-4" />
-                            Delete Entry
-                          </button>
-                        </div>
-                      </>
-                    )}
-                  </div>
+                  <button
+                    ref={(el) => { buttonRefs.current[entry.id] = el; }}
+                    onClick={() =>
+                      isMenuOpen ? handleCloseMenu() : handleOpenMenu(entry.id)
+                    }
+                    className="p-2 hover:bg-purple-900/50 rounded-md transition-colors text-purple-300"
+                  >
+                    <MoreVertical className="h-4 w-4" />
+                  </button>
                 </div>
               </div>
             );
           })}
         </div>
       </div>
+
+      {/* Fixed Position Dropdown Menu */}
+      {openMenuId && (
+        <>
+          {/* Backdrop to close menu */}
+          <div
+            className="fixed inset-0 z-40"
+            onClick={handleCloseMenu}
+          />
+
+          {/* Menu - Fixed position, won't be clipped by overflow containers */}
+          <div
+            className="fixed z-50 w-48 bg-[#1a1a2e] border border-purple-500/30 rounded-lg shadow-xl overflow-hidden"
+            style={{
+              top: `${menuPosition.top}px`,
+              right: `${menuPosition.right}px`,
+            }}
+          >
+            <button
+              onClick={() => {
+                const entry = entries.find(e => e.id === openMenuId);
+                if (entry) handleView(entry);
+              }}
+              className="w-full px-4 py-3 text-left text-sm text-white hover:bg-purple-900/30 transition-colors flex items-center gap-3"
+            >
+              <Eye className="w-4 h-4" />
+              View Details
+            </button>
+            <button
+              onClick={() => {
+                const entry = entries.find(e => e.id === openMenuId);
+                if (entry) handleEdit(entry);
+              }}
+              className="w-full px-4 py-3 text-left text-sm text-white hover:bg-purple-900/30 transition-colors flex items-center gap-3 border-t border-purple-500/20"
+            >
+              <Edit2 className="w-4 h-4" />
+              Edit Entry
+            </button>
+            <button
+              onClick={() => {
+                const entry = entries.find(e => e.id === openMenuId);
+                if (entry) handleDelete(entry);
+              }}
+              className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-red-900/20 transition-colors flex items-center gap-3 border-t border-purple-500/20"
+            >
+              <Trash2 className="w-4 h-4" />
+              Delete Entry
+            </button>
+          </div>
+        </>
+      )}
 
       {/* Modals */}
       {editingEntry && (
