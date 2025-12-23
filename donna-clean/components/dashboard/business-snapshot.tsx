@@ -102,107 +102,124 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
         />
       </div>
 
-      {/* What You Own (Assets) */}
-      <div className="bg-green-900/20 border border-green-500/30 rounded-xl overflow-hidden">
-        <button
-          onClick={() => setExpandedOwn(!expandedOwn)}
-          className="w-full p-4 flex items-center justify-between hover:bg-green-900/10 transition-colors"
-        >
-          <div className="text-left">
-            <div className="text-sm text-white mb-1">💰 WHAT YOU OWN</div>
-            <div className="text-3xl font-bold text-white">
-              ₹{snapshotData.totalOwn.toLocaleString('en-IN')}
-            </div>
-          </div>
-          {expandedOwn ? (
-            <ChevronUp className="w-5 h-5 text-green-400" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-green-400" />
-          )}
-        </button>
+      {/* What You Own - HERO CARD (LARGEST) */}
+      <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border-2 border-purple-500 p-8 md:p-10 rounded-2xl shadow-lg shadow-purple-500/30 relative overflow-hidden">
+        {/* Decorative background */}
+        <div className="absolute top-[-50%] right-[-20%] w-64 h-64 bg-purple-500/15 rounded-full" />
 
-        {expandedOwn && (
-          <div className="px-4 pb-4 space-y-3 border-t border-green-500/20">
-            <div className="flex justify-between items-center pt-3">
-              <span className="text-sm text-white">Cash in Bank/Hand</span>
-              <span className="text-lg font-semibold text-green-400">
-                ₹{snapshotData.cash.toLocaleString('en-IN')}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-white">Money to Collect (Receivables)</span>
-              <span className="text-lg font-semibold text-green-400">
-                ₹{snapshotData.receivables.toLocaleString('en-IN')}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-white">Advances Paid (Prepaid)</span>
-              <span className="text-lg font-semibold text-green-400">
-                ₹{snapshotData.prepaid.toLocaleString('en-IN')}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-white">Fixed Assets</span>
-              <span className="text-lg font-semibold text-green-400">
-                ₹{snapshotData.fixedAssets.toLocaleString('en-IN')}
-              </span>
-            </div>
+        <div className="relative z-10">
+          <div className="text-xs uppercase tracking-widest opacity-60 font-bold mb-4">
+            💰 WHAT YOU OWN
           </div>
-        )}
+          <div className="text-5xl md:text-6xl lg:text-7xl font-black mb-2 text-white">
+            ₹{snapshotData.cash.toLocaleString('en-IN')}
+          </div>
+          <div className="text-sm opacity-50 font-medium">
+            Your total cash balance
+          </div>
+        </div>
       </div>
 
-      {/* What You Owe (Liabilities) */}
-      <div className="bg-red-900/20 border border-red-500/30 rounded-xl overflow-hidden">
-        <button
-          onClick={() => setExpandedOwe(!expandedOwe)}
-          className="w-full p-4 flex items-center justify-between hover:bg-red-900/10 transition-colors"
-        >
-          <div className="text-left">
-            <div className="text-sm text-white mb-1">📋 WHAT YOU OWE</div>
-            <div className="text-3xl font-bold text-white">
-              ₹{snapshotData.totalOwe.toLocaleString('en-IN')}
-            </div>
+      {/* What You Owe + Total Profit - Side by side (SMALLER) */}
+      <div className="grid grid-cols-2 gap-3 md:gap-4">
+        {/* What You Owe */}
+        <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-red-500 p-4 rounded-xl">
+          <div className={`text-xs uppercase tracking-wide font-semibold mb-3 ${snapshotData.totalOwe === 0 ? 'opacity-50' : 'opacity-70'}`}>
+            What You Owe
           </div>
-          {expandedOwe ? (
-            <ChevronUp className="w-5 h-5 text-red-400" />
-          ) : (
-            <ChevronDown className="w-5 h-5 text-red-400" />
-          )}
-        </button>
+          <div className={`text-2xl md:text-3xl font-bold text-white ${snapshotData.totalOwe === 0 ? 'opacity-30' : ''}`}>
+            ₹{snapshotData.totalOwe.toLocaleString('en-IN')}
+          </div>
+        </div>
 
-        {expandedOwe && (
-          <div className="px-4 pb-4 space-y-3 border-t border-red-500/20">
-            <div className="flex justify-between items-center pt-3">
-              <span className="text-sm text-white">Bills to Pay (Credit)</span>
-              <span className="text-lg font-semibold text-red-400">
-                ₹{snapshotData.creditBills.toLocaleString('en-IN')}
-              </span>
-            </div>
-            <div className="flex justify-between items-center">
-              <span className="text-sm text-white">Customer Advances</span>
-              <span className="text-lg font-semibold text-red-400">
-                ₹{snapshotData.customerAdvances.toLocaleString('en-IN')}
-              </span>
-            </div>
+        {/* Total Profit */}
+        <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-purple-500 p-4 rounded-xl">
+          <div className="text-xs uppercase tracking-wide opacity-50 font-semibold mb-3">
+            Total Profit
           </div>
-        )}
+          <div className="text-2xl md:text-3xl font-bold text-white">
+            ₹{snapshotData.profit.toLocaleString('en-IN')}
+          </div>
+        </div>
       </div>
 
-      {/* Total Profit */}
-      <div className="bg-purple-900/20 border border-purple-500/30 rounded-xl p-4">
-        <div className="text-sm text-white mb-1">
-          📊 TOTAL PROFIT ({period === "all-time" ? "All Time" : selectedYear})
-        </div>
-        <div className="text-3xl font-bold text-white">
-          ₹{snapshotData.profit.toLocaleString('en-IN')}
-        </div>
-        <div className="text-xs text-white mt-1">What you earned in selected period</div>
+      {/* Expandable Details Section */}
+      <div className="space-y-3">
+        {/* What You Own Details (Collapsible) */}
+        <div className="bg-gray-900/50 border border-gray-700 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setExpandedOwn(!expandedOwn)}
+            className="w-full p-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+          >
+            <div className="text-sm text-white font-medium">💰 Asset Breakdown</div>
+            {expandedOwn ? (
+              <ChevronUp className="w-4 h-4 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
 
-        {period !== "all-time" && (
-          <div className="mt-3 p-2 bg-blue-900/20 border border-blue-500/30 rounded text-xs text-blue-200">
-            ℹ️ Assets & Liabilities show current balances. Profit shows {selectedYear} earnings only.
-          </div>
-        )}
+          {expandedOwn && (
+            <div className="px-3 pb-3 space-y-2 border-t border-gray-700">
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-xs text-gray-400">Cash in Bank/Hand</span>
+                <span className="text-sm font-semibold text-white">
+                  ₹{snapshotData.cash.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-400">Money to Collect</span>
+                <span className="text-sm font-semibold text-white">
+                  ₹{snapshotData.receivables.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-400">Advances Paid</span>
+                <span className="text-sm font-semibold text-white">
+                  ₹{snapshotData.prepaid.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-400">Fixed Assets</span>
+                <span className="text-sm font-semibold text-white">
+                  ₹{snapshotData.fixedAssets.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* What You Owe Details (Collapsible) */}
+        <div className="bg-gray-900/50 border border-gray-700 rounded-xl overflow-hidden">
+          <button
+            onClick={() => setExpandedOwe(!expandedOwe)}
+            className="w-full p-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+          >
+            <div className="text-sm text-white font-medium">📋 Liability Breakdown</div>
+            {expandedOwe ? (
+              <ChevronUp className="w-4 h-4 text-gray-400" />
+            ) : (
+              <ChevronDown className="w-4 h-4 text-gray-400" />
+            )}
+          </button>
+
+          {expandedOwe && (
+            <div className="px-3 pb-3 space-y-2 border-t border-gray-700">
+              <div className="flex justify-between items-center pt-2">
+                <span className="text-xs text-gray-400">Bills to Pay</span>
+                <span className="text-sm font-semibold text-white">
+                  ₹{snapshotData.creditBills.toLocaleString('en-IN')}
+                </span>
+              </div>
+              <div className="flex justify-between items-center">
+                <span className="text-xs text-gray-400">Customer Advances</span>
+                <span className="text-sm font-semibold text-white">
+                  ₹{snapshotData.customerAdvances.toLocaleString('en-IN')}
+                </span>
+              </div>
+            </div>
+          )}
+        </div>
       </div>
 
       {/* Quick Action Buttons */}
