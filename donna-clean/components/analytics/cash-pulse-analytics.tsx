@@ -575,7 +575,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">⏰</span>
+                <DonnaIcon icon={DonnaIcons.clock} size="sm" variant="default" />
                 <h3 className="text-sm font-semibold text-white">ADVANCE</h3>
               </div>
 
