@@ -3,17 +3,18 @@
 import { useMemo } from "react";
 import type { Entry } from "@/lib/entries";
 
-interface Alert {
+interface Reminder {
   id: string;
   title: string;
-  message: string;
-  priority: number;
-  is_read: boolean;
+  description: string | null;
+  due_date: string;
+  status: string;
+  category: string;
 }
 
 interface BusinessInsightsProps {
   entries: Entry[];
-  alerts?: Alert[];
+  reminders?: Reminder[];
 }
 
 interface NewsItem {
@@ -22,12 +23,45 @@ interface NewsItem {
   priority: number; // 1=critical, 2=warning, 3=info, 4=success
 }
 
-export function BusinessInsights({ entries, alerts = [] }: BusinessInsightsProps) {
+export function BusinessInsights({ entries, reminders = [] }: BusinessInsightsProps) {
   const newsItems = useMemo(() => {
     const items: NewsItem[] = [];
     const today = new Date().toISOString().split('T')[0];
 
     const fmt = (amount: number) => `₹${amount.toLocaleString('en-IN')}`;
+
+    // Process Reminders - HIGHEST PRIORITY
+    const pendingReminders = reminders.filter(r => r.status === 'pending');
+
+    // 1. Overdue reminders (CRITICAL)
+    const overdueReminders = pendingReminders.filter(r => r.due_date < today);
+    if (overdueReminders.length > 0) {
+      const daysOverdue = Math.ceil((new Date().getTime() - new Date(overdueReminders[0].due_date).getTime()) / (1000 * 60 * 60 * 24));
+      items.push({
+        icon: '😰',
+        message: overdueReminders.length === 1
+          ? `Overdue: ${overdueReminders[0].title}`
+          : `${overdueReminders.length} overdue reminders (${daysOverdue}+ days)`,
+        priority: 1
+      });
+    }
+
+    // 2. Reminders due within a week (WARNING)
+    const oneWeekFromNow = new Date(Date.now() + 7 * 86400000).toISOString().split('T')[0];
+    const upcomingReminders = pendingReminders.filter(r =>
+      r.due_date >= today && r.due_date <= oneWeekFromNow
+    );
+    if (upcomingReminders.length > 0) {
+      const daysUntil = Math.ceil((new Date(upcomingReminders[0].due_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24));
+      const when = daysUntil === 0 ? 'today' : daysUntil === 1 ? 'tomorrow' : `in ${daysUntil} days`;
+      items.push({
+        icon: '🤔',
+        message: upcomingReminders.length === 1
+          ? `Reminder due ${when}: ${upcomingReminders[0].title}`
+          : `${upcomingReminders.length} reminders due ${when}`,
+        priority: 2
+      });
+    }
 
     // Calculate cash balance
     const allCashEntries = entries.filter(e =>
@@ -187,7 +221,7 @@ export function BusinessInsights({ entries, alerts = [] }: BusinessInsightsProps
     return items
       .sort((a, b) => a.priority - b.priority)
       .slice(0, 3);
-  }, [entries, alerts]);
+  }, [entries, reminders]);
 
   // Hide if no news
   if (newsItems.length === 0) {

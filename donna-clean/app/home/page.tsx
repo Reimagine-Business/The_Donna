@@ -38,6 +38,14 @@ export default async function HomePage() {
     .eq('user_id', user.id)
     .maybeSingle();
 
+  // Fetch reminders for Today's News
+  const { data: reminders } = await supabase
+    .from('reminders')
+    .select('*')
+    .eq('user_id', user.id)
+    .eq('status', 'pending')
+    .order('due_date', { ascending: true });
+
   return (
     <main className="min-h-screen bg-background text-foreground pb-24 md:pb-8">
       <div className="flex flex-col min-h-screen">
@@ -50,7 +58,7 @@ export default async function HomePage() {
             <GreetingSection businessName={profile?.business_name ?? null} />
 
             {/* Business Insights */}
-            <BusinessInsights entries={entries} />
+            <BusinessInsights entries={entries} reminders={reminders || []} />
 
             {/* Business Snapshot */}
             <Suspense fallback={<EntryListSkeleton />}>
