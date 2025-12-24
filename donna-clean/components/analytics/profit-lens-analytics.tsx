@@ -2,10 +2,11 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { TrendingUp, TrendingDown, Download, RefreshCw, TrendingUpIcon } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { DonnaIcon } from '@/components/common/donna-icon'
+import { DonnaIcons } from '@/lib/icon-mappings'
 import { type Entry } from '@/lib/entries'
 import {
   getProfitMetrics,
@@ -246,8 +247,11 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
         <div className="absolute top-[-50%] right-[-20%] w-64 h-64 bg-purple-500/15 rounded-full" />
 
         <div className="relative z-10">
-          <div className="text-xs uppercase tracking-widest opacity-60 font-bold mb-4 flex items-center gap-2">
-            📈 Sales
+          <div className="flex items-center gap-3 mb-4">
+            <DonnaIcon icon={DonnaIcons.profitLens} size="lg" variant="success" />
+            <div className="text-xs uppercase tracking-widest opacity-60 font-bold">
+              Sales
+            </div>
           </div>
           <div className="text-5xl md:text-6xl lg:text-7xl font-black mb-3 text-white">
             {formatCurrency(currentMetrics.revenue)}
@@ -265,8 +269,11 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
       <div className="grid grid-cols-2 gap-3 md:gap-4">
         {/* Total Expenses */}
         <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-red-500 p-4 rounded-xl">
-          <div className="text-xs uppercase tracking-wide opacity-50 font-semibold mb-3">
-            Total Expenses
+          <div className="flex items-center gap-3 mb-3">
+            <DonnaIcon icon={DonnaIcons.totalExpenses} size="sm" variant="danger" />
+            <div className="text-xs uppercase tracking-wide opacity-50 font-semibold">
+              Total Expenses
+            </div>
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {formatCurrency(currentMetrics.cogs + currentMetrics.operatingExpenses)}
@@ -280,8 +287,11 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
 
         {/* Profit */}
         <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-green-500 p-4 rounded-xl">
-          <div className="text-xs uppercase tracking-wide opacity-50 font-semibold mb-3">
-            Profit
+          <div className="flex items-center gap-3 mb-3">
+            <DonnaIcon icon={DonnaIcons.profit} size="sm" variant="success" />
+            <div className="text-xs uppercase tracking-wide opacity-50 font-semibold">
+              Profit
+            </div>
           </div>
           <div className="text-2xl md:text-3xl font-bold text-white mb-1">
             {formatCurrency(currentMetrics.netProfit)}

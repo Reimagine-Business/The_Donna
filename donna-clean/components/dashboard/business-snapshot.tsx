@@ -7,6 +7,8 @@ import { type Entry } from "@/lib/entries";
 import { calculateCashBalance } from "@/lib/analytics-new";
 import { getProfitMetrics } from "@/lib/profit-calculations-new";
 import { PeriodFilter, getDateRangeForPeriod, type PeriodType } from "@/components/common/period-filter";
+import { DonnaIcon } from "@/components/common/donna-icon";
+import { DonnaIcons } from "@/lib/icon-mappings";
 
 interface BusinessSnapshotProps {
   entries: Entry[];
@@ -108,8 +110,11 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
         <div className="hidden md:block absolute top-[-50%] right-[-20%] w-64 h-64 bg-purple-500/15 rounded-full" />
 
         <div className="relative z-10">
-          <div className="text-[10px] md:text-xs uppercase tracking-widest opacity-60 font-bold mb-2 md:mb-4">
-            💰 WHAT'S YOURS?
+          <div className="flex items-center gap-3 mb-2 md:mb-4">
+            <DonnaIcon icon={DonnaIcons.whatYouOwn} size="xl" />
+            <div className="text-[10px] md:text-xs uppercase tracking-widest opacity-60 font-bold">
+              WHAT'S YOURS?
+            </div>
           </div>
           <div className="text-3xl md:text-5xl lg:text-6xl font-black mb-1 md:mb-2 text-white">
             ₹{snapshotData.totalOwn.toLocaleString('en-IN')}
@@ -124,8 +129,11 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
       <div className="grid grid-cols-2 gap-2 md:gap-4">
         {/* What You Owe */}
         <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-red-500 p-3 md:p-4 rounded-lg md:rounded-xl">
-          <div className={`text-[10px] md:text-xs uppercase tracking-wide font-semibold mb-2 md:mb-3 ${snapshotData.totalOwe === 0 ? 'opacity-50' : 'opacity-70'}`}>
-            What is NOT yours?
+          <div className="flex items-center gap-2 mb-2 md:mb-3">
+            <DonnaIcon icon={DonnaIcons.whatYouOwe} size="sm" variant="danger" />
+            <div className={`text-[10px] md:text-xs uppercase tracking-wide font-semibold ${snapshotData.totalOwe === 0 ? 'opacity-50' : 'opacity-70'}`}>
+              What is NOT yours?
+            </div>
           </div>
           <div className={`text-xl md:text-2xl lg:text-3xl font-bold text-white ${snapshotData.totalOwe === 0 ? 'opacity-30' : ''}`}>
             ₹{snapshotData.totalOwe.toLocaleString('en-IN')}
@@ -134,8 +142,11 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
 
         {/* Total Profit */}
         <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-purple-500 p-3 md:p-4 rounded-lg md:rounded-xl">
-          <div className="text-[10px] md:text-xs uppercase tracking-wide opacity-50 font-semibold mb-2 md:mb-3">
-            Your Profit from Sales
+          <div className="flex items-center gap-2 mb-2 md:mb-3">
+            <DonnaIcon icon={DonnaIcons.profit} size="sm" variant="success" />
+            <div className="text-[10px] md:text-xs uppercase tracking-wide opacity-50 font-semibold">
+              Your Profit from Sales
+            </div>
           </div>
           <div className="text-xl md:text-2xl lg:text-3xl font-bold text-white">
             ₹{snapshotData.profit.toLocaleString('en-IN')}
@@ -151,7 +162,10 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
             onClick={() => setExpandedOwn(!expandedOwn)}
             className="w-full p-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
           >
-            <div className="text-sm text-white font-medium">💰 What's Yours?</div>
+            <div className="flex items-center gap-2 text-sm text-white font-medium">
+              <DonnaIcon icon={DonnaIcons.whatYouOwn} size="xs" />
+              <span>What's Yours?</span>
+            </div>
             {expandedOwn ? (
               <ChevronUp className="w-4 h-4 text-gray-400" />
             ) : (
@@ -195,7 +209,10 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
             onClick={() => setExpandedOwe(!expandedOwe)}
             className="w-full p-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
           >
-            <div className="text-sm text-white font-medium">📋 What's left to pay?</div>
+            <div className="flex items-center gap-2 text-sm text-white font-medium">
+              <DonnaIcon icon={DonnaIcons.whatYouOwe} size="xs" />
+              <span>What's left to pay?</span>
+            </div>
             {expandedOwe ? (
               <ChevronUp className="w-4 h-4 text-gray-400" />
             ) : (
@@ -226,15 +243,17 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => router.push('/analytics/cashpulse')}
-          className="py-3 px-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-sm transition-colors text-white"
+          className="py-3 px-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-sm transition-colors text-white flex items-center justify-center gap-2"
         >
-          💰 View Cash Pulse
+          <DonnaIcon icon={DonnaIcons.whatsLeft} size="xs" variant="success" className="shrink-0" />
+          <span>View Cash Pulse</span>
         </button>
         <button
           onClick={() => router.push('/analytics/profitlens')}
-          className="py-3 px-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-sm transition-colors text-white"
+          className="py-3 px-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-sm transition-colors text-white flex items-center justify-center gap-2"
         >
-          📊 View Profit Lens
+          <DonnaIcon icon={DonnaIcons.profitLens} size="xs" variant="success" className="shrink-0" />
+          <span>View Profit Lens</span>
         </button>
       </div>
     </div>

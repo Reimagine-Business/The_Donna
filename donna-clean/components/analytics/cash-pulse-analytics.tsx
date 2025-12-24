@@ -2,10 +2,11 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { TrendingUp, TrendingDown, Wallet, ArrowUpRight, ArrowDownRight, Download, RefreshCw, Trash2 } from 'lucide-react'
 import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
+import { DonnaIcon } from '@/components/common/donna-icon'
+import { DonnaIcons } from '@/lib/icon-mappings'
 import { type Entry } from '@/lib/entries'
 import {
   calculateCashBalance,
@@ -376,8 +377,11 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
       <div className="grid grid-cols-2 gap-3 md:gap-4">
         {/* Cash IN */}
         <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-green-500 p-4 rounded-xl transition-transform hover:scale-[1.02]">
-          <div className="text-xs uppercase tracking-wide opacity-70 font-semibold mb-2">
-            Cash In
+          <div className="flex items-center gap-3 mb-3">
+            <DonnaIcon icon={DonnaIcons.cashIn} size="sm" variant="success" />
+            <div className="text-xs uppercase tracking-wide opacity-70 font-semibold">
+              Cash In
+            </div>
           </div>
           <div className="text-xl md:text-2xl font-bold text-white mb-1">
             {formatCurrency(totalCashIn)}
@@ -389,8 +393,11 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
 
         {/* Cash OUT */}
         <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-red-500 p-4 rounded-xl transition-transform hover:scale-[1.02]">
-          <div className="text-xs uppercase tracking-wide opacity-70 font-semibold mb-2">
-            Cash Out
+          <div className="flex items-center gap-3 mb-3">
+            <DonnaIcon icon={DonnaIcons.cashOut} size="sm" variant="danger" />
+            <div className="text-xs uppercase tracking-wide opacity-70 font-semibold">
+              Cash Out
+            </div>
           </div>
           <div className="text-xl md:text-2xl font-bold text-white mb-1">
             {formatCurrency(totalCashOut)}
@@ -401,7 +408,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
       </div>
 
-      {/* 💰 What's left! - NEW PRIMARY HERO CARD */}
+      {/* What's left! - NEW PRIMARY HERO CARD */}
       <div className={`bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border-2 border-purple-500/50 p-6 md:p-8 rounded-2xl shadow-lg relative overflow-hidden ${
         periodChange >= 0
           ? 'border-l-4 border-l-green-500 shadow-green-500/20'
@@ -411,8 +418,13 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         <div className="absolute top-[-50%] right-[-20%] w-48 h-48 bg-purple-500/10 rounded-full" />
 
         <div className="relative z-10">
-          <div className="flex items-center gap-2 text-sm font-semibold mb-2">
-            💰 What's left!
+          <div className="flex items-center gap-3 mb-3">
+            <DonnaIcon
+              icon={DonnaIcons.whatsLeft}
+              size="md"
+              variant={periodChange >= 0 ? 'success' : 'danger'}
+            />
+            <span className="text-sm font-semibold">What's left!</span>
           </div>
           <div className="text-xs opacity-70 mb-3">
             {getPeriodLabel(dateRange)}
@@ -426,10 +438,13 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
       </div>
 
-      {/* 💳 Total cash balance - DEMOTED SECONDARY CARD */}
+      {/* Total cash balance - DEMOTED SECONDARY CARD */}
       <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500 p-5 rounded-xl">
-        <div className="flex items-center gap-2 text-xs uppercase tracking-wide opacity-70 font-semibold mb-3">
-          💳 Total cash balance
+        <div className="flex items-center gap-3 mb-3">
+          <DonnaIcon icon={DonnaIcons.totalCashBalance} size="md" />
+          <div className="text-xs uppercase tracking-wide opacity-70 font-semibold">
+            Total cash balance
+          </div>
         </div>
         <div className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-purple-200 bg-clip-text text-transparent">
           {formatCurrency(cashBalance)}
@@ -484,8 +499,8 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         <div className="bg-card rounded-lg p-4 border-l-4 border-orange-500">
           <div className="flex items-start justify-between">
             <div className="w-full">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">💰</span>
+              <div className="flex items-center gap-3 mb-3">
+                <DonnaIcon icon={DonnaIcons.pendingCollection} size="sm" variant="warning" />
                 <h3 className="text-sm font-semibold text-white">PENDING COLLECTIONS</h3>
               </div>
 
@@ -523,8 +538,8 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         <div className="bg-card rounded-lg p-4 border-l-4 border-red-500">
           <div className="flex items-start justify-between">
             <div className="w-full">
-              <div className="flex items-center gap-2 mb-3">
-                <span className="text-2xl">💸</span>
+              <div className="flex items-center gap-3 mb-3">
+                <DonnaIcon icon={DonnaIcons.billsDue} size="sm" variant="danger" />
                 <h3 className="text-sm font-semibold text-white">PENDING BILLS</h3>
               </div>
 
