@@ -229,8 +229,8 @@ export function BusinessInsights({ entries, reminders = [] }: BusinessInsightsPr
   }
 
   return (
-    <div className="rounded-lg border bg-card p-3">
-      <h2 className="text-sm font-semibold mb-2">
+    <div className="rounded-lg border-2 border-gray-200 bg-white p-3 shadow-sm">
+      <h2 className="text-sm font-semibold mb-2 text-gray-900">
         📰 Today's News
       </h2>
 
@@ -240,7 +240,7 @@ export function BusinessInsights({ entries, reminders = [] }: BusinessInsightsPr
             key={idx}
             className="flex items-center justify-between gap-3 p-2 rounded-md bg-purple-500/5 hover:bg-purple-500/10 transition-all duration-200 hover:translate-x-1"
           >
-            <span className="text-xs flex-1 leading-relaxed text-white/90">{item.message}</span>
+            <span className="text-xs flex-1 leading-relaxed text-gray-700">{item.message}</span>
             <span className="text-2xl flex-shrink-0">{item.icon}</span>
           </li>
         ))}
