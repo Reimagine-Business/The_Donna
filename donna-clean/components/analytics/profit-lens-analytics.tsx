@@ -181,7 +181,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
 
           {/* Period Dropdown */}
           <div className="flex items-center gap-2">
-            <span className="text-sm text-white">Period:</span>
+            <span className="text-sm text-gray-600">Period:</span>
             <select
               value={dateRange}
               onChange={(e) => {
@@ -189,7 +189,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
                 setDateRange(value);
                 setShowCustomDatePickers(value === 'customize');
               }}
-              className="px-3 py-1.5 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+              className="px-3 py-1.5 bg-purple-900/30 border-2 border-gray-200 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
             >
               <option value="this-month">This Month</option>
               <option value="last-month">Last Month</option>
@@ -206,7 +206,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
           <div className="flex flex-wrap items-center gap-2">
             <Popover>
               <PopoverTrigger asChild>
-                <button className="px-3 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <button className="px-3 py-2 bg-purple-900/30 border-2 border-gray-200 rounded-lg text-white text-sm hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
                   {customFromDate ? format(customFromDate, "MMM dd, yyyy") : "From Date"}
                 </button>
               </PopoverTrigger>
@@ -220,11 +220,11 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
               </PopoverContent>
             </Popover>
 
-            <span className="text-sm text-white">to</span>
+            <span className="text-sm text-gray-600">to</span>
 
             <Popover>
               <PopoverTrigger asChild>
-                <button className="px-3 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                <button className="px-3 py-2 bg-purple-900/30 border-2 border-gray-200 rounded-lg text-white text-sm hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
                   {customToDate ? format(customToDate, "MMM dd, yyyy") : "To Date"}
                 </button>
               </PopoverTrigger>
@@ -242,7 +242,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
       </div>
 
       {/* Sales - HERO CARD (LARGEST) */}
-      <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border-2 border-purple-500 p-8 md:p-10 rounded-2xl shadow-lg shadow-purple-500/30 relative overflow-hidden">
+      <div className="bg-white border-2 border-purple-500 p-8 md:p-10 rounded-2xl shadow-lg shadow-purple-500/30 relative overflow-hidden">
         {/* Decorative background */}
         <div className="absolute top-[-50%] right-[-20%] w-64 h-64 bg-purple-500/15 rounded-full" />
 
@@ -256,7 +256,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
           <div className="text-5xl md:text-6xl lg:text-7xl font-black mb-3 text-white">
             {formatCurrency(currentMetrics.revenue)}
           </div>
-          <div className="text-sm opacity-50 font-medium flex items-center gap-2">
+          <div className="text-sm text-gray-400 font-medium flex items-center gap-2">
             Margin:
             <span className="bg-green-500/20 text-green-400 px-2 py-1 rounded text-xs font-bold">
               {currentMetrics.profitMargin.toFixed(1)}%
@@ -268,10 +268,10 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
       {/* Total Expenses + Profit - Side by side (SMALLER) */}
       <div className="grid grid-cols-2 gap-3 md:gap-4">
         {/* Total Expenses */}
-        <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-red-500 p-4 rounded-xl">
+        <div className="bg-white border-2 border-gray-200 border-l-4 border-l-red-500 p-4 rounded-xl">
           <div className="flex items-center gap-3 mb-3">
             <DonnaIcon icon={DonnaIcons.totalExpenses} size="sm" variant="danger" />
-            <div className="text-xs uppercase tracking-wide opacity-50 font-semibold">
+            <div className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
               Total Expenses
             </div>
           </div>
@@ -286,10 +286,10 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
         </div>
 
         {/* Profit */}
-        <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-green-500 p-4 rounded-xl">
+        <div className="bg-white border-2 border-gray-200 border-l-4 border-l-green-500 p-4 rounded-xl">
           <div className="flex items-center gap-3 mb-3">
             <DonnaIcon icon={DonnaIcons.profit} size="sm" variant="success" />
-            <div className="text-xs uppercase tracking-wide opacity-50 font-semibold">
+            <div className="text-xs uppercase tracking-wide text-gray-400 font-semibold">
               Profit
             </div>
           </div>
@@ -312,9 +312,9 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
             {expenseBreakdown.map((cat) => (
               <div key={cat.category} className="space-y-1">
                 <div className="flex justify-between items-center">
-                  <span className="text-sm text-white">{cat.category}</span>
+                  <span className="text-sm text-gray-600">{cat.category}</span>
                   <div className="flex items-center gap-2">
-                    <span className="text-sm font-medium text-white">{formatCurrency(cat.amount)}</span>
+                    <span className="text-sm font-medium text-gray-900">{formatCurrency(cat.amount)}</span>
                     <span className="text-xs text-purple-400">{cat.percentage.toFixed(1)}%</span>
                   </div>
                 </div>

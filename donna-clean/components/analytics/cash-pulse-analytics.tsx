@@ -313,7 +313,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
           <h1 className="text-2xl font-bold text-white">Check what you Have!</h1>
 
           <div className="flex items-center gap-2">
-            <span className="text-sm text-white">Period:</span>
+            <span className="text-sm text-gray-600">Period:</span>
             <select
               value={dateRange}
               onChange={(e) => {
@@ -352,7 +352,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
               </PopoverContent>
             </Popover>
 
-            <span className="text-sm text-white">to</span>
+            <span className="text-sm text-gray-600">to</span>
 
             <Popover>
               <PopoverTrigger asChild>
@@ -376,47 +376,44 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
       {/* Cash IN and Cash OUT - Side by side (MOVED UP) */}
       <div className="grid grid-cols-2 gap-3 md:gap-4">
         {/* Cash IN */}
-        <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-green-500 p-4 rounded-xl transition-transform hover:scale-[1.02]">
+        <div className="bg-white border-2 border-gray-200 border-l-4 border-l-green-500 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-3">
             <DonnaIcon icon={DonnaIcons.cashIn} size="sm" variant="success" />
-            <div className="text-xs uppercase tracking-wide opacity-70 font-semibold">
+            <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold">
               Cash In
             </div>
           </div>
-          <div className="text-xl md:text-2xl font-bold text-white mb-1">
+          <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
             {formatCurrency(totalCashIn)}
           </div>
-          <div className="text-xs opacity-50">
+          <div className="text-xs text-gray-400">
             {cashInCount} entries
           </div>
         </div>
 
         {/* Cash OUT */}
-        <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500/30 border-l-4 border-l-red-500 p-4 rounded-xl transition-transform hover:scale-[1.02]">
+        <div className="bg-white border-2 border-gray-200 border-l-4 border-l-red-500 p-4 rounded-xl shadow-sm hover:shadow-md transition-shadow">
           <div className="flex items-center gap-3 mb-3">
             <DonnaIcon icon={DonnaIcons.cashOut} size="sm" variant="danger" />
-            <div className="text-xs uppercase tracking-wide opacity-70 font-semibold">
+            <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold">
               Cash Out
             </div>
           </div>
-          <div className="text-xl md:text-2xl font-bold text-white mb-1">
+          <div className="text-xl md:text-2xl font-bold text-gray-900 mb-1">
             {formatCurrency(totalCashOut)}
           </div>
-          <div className="text-xs opacity-50">
+          <div className="text-xs text-gray-400">
             {cashOutCount} entries
           </div>
         </div>
       </div>
 
       {/* What's left! - NEW PRIMARY HERO CARD */}
-      <div className={`bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border-2 border-purple-500/50 p-6 md:p-8 rounded-2xl shadow-lg relative overflow-hidden ${
+      <div className={`bg-white border-2 border-gray-200 p-6 md:p-8 rounded-2xl shadow-md relative overflow-hidden ${
         periodChange >= 0
-          ? 'border-l-4 border-l-green-500 shadow-green-500/20'
-          : 'border-l-4 border-l-red-500 shadow-red-500/20'
+          ? 'border-l-4 border-l-green-500'
+          : 'border-l-4 border-l-red-500'
       }`}>
-        {/* Decorative background circle */}
-        <div className="absolute top-[-50%] right-[-20%] w-48 h-48 bg-purple-500/10 rounded-full" />
-
         <div className="relative z-10">
           <div className="flex items-center gap-3 mb-3">
             <DonnaIcon
@@ -424,68 +421,68 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
               size="md"
               variant={periodChange >= 0 ? 'success' : 'danger'}
             />
-            <span className="text-sm font-semibold">What's left!</span>
+            <span className="text-sm font-semibold text-gray-900">What's left!</span>
           </div>
-          <div className="text-xs opacity-70 mb-3">
+          <div className="text-xs text-gray-500 mb-3">
             {getPeriodLabel(dateRange)}
           </div>
-          <div className="text-4xl md:text-5xl lg:text-6xl font-extrabold text-white mb-2">
+          <div className="text-4xl md:text-5xl lg:text-6xl font-extrabold bg-gradient-to-br from-purple-600 to-purple-400 bg-clip-text text-transparent mb-2">
             {formatCurrency(periodChange)}
           </div>
-          <div className="text-xs opacity-70">
+          <div className="text-xs text-gray-400">
             Cash In - Cash Out
           </div>
         </div>
       </div>
 
       {/* Total cash balance - DEMOTED SECONDARY CARD */}
-      <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500 p-5 rounded-xl">
+      <div className="bg-white border-2 border-gray-200 p-5 rounded-xl shadow-sm">
         <div className="flex items-center gap-3 mb-3">
           <DonnaIcon icon={DonnaIcons.totalCashBalance} size="md" />
-          <div className="text-xs uppercase tracking-wide opacity-70 font-semibold">
+          <div className="text-xs uppercase tracking-wide text-gray-500 font-semibold">
             Total cash balance
           </div>
         </div>
-        <div className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-purple-200 bg-clip-text text-transparent">
+        <div className="text-3xl md:text-4xl font-bold mb-2 text-gray-900">
           {formatCurrency(cashBalance)}
         </div>
-        <div className="text-xs opacity-50 mb-1">
+        <div className="text-xs text-gray-500 mb-1">
           {formatCurrency(previousBalance)} previous + {formatCurrency(periodChange)} {getPeriodLabel(dateRange).toLowerCase()}
         </div>
-        <div className="text-xs opacity-40">
+        <div className="text-xs text-gray-400">
           As of {format(new Date(), 'dd MMM yyyy')}
         </div>
       </div>
 
       {/* Balances */}
-      <div className="bg-green-900/10 border border-green-500/20 rounded-lg p-3">
-        <h3 className="text-sm font-semibold text-white mb-2">Balances</h3>
+      <div className="bg-white border-2 border-gray-200 rounded-lg p-3 shadow-sm">
+        <h3 className="text-sm font-semibold text-gray-900 mb-2">Balances</h3>
 
         {/* Cash */}
         <div className="space-y-1 mb-2">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-white">Cash</span>
+            <span className="text-sm text-gray-700">Cash</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white">{formatCurrency(cashAmount)}</span>
-              <span className="text-xs text-white">{cashPercentage.toFixed(1)}%</span>
+              <span className="text-sm font-medium text-gray-900">{formatCurrency(cashAmount)}</span>
+              <span className="text-xs text-gray-500">{cashPercentage.toFixed(1)}%</span>
             </div>
           </div>
-          <div className="w-full bg-gray-700/30 rounded-full h-2 overflow-hidden">
-            <div className="bg-white h-2 rounded-full transition-all" style={{ width: `${Math.min(cashPercentage, 100)}%` }}></div>
+          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div className="bg-purple-600 h-2 rounded-full transition-all" style={{ width: `${Math.min(cashPercentage, 100)}%` }}></div>
           </div>
         </div>
 
         {/* Bank */}
         <div className="space-y-1">
           <div className="flex justify-between items-center">
-            <span className="text-sm text-white">Bank</span>
+            <span className="text-sm text-gray-700">Bank</span>
             <div className="flex items-center gap-2">
-              <span className="text-sm font-medium text-white">{formatCurrency(bankAmount)}</span>
-              <span className="text-xs text-white">{bankPercentage.toFixed(1)}%</span>
+              <span className="text-sm font-medium text-gray-900">{formatCurrency(bankAmount)}</span>
+              <span className="text-xs text-gray-500">{bankPercentage.toFixed(1)}%</span>
             </div>
           </div>
-          <div className="w-full bg-gray-700/30 rounded-full h-2 overflow-hidden">
-            <div className="bg-white h-2 rounded-full transition-all" style={{ width: `${Math.min(bankPercentage, 100)}%` }}></div>
+          <div className="w-full bg-gray-200 rounded-full h-2 overflow-hidden">
+            <div className="bg-purple-600 h-2 rounded-full transition-all" style={{ width: `${Math.min(bankPercentage, 100)}%` }}></div>
           </div>
         </div>
       </div>
@@ -496,27 +493,27 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
 
       <div className="space-y-3 mt-4">
         {/* PENDING COLLECTIONS */}
-        <div className="bg-card rounded-lg p-4 border-l-4 border-orange-500">
+        <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-3 mb-3">
                 <DonnaIcon icon={DonnaIcons.pendingCollection} size="sm" variant="warning" />
-                <h3 className="text-sm font-semibold text-white">PENDING COLLECTIONS</h3>
+                <h3 className="text-sm font-semibold text-gray-900">PENDING COLLECTIONS</h3>
               </div>
 
               {pendingCollections.count > 0 ? (
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">No of Pending:</span>
-                    <span className="text-sm font-medium text-white">{pendingCollections.count}</span>
+                    <span className="text-xs text-gray-600">No of Pending:</span>
+                    <span className="text-sm font-medium text-gray-900">{pendingCollections.count}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">Amount to Collect:</span>
+                    <span className="text-xs text-gray-600">Amount to Collect:</span>
                     <span className="text-sm font-bold text-orange-500">{formatCurrency(pendingCollections.amount)}</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-white">No pending collections</p>
+                <p className="text-sm text-gray-600">No pending collections</p>
               )}
             </div>
           </div>
@@ -535,27 +532,27 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
 
         {/* PENDING BILLS */}
-        <div className="bg-card rounded-lg p-4 border-l-4 border-red-500">
+        <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm p-4 border-l-4 border-red-500">
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-3 mb-3">
                 <DonnaIcon icon={DonnaIcons.billsDue} size="sm" variant="danger" />
-                <h3 className="text-sm font-semibold text-white">PENDING BILLS</h3>
+                <h3 className="text-sm font-semibold text-gray-900">PENDING BILLS</h3>
               </div>
 
               {pendingBills.count > 0 ? (
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">No of Pending:</span>
-                    <span className="text-sm font-medium text-white">{pendingBills.count}</span>
+                    <span className="text-xs text-gray-600">No of Pending:</span>
+                    <span className="text-sm font-medium text-gray-900">{pendingBills.count}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">Amount to Pay:</span>
+                    <span className="text-xs text-gray-600">Amount to Pay:</span>
                     <span className="text-sm font-bold text-red-500">{formatCurrency(pendingBills.amount)}</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-white">No pending bills</p>
+                <p className="text-sm text-gray-600">No pending bills</p>
               )}
             </div>
           </div>
@@ -571,33 +568,33 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
 
         {/* ADVANCE */}
-        <div className="bg-card rounded-lg p-4 border-l-4 border-purple-500">
+        <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm p-4 border-l-4 border-purple-500">
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-2 mb-3">
                 <DonnaIcon icon={DonnaIcons.clock} size="sm" variant="default" />
-                <h3 className="text-sm font-semibold text-white">ADVANCE</h3>
+                <h3 className="text-sm font-semibold text-gray-900">ADVANCE</h3>
               </div>
 
               {(advance.received.count > 0 || advance.paid.count > 0) ? (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-white">Received (Sales):</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-xs text-gray-600">Received (Sales):</span>
+                    <span className="text-sm font-medium text-gray-900">
                       {formatCurrency(advance.received.amount)}
                       <span className="text-xs text-white ml-1">({advance.received.count} pending)</span>
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-white">Paid (Expenses):</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-xs text-gray-600">Paid (Expenses):</span>
+                    <span className="text-sm font-medium text-gray-900">
                       {formatCurrency(advance.paid.amount)}
                       <span className="text-xs text-white ml-1">({advance.paid.count} pending)</span>
                     </span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-white">No pending advance payments</p>
+                <p className="text-sm text-gray-600">No pending advance payments</p>
               )}
             </div>
           </div>
