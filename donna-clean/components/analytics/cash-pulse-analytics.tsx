@@ -498,27 +498,27 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
 
       <div className="space-y-3 mt-4">
         {/* PENDING COLLECTIONS */}
-        <div className="bg-card rounded-lg p-4 border-l-4 border-orange-500">
+        <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm p-4 border-l-4 border-orange-500">
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-3 mb-3">
                 <DonnaIcon icon={DonnaIcons.pendingCollection} size="sm" variant="warning" />
-                <h3 className="text-sm font-semibold text-white">PENDING COLLECTIONS</h3>
+                <h3 className="text-sm font-semibold text-gray-900">PENDING COLLECTIONS</h3>
               </div>
 
               {pendingCollections.count > 0 ? (
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">No of Pending:</span>
-                    <span className="text-sm font-medium text-white">{pendingCollections.count}</span>
+                    <span className="text-xs text-gray-600">No of Pending:</span>
+                    <span className="text-sm font-medium text-gray-900">{pendingCollections.count}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">Amount to Collect:</span>
+                    <span className="text-xs text-gray-600">Amount to Collect:</span>
                     <span className="text-sm font-bold text-orange-500">{formatCurrency(pendingCollections.amount)}</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-white">No pending collections</p>
+                <p className="text-sm text-gray-600">No pending collections</p>
               )}
             </div>
           </div>
@@ -537,27 +537,27 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
 
         {/* PENDING BILLS */}
-        <div className="bg-card rounded-lg p-4 border-l-4 border-red-500">
+        <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm p-4 border-l-4 border-red-500">
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-3 mb-3">
                 <DonnaIcon icon={DonnaIcons.billsDue} size="sm" variant="danger" />
-                <h3 className="text-sm font-semibold text-white">PENDING BILLS</h3>
+                <h3 className="text-sm font-semibold text-gray-900">PENDING BILLS</h3>
               </div>
 
               {pendingBills.count > 0 ? (
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">No of Pending:</span>
-                    <span className="text-sm font-medium text-white">{pendingBills.count}</span>
+                    <span className="text-xs text-gray-600">No of Pending:</span>
+                    <span className="text-sm font-medium text-gray-900">{pendingBills.count}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">Amount to Pay:</span>
+                    <span className="text-xs text-gray-600">Amount to Pay:</span>
                     <span className="text-sm font-bold text-red-500">{formatCurrency(pendingBills.amount)}</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-white">No pending bills</p>
+                <p className="text-sm text-gray-600">No pending bills</p>
               )}
             </div>
           </div>
@@ -573,33 +573,33 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
 
         {/* ADVANCE */}
-        <div className="bg-card rounded-lg p-4 border-l-4 border-purple-500">
+        <div className="bg-white border-2 border-gray-200 rounded-lg shadow-sm p-4 border-l-4 border-purple-500">
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-2 mb-3">
                 <DonnaIcon icon={DonnaIcons.clock} size="sm" variant="default" />
-                <h3 className="text-sm font-semibold text-white">ADVANCE</h3>
+                <h3 className="text-sm font-semibold text-gray-900">ADVANCE</h3>
               </div>
 
               {(advance.received.count > 0 || advance.paid.count > 0) ? (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-white">Received (Sales):</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-xs text-gray-600">Received (Sales):</span>
+                    <span className="text-sm font-medium text-gray-900">
                       {formatCurrency(advance.received.amount)}
                       <span className="text-xs text-white ml-1">({advance.received.count} pending)</span>
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-white">Paid (Expenses):</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-xs text-gray-600">Paid (Expenses):</span>
+                    <span className="text-sm font-medium text-gray-900">
                       {formatCurrency(advance.paid.amount)}
                       <span className="text-xs text-white ml-1">({advance.paid.count} pending)</span>
                     </span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-white">No pending advance payments</p>
+                <p className="text-sm text-gray-600">No pending advance payments</p>
               )}
             </div>
           </div>
