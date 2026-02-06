@@ -130,12 +130,21 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
     }
 
     if (startDate) {
+      // Compare using date strings (YYYY-MM-DD) to avoid timezone issues.
+      // new Date(year, month, day) uses local timezone, but
+      // new Date("YYYY-MM-DD") parses as UTC, causing the last day of
+      // the month to be excluded for users east of UTC.
+      const toDateStr = (d: Date) =>
+        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+      const startStr = toDateStr(startDate)
+      const endStr = endDate ? toDateStr(endDate) : null
+
       result = result.filter(e => {
-        const entryDate = new Date(e.entry_date)
-        if (endDate) {
-          return entryDate >= startDate && entryDate <= endDate
+        const entryDateStr = e.entry_date.split('T')[0]
+        if (endStr) {
+          return entryDateStr >= startStr && entryDateStr <= endStr
         }
-        return entryDate >= startDate
+        return entryDateStr >= startStr
       })
     }
 
