@@ -44,16 +44,6 @@ export async function getOrRefreshUser(
 
   const isEmailVerified = isUserEmailVerified(user);
 
-  if (user && !isEmailVerified) {
-    console.warn("[Auth] Email not verified in getUser()", { email: user.email, id: user.id });
-  }
-
-  if (!user && error) {
-    console.warn(
-      `[Auth] No user found in getUser() – error: ${error.message}. Middleware should have refreshed the session.`,
-      error
-    );
-  }
 
   return {
     user,

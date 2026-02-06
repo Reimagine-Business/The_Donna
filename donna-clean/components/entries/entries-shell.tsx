@@ -181,7 +181,6 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
         setAllCategories(categoriesResult.categories)
       }
     } catch (err: unknown) {
-      console.error('Failed to refresh data:', err)
       setError(err instanceof Error ? err.message : 'Failed to refresh data')
     } finally {
       setLoading(false)
@@ -238,7 +237,6 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
     } catch (error) {
       dismissToast(loadingToastId)
       showError('An unexpected error occurred')
-      console.error('Create entry error:', error)
     } finally {
       setSubmitting(false)
     }

@@ -130,9 +130,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
       } catch {
         payloadSummary = "unserializable";
       }
-      console.warn(
-        `[Realtime Closed] Code ${code}: ${reason} payload ${payloadSummary} (profit-lens channel)`,
-      );
+      // Removed: console.warn for realtime close reason
     };
 
     const teardownChannel = () => {
@@ -189,7 +187,6 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
             startHeartbeat();
           } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
             logCloseReason(undefined, { status });
-            console.error("[Realtime Error] Closed – scheduling retry");
             teardownChannel();
             // Note: DO NOT call refreshSession() here - it causes 429 rate limiting
             // Middleware handles session refresh automatically
@@ -207,16 +204,12 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
         return;
       }
       if (retryAttempt >= MAX_REALTIME_RECONNECT_ATTEMPTS) {
-        console.error("[Realtime Error] Max retries reached for Profit Lens channel.");
         alertRealtimeFailure();
         return;
       }
       const attemptIndex = retryAttempt + 1;
       const exponentialDelay = BASE_REALTIME_DELAY_MS * 2 ** retryAttempt;
       const delay = Math.min(exponentialDelay, MAX_REALTIME_DELAY_MS);
-      console.warn(
-        `[Realtime Retry] attempt ${attemptIndex} in ${delay}ms (profit-lens channel)`,
-      );
       retryTimer = setTimeout(() => {
         retryTimer = null;
         retryAttempt = attemptIndex;

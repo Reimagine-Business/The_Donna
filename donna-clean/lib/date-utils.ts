@@ -89,7 +89,6 @@ export function filterByDateRange<T extends Record<string, any>>(
         end: boundaries.end,
       });
     } catch (error) {
-      console.warn(`Invalid date value: ${dateValue}`);
       return false;
     }
   });
@@ -136,7 +135,6 @@ export function filterByCustomDateRange<T extends Record<string, any>>(
         end: endDate,
       });
     } catch (error) {
-      console.warn(`Invalid date value: ${dateValue}`);
       return false;
     }
   });

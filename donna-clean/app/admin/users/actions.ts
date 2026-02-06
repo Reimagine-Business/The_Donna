@@ -36,8 +36,6 @@ export async function inviteUser(email: string) {
     // Get site URL for redirect
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://donna-clean.vercel.app';
 
-    console.log('Inviting user with admin client:', email);
-
     // Send invitation using admin client
     const { data, error } = await supabaseAdmin.auth.admin.inviteUserByEmail(email, {
       redirectTo: `${siteUrl}/auth/sign-up`,

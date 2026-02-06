@@ -82,7 +82,6 @@ export function SettleEntryDialog({ entry, onClose }: SettleEntryDialogProps) {
       // Refresh the current page data without full reload
       router.refresh();
     } catch (err) {
-      console.error("Settlement failed", err);
       const errorMessage = err instanceof Error ? err.message : "Unable to settle entry.";
       showError(errorMessage);
       setError(errorMessage);

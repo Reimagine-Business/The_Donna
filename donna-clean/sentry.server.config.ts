@@ -14,10 +14,6 @@ Sentry.init({
 
   // Capture 100% of server-side errors
   beforeSend(event) {
-    // Log important server errors
-    if (event.level === 'error' || event.level === 'fatal') {
-      console.error('[Sentry] Capturing server error:', event.exception);
-    }
     return event;
   },
 
