@@ -77,8 +77,6 @@ export async function protectedAction<T>(
 
   } catch (error) {
     // 4. Error Handling with Sentry
-    console.error(`[protectedAction] Error in ${config.rateLimitKey}:`, error);
-
     Sentry.captureException(error, {
       tags: {
         action: config.rateLimitKey,

@@ -50,8 +50,6 @@ export async function createUserDirect(userData: CreateUserData) {
       }
     );
 
-    console.log('Creating user directly:', userData.email);
-
     // Check if username is already taken
     const { data: existingUsername } = await supabaseAdmin
       .from('profiles')
@@ -116,8 +114,7 @@ export async function createUserDirect(userData: CreateUserData) {
 
     if (profileError) {
       console.error('Profile creation error:', profileError);
-      // User created but profile failed - log but don't fail completely
-      console.warn('User created successfully but profile creation had issues');
+      // User created but profile failed - don't fail completely
     }
 
     // Revalidate admin pages

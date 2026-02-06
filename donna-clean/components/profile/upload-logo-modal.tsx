@@ -74,7 +74,6 @@ export function UploadLogoModal({ currentLogoUrl, userId, onSuccess, onClose }: 
         })
 
       if (uploadError) {
-        console.error('❌ Upload error:', uploadError)
         throw uploadError
       }
 
@@ -93,12 +92,6 @@ export function UploadLogoModal({ currentLogoUrl, userId, onSuccess, onClose }: 
         .eq('user_id', userId)
 
       if (updateError) {
-        console.error('❌ Profile update error:', updateError)
-        console.error('Error details:', {
-          message: updateError.message,
-          code: updateError.code,
-          details: updateError.details
-        })
         throw updateError
       }
 
@@ -111,7 +104,6 @@ export function UploadLogoModal({ currentLogoUrl, userId, onSuccess, onClose }: 
         onClose()
       }, 1500)
     } catch (error: unknown) {
-      console.error('❌ Logo upload failed:', error)
       clearInterval(progressInterval)
       setUploadProgress(0)
       const errorMessage = error instanceof Error ? error.message : 'Unknown error'

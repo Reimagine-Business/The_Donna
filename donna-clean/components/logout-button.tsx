@@ -17,10 +17,6 @@ export function LogoutButton() {
 
     const { error } = await supabase.auth.signOut();
 
-    if (error) {
-      console.error("[Auth] Logout failed", error);
-    }
-
     // Clear any leftover localStorage if you want (optional)
     if (typeof window !== "undefined") {
       try {

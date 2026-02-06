@@ -178,7 +178,6 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
       onClose();
       router.refresh();
     } catch (error) {
-      console.error("Settlement failed:", error);
       showError("Failed to settle item");
     } finally {
       setIsSaving(false);

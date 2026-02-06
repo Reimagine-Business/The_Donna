@@ -66,7 +66,6 @@ export function DeleteEntryDialog({ entry, categories, onSuccess, onClose }: Del
         showError(result.error || 'Failed to delete entry')
       }
     } catch (error: unknown) {
-      console.error('Failed to delete entry:', error)
       showError(error instanceof Error ? error.message : 'An unexpected error occurred')
     } finally {
       setDeleting(false)

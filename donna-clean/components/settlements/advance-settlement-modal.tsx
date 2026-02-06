@@ -129,7 +129,6 @@ export function AdvanceSettlementModal({
         showError(result.error || 'Failed to create settlement')
       }
     } catch (error) {
-      console.error('Settlement error:', error)
       showError('An error occurred while processing the settlement')
     } finally {
       setIsSubmitting(false)

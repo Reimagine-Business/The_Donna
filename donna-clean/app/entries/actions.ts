@@ -340,12 +340,10 @@ export async function createEntry(input: CreateEntryInput) {
   // Generate alerts based on entry data
   await generateAlertsForEntry(supabase, user.id, sanitizedData)
 
-  console.log('🔄 [CREATE ENTRY] REVALIDATING PATHS...')
   revalidatePath('/entries')
   revalidatePath('/analytics/cashpulse')
   revalidatePath('/analytics/profitlens')
   revalidatePath('/home')
-  console.log('✅ [CREATE ENTRY] REVALIDATION COMPLETE')
 
   return { success: true, error: null }
 }
@@ -443,12 +441,10 @@ export async function updateEntry(id: string, input: UpdateEntryInput) {
     return { success: false, error: error.message }
   }
 
-  console.log('🔄 [UPDATE ENTRY] REVALIDATING PATHS...')
   revalidatePath('/entries')
   revalidatePath('/analytics/cashpulse')
   revalidatePath('/analytics/profitlens')
   revalidatePath('/home')
-  console.log('✅ [UPDATE ENTRY] REVALIDATION COMPLETE')
 
   return { success: true, error: null }
 }
@@ -519,8 +515,6 @@ export async function deleteEntry(id: string) {
           level: 'warning',
         })
         // Continue anyway - we'll still delete the original entry
-      } else {
-        console.log(`✅ Deleted associated settlement entry for Credit ${entry.category}`)
       }
     }
     // For Advance entries, no settlement entry to delete (just marks as settled)
@@ -544,12 +538,10 @@ export async function deleteEntry(id: string) {
     return { success: false, error: error.message }
   }
 
-  console.log('🔄 [DELETE ENTRY] REVALIDATING PATHS...')
   revalidatePath('/entries')
   revalidatePath('/analytics/cashpulse')
   revalidatePath('/analytics/profitlens')
   revalidatePath('/home')
-  console.log('✅ [DELETE ENTRY] REVALIDATION COMPLETE')
 
   return { success: true, error: null }
 }

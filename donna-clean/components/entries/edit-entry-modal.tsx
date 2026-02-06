@@ -218,7 +218,6 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
       }
     } catch (error) {
       showError('An unexpected error occurred')
-      console.error('Update entry error:', error)
     } finally {
       setLoading(false)
     }

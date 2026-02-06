@@ -27,7 +27,7 @@ export async function deleteAccount(confirmationText: string) {
       await supabase.from("notifications").delete().eq("user_id", user.id);
     } catch (e) {
       // Table might not exist, continue
-      console.log("Notifications table not found or already deleted");
+      // Table might not exist, continue
     }
 
     // 2. Delete alerts (if table exists)
@@ -35,7 +35,7 @@ export async function deleteAccount(confirmationText: string) {
       await supabase.from("alerts").delete().eq("user_id", user.id);
     } catch (e) {
       // Table might not exist, continue
-      console.log("Alerts table not found or already deleted");
+      // Table might not exist, continue
     }
 
     // 3. Delete settlements (if table exists)
@@ -43,7 +43,7 @@ export async function deleteAccount(confirmationText: string) {
       await supabase.from("settlements").delete().eq("user_id", user.id);
     } catch (e) {
       // Table might not exist, continue
-      console.log("Settlements table not found or already deleted");
+      // Table might not exist, continue
     }
 
     // 4. Delete entries (main table)
@@ -65,7 +65,7 @@ export async function deleteAccount(confirmationText: string) {
       await supabase.from("parties").delete().eq("user_id", user.id);
     } catch (e) {
       // Table might not exist or have different structure
-      console.log("Parties table not found or already deleted");
+      // Table might not exist, continue
     }
 
     // 6. Delete categories (if user has custom categories)
@@ -73,7 +73,7 @@ export async function deleteAccount(confirmationText: string) {
       await supabase.from("categories").delete().eq("user_id", user.id);
     } catch (e) {
       // Table might not exist, continue
-      console.log("Categories table not found or already deleted");
+      // Table might not exist, continue
     }
 
     // 7. Delete profile (if you have a profiles table)
@@ -81,7 +81,7 @@ export async function deleteAccount(confirmationText: string) {
       await supabase.from("profiles").delete().eq("id", user.id);
     } catch (e) {
       // Table might not exist, continue
-      console.log("Profiles table not found or already deleted");
+      // Table might not exist, continue
     }
 
     // 8. Sign out the user first

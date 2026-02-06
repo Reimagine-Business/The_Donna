@@ -226,7 +226,6 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
     } catch (error) {
       dismissToast(loadingToastId)
       showError('An unexpected error occurred')
-      console.error('Create entry error:', error)
     } finally {
       setLoading(false)
     }
