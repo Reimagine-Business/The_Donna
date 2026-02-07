@@ -8,8 +8,8 @@ import { HamburgerMenu } from "./hamburger-menu";
 
 export function TopNavMobile() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
-  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<{ username: string; business_name: string; logo_url: string } | null>(null);
+  const [user, setUser] = useState<{ email?: string; app_metadata?: { role?: string } } | null>(null);
 
   const supabase = createClient();
 
@@ -17,7 +17,10 @@ export function TopNavMobile() {
     async function loadUserData() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setUser(user);
+        setUser({
+          email: user.email,
+          app_metadata: user.app_metadata as { role?: string }
+        });
 
         const { data: profileData } = await supabase
           .from("profiles")

@@ -74,7 +74,7 @@ export function NotificationsShell({ initialAlerts, counts, onRefresh }: Notific
           <Filter className="w-4 h-4 text-purple-400" />
           <select
             value={filterType}
-            onChange={(e) => setFilterType(e.target.value as any)}
+            onChange={(e) => setFilterType(e.target.value as 'all' | AlertType)}
             className="px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white focus:outline-none focus:ring-2 focus:ring-purple-500"
           >
             <option value="all">All Types</option>

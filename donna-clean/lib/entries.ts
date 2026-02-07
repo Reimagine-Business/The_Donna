@@ -113,14 +113,14 @@ export const normalizeEntry = (entry: SupabaseEntry): Entry => {
       : globalThis.crypto?.randomUUID?.() ?? `${Date.now()}`;
 
   // Handle party data - Supabase returns it as an array when using LEFT JOIN
-  const partyData = (entry as any).party;
+  const partyData = (entry as SupabaseEntry).party;
   const party = Array.isArray(partyData)
     ? (partyData.length > 0 ? partyData[0] : null)
     : partyData;
 
   // ✅ For settlements, allow the descriptive entry_type to pass through
   const allEntryTypes = [...ENTRY_TYPES, ...SETTLEMENT_TYPES];
-  const entryType = allEntryTypes.includes(entry.entry_type as any)
+  const entryType = allEntryTypes.includes(entry.entry_type as AllEntryTypes)
     ? (entry.entry_type as AllEntryTypes)
     : ensureOption(entry.entry_type, ENTRY_TYPES, ENTRY_TYPES[0]);
 
@@ -142,9 +142,9 @@ export const normalizeEntry = (entry: SupabaseEntry): Entry => {
     image_url: entry.image_url ?? null,
     settled: Boolean(entry.settled),
     settled_at: entry.settled_at ?? null,
-    party_id: (entry as any).party_id ?? null,
+    party_id: (entry as SupabaseEntry & { party_id?: string | null }).party_id ?? null,
     party: party,
-    is_settlement: (entry as any).is_settlement ?? false,
+    is_settlement: (entry as SupabaseEntry).is_settlement ?? false,
     settlement_type: entry.settlement_type ?? null,
     original_entry_id: entry.original_entry_id ?? null,
     created_at: entry.created_at ?? new Date().toISOString(),

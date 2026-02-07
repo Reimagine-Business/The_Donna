@@ -162,7 +162,7 @@ export async function updateParty(
     }
 
     // Build update object
-    const updateData: any = {
+    const updateData: Record<string, string | number | null> = {
       updated_at: new Date().toISOString(),
     };
 
