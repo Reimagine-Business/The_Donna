@@ -5,12 +5,13 @@ import { EntryListSkeleton } from '@/components/skeletons/entry-skeleton'
 import { SiteHeader } from '@/components/site-header'
 import { TopNavMobile } from '@/components/navigation/top-nav-mobile'
 import { BottomNav } from '@/components/navigation/bottom-nav'
+import type { Entry } from '@/lib/entries'
 
 export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function ProfitLensAnalyticsPage() {
-  let entries: any[] = []
+  let entries: Entry[] = []
   let error: string | null = null
 
   try {

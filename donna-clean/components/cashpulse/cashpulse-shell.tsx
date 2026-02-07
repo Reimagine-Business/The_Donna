@@ -11,6 +11,7 @@ import {
   PAYMENT_METHODS,
   type CashPaymentMethod,
   type PaymentMethod,
+  type SupabaseEntry,
   normalizeEntry,
 } from "@/lib/entries";
 import { cn } from "@/lib/utils";
@@ -103,7 +104,7 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
         throw error;
       }
 
-      const nextEntries = data?.map((entry) => normalizeEntry(entry as any)) ?? [];
+      const nextEntries = data?.map((entry) => normalizeEntry(entry as SupabaseEntry)) ?? [];
       skipNextRecalc.current = true;
       setEntries(nextEntries);
       return nextEntries;

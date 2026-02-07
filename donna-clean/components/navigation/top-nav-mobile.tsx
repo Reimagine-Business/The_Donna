@@ -8,8 +8,8 @@ import { HamburgerMenu } from "./hamburger-menu";
 
 export function TopNavMobile() {
   const [isMenuOpen, setIsMenuOpen] = useState(false);
-  const [profile, setProfile] = useState<any>(null);
-  const [user, setUser] = useState<any>(null);
+  const [profile, setProfile] = useState<{ username: string; business_name: string; logo_url: string } | null>(null);
+  const [user, setUser] = useState<{ email?: string; app_metadata?: { role?: string } } | null>(null);
 
   const supabase = createClient();
 
