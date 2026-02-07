@@ -17,7 +17,10 @@ export function TopNavMobile() {
     async function loadUserData() {
       const { data: { user } } = await supabase.auth.getUser();
       if (user) {
-        setUser(user);
+        setUser({
+          email: user.email,
+          app_metadata: user.app_metadata as { role?: string }
+        });
 
         const { data: profileData } = await supabase
           .from("profiles")
