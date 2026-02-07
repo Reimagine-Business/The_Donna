@@ -74,7 +74,7 @@ export function DeleteEntryDialog({ entry, categories, onSuccess, onClose }: Del
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a2e] border border-red-500/50 rounded-lg max-w-md w-full">
+      <div className="bg-secondary border border-red-500/50 rounded-lg max-w-md w-full">
         {/* Header */}
         <div className="flex items-start gap-3 p-6 border-b border-red-500/30">
           <div className="flex-shrink-0 w-10 h-10 bg-red-900/30 border border-red-500/50 rounded-full flex items-center justify-center">

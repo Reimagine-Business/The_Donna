@@ -289,7 +289,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
                   start_date: event.target.value,
                 }))
               }
-              className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+              className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
             />
           </div>
           <div>
@@ -304,7 +304,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
                   end_date: event.target.value,
                 }))
               }
-              className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-[#a78bfa]"
+              className="rounded-lg border border-white/10 bg-slate-950/80 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-violet-400"
             />
           </div>
           <button
@@ -315,7 +315,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
                 end_date: currentEnd,
               })
             }
-            className="mt-4 rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-300 transition hover:border-[#a78bfa]/60 hover:text-white"
+            className="mt-4 rounded-lg border border-white/10 px-4 py-2 text-sm text-slate-300 transition hover:border-violet-400/60 hover:text-white"
           >
             Current month
           </button>
@@ -375,7 +375,7 @@ export function ProfitLensShell({ initialEntries, userId }: ProfitLensShellProps
           </div>
       </section>
 
-        <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-[#a78bfa]/30 to-[#a78bfa]/10 p-6 text-white shadow-[0_0_35px_rgba(167,139,250,0.25)]">
+        <section className="rounded-3xl border border-white/10 bg-gradient-to-br from-violet-400/30 to-violet-400/10 p-6 text-white shadow-[0_0_35px_rgba(167,139,250,0.25)]">
           <p className="text-xs uppercase tracking-[0.3em] text-white/80">Total Sales</p>
           <p className="mt-4 text-4xl font-semibold">{currencyFormatter.format(sales)}</p>
           <p className="mt-2 text-sm text-white/70">
@@ -423,10 +423,10 @@ type BreakdownCardProps = {
 
 function BreakdownCard({ title, value, description }: BreakdownCardProps) {
   return (
-    <div className="rounded-2xl border border-[#a78bfa]/30 bg-gradient-to-br from-[#a78bfa]/20 to-transparent p-5 shadow-lg shadow-[#a78bfa]/20">
-      <p className="text-xs uppercase tracking-[0.3em] text-[#c4b5fd]">{title}</p>
+    <div className="rounded-2xl border border-violet-400/30 bg-gradient-to-br from-violet-400/20 to-transparent p-5 shadow-lg shadow-violet-400/20">
+      <p className="text-xs uppercase tracking-[0.3em] text-violet-300">{title}</p>
       <p className="mt-3 text-3xl font-semibold text-white">{value}</p>
-      <p className="mt-2 text-sm text-[#c4b5fd]">{description}</p>
+      <p className="mt-2 text-sm text-violet-300">{description}</p>
     </div>
   );
 }

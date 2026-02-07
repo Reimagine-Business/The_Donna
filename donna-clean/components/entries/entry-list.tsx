@@ -340,7 +340,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
 
           {/* Menu - Fixed position, won't be clipped by overflow containers */}
           <div
-            className="fixed z-50 w-48 bg-[#1a1a2e] border border-purple-500/30 rounded-lg shadow-xl overflow-hidden"
+            className="fixed z-50 w-48 bg-secondary border border-purple-500/30 rounded-lg shadow-xl overflow-hidden"
             style={{
               top: `${menuPosition.top}px`,
               left: `${menuPosition.left}px`,

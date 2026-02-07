@@ -528,7 +528,7 @@ function StatCard({ title, value, subtitle, variant }: StatCardProps) {
   const colorMap = {
     positive: "from-emerald-500/40 to-emerald-500/5 border-emerald-500/40",
     negative: "from-rose-500/40 to-rose-500/5 border-rose-500/40",
-    neutral: "from-[#a78bfa]/40 to-[#a78bfa]/5 border-[#a78bfa]/40",
+    neutral: "from-violet-400/40 to-violet-400/5 border-violet-400/40",
   };
 
   const icon =
@@ -566,7 +566,7 @@ function ChannelCard({ method, value }: ChannelCardProps) {
     <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-5 shadow-lg shadow-black/30">
       <p className="text-xs uppercase tracking-[0.3em] text-slate-400">Channel</p>
       <p className="mt-2 text-lg font-semibold text-white">{method}</p>
-      <p className={cn("mt-3 text-2xl font-semibold", value.startsWith("-") ? "text-rose-300" : "text-[#a78bfa]")}>
+      <p className={cn("mt-3 text-2xl font-semibold", value.startsWith("-") ? "text-rose-300" : "text-violet-400")}>
         {value}
       </p>
     </div>
@@ -584,7 +584,7 @@ type PendingCardProps = {
 const accentText: Record<PendingCardProps["accent"], string> = {
   emerald: "text-emerald-300",
   rose: "text-rose-300",
-  purple: "text-[#a78bfa]",
+  purple: "text-violet-400",
 };
 
 function PendingCard({ title, description, info, accent, onSettle }: PendingCardProps) {
@@ -626,7 +626,7 @@ function PendingCard({ title, description, info, accent, onSettle }: PendingCard
                 variant="outline"
                 size="sm"
                 className={cn(
-                  "border-[#a78bfa]/40 text-[#a78bfa] hover:text-white",
+                  "border-violet-400/40 text-violet-400 hover:text-white",
                   !canSettleEntry &&
                     "border-white/5 text-slate-500 hover:text-slate-500 disabled:pointer-events-auto",
                 )}

@@ -33,8 +33,8 @@ export function BottomNav() {
                 className={cn(
                   "flex h-14 w-14 items-center justify-center rounded-lg border-2 transition-colors",
                   isActive
-                    ? "border-[#673AB7] bg-[#673AB7]"
-                    : "border-[#673AB7] bg-[#1a1a2e]"
+                    ? "border-primary bg-primary"
+                    : "border-primary bg-secondary"
                 )}
               >
                 <Icon
@@ -42,14 +42,14 @@ export function BottomNav() {
                   strokeWidth={2}
                   className={cn(
                     "transition-colors",
-                    isActive ? "text-white" : "text-[#B39DDB]"
+                    isActive ? "text-white" : "text-accent"
                   )}
                 />
               </div>
               <span
                 className={cn(
                   "text-[10px] md:text-[11px] font-medium transition-colors",
-                  isActive ? "text-white" : "text-[#B39DDB]"
+                  isActive ? "text-white" : "text-accent"
                 )}
               >
                 {item.label}

@@ -225,8 +225,8 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#16213e] rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-[#16213e] border-b border-gray-700 p-4 flex justify-between items-center">
+      <div className="bg-secondary rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-secondary border-b border-gray-700 p-4 flex justify-between items-center">
           <div>
             <h2 className="text-xl font-semibold text-white">Edit Entry</h2>
             <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
