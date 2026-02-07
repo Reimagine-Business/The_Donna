@@ -69,7 +69,7 @@ export function ViewAllAlertsModal({
         }
       }}
     >
-      <div className="bg-[#1a1a2e] border-t md:border border-purple-500/30 rounded-t-2xl md:rounded-lg w-full md:max-w-3xl max-h-[85vh] flex flex-col">
+      <div className="bg-secondary border-t md:border border-purple-500/30 rounded-t-2xl md:rounded-lg w-full md:max-w-3xl max-h-[85vh] flex flex-col">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-purple-500/30 flex-shrink-0">
           <h2 className="text-xl md:text-2xl font-bold text-white">

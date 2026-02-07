@@ -69,7 +69,7 @@ export function DesktopUserMenu({ userName, isAdmin }: DesktopUserMenuProps) {
 
       {/* Dropdown Menu */}
       {isOpen && (
-        <div className="absolute right-0 mt-2 w-64 bg-[#1a1a2e] border border-purple-500/30 rounded-lg shadow-xl z-50">
+        <div className="absolute right-0 mt-2 w-64 bg-secondary border border-purple-500/30 rounded-lg shadow-xl z-50">
           {/* User Info */}
           {userName && (
             <div className="px-4 py-3 border-b border-purple-500/30">

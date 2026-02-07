@@ -76,7 +76,7 @@ export function DeleteAccountSection() {
       {/* Custom Dialog */}
       {showDialog && (
         <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/70">
-          <div className="bg-[#1a1a2e] border border-purple-500/30 rounded-lg max-w-md w-full p-6">
+          <div className="bg-secondary border border-purple-500/30 rounded-lg max-w-md w-full p-6">
             <h3 className="text-xl font-bold text-white mb-4">
               Are you absolutely sure?
             </h3>

@@ -50,7 +50,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#1a1a2e] border border-purple-500/30 rounded-lg max-w-md w-full">
+      <div className="bg-secondary border border-purple-500/30 rounded-lg max-w-md w-full">
         <div className="flex items-center justify-between p-6 border-b border-purple-500/30">
           <h2 className="text-xl font-semibold text-white">
             Change Password
@@ -72,7 +72,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
               type="password"
               value={newPassword}
               onChange={(e) => setNewPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-[#0f0f1e] border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
+              className="w-full px-4 py-2 bg-background border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
               placeholder="Min 8 characters"
             />
           </div>
@@ -85,7 +85,7 @@ export function ChangePasswordModal({ onClose }: ChangePasswordModalProps) {
               type="password"
               value={confirmPassword}
               onChange={(e) => setConfirmPassword(e.target.value)}
-              className="w-full px-4 py-2 bg-[#0f0f1e] border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
+              className="w-full px-4 py-2 bg-background border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
               placeholder="Confirm new password"
             />
           </div>

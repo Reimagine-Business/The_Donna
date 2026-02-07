@@ -41,7 +41,7 @@ export function EntryDetailsModal({ entry, categories, onEdit, onDelete, onClose
 
   return (
     <div className="fixed inset-0 bg-black/80 flex items-center justify-center z-50 p-4 overflow-y-auto">
-      <div className="bg-[#1a1a2e] border border-purple-500/30 rounded-lg max-w-2xl w-full my-8">
+      <div className="bg-secondary border border-purple-500/30 rounded-lg max-w-2xl w-full my-8">
         {/* Header */}
         <div className="flex items-center justify-between p-6 border-b border-purple-500/30">
           <h2 className="text-xl font-semibold text-white">

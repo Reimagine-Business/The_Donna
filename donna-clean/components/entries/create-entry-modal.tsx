@@ -233,8 +233,8 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-[#16213e] rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-[#16213e] border-b border-gray-700 p-4 flex justify-between items-center">
+      <div className="bg-secondary rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
+        <div className="sticky top-0 bg-secondary border-b border-gray-700 p-4 flex justify-between items-center">
           <h2 className="text-xl font-semibold text-white">Add New Entry</h2>
           <button
             onClick={onClose}

@@ -122,7 +122,7 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-[#0f0f1e] pb-24 md:pb-8">
+      <div className="min-h-screen bg-background pb-24 md:pb-8">
         <SiteHeader />
         <TopNavMobile />
         <div className="container mx-auto px-4 pt-2 pb-24 md:p-6 max-w-3xl">
@@ -134,7 +134,7 @@ export default function ProfilePage() {
   }
 
   return (
-    <div className="min-h-screen bg-[#0f0f1e] pb-24 md:pb-8">
+    <div className="min-h-screen bg-background pb-24 md:pb-8">
       <SiteHeader />
       <TopNavMobile />
 
@@ -264,7 +264,7 @@ export default function ProfilePage() {
             }
           }}
         >
-          <div className="bg-[#1a1a2e] border border-purple-500/30 rounded-lg max-w-md w-full p-6">
+          <div className="bg-secondary border border-purple-500/30 rounded-lg max-w-md w-full p-6">
             <h2 className="text-xl font-bold text-white mb-4">
               Confirm Logout
             </h2>
