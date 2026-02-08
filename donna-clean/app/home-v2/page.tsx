@@ -71,14 +71,13 @@ export default async function HomeV2Page() {
               )}
             </div>
 
-            {/* Donna Says Card — Purple Gradient */}
-            <div className="relative rounded-2xl p-5 overflow-hidden">
-              <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc]" />
+            {/* Donna Says Card — Purple Gradient with overflowing avatar */}
+            <div className="relative">
+              <div className="relative rounded-2xl p-5 pr-28 sm:pr-36 overflow-visible">
+                <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc] rounded-2xl" />
 
-              <div className="relative flex items-center gap-4">
-                <div className="flex-1 min-w-0">
+                <div className="relative">
                   <div className="flex items-start gap-2">
-                    <span className="text-xl flex-shrink-0">💬</span>
                     <div className="flex-1 min-w-0">
                       <h3 className="text-base font-semibold text-white mb-2">
                         Donna says:
@@ -90,10 +89,11 @@ export default async function HomeV2Page() {
                     </div>
                   </div>
                 </div>
+              </div>
 
-                <div className="flex-shrink-0">
-                  <DonnaAvatarCompact />
-                </div>
+              {/* Avatar positioned to overflow the card on the right */}
+              <div className="absolute -right-2 -top-4 sm:-right-1 sm:-top-3 z-10">
+                <DonnaAvatarCompact />
               </div>
             </div>
 
