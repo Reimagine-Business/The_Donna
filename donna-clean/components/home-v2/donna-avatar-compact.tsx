@@ -8,20 +8,20 @@ export function DonnaAvatarCompact() {
 
   return (
     <div className="relative flex justify-center items-center">
-      {/* Smaller glow ring for compact layout */}
+      {/* Purple glow ring for compact layout */}
       <div className="absolute inset-0 flex justify-center items-center">
         <div
           className="w-24 h-24 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(255,165,0,0.3) 0%, rgba(255,105,180,0.2) 50%, transparent 70%)",
-            filter: "blur(15px)",
+              "radial-gradient(circle, rgba(147,51,234,0.4) 0%, rgba(192,132,252,0.3) 40%, rgba(236,72,153,0.2) 60%, transparent 80%)",
+            filter: "blur(20px)",
           }}
         />
       </div>
 
-      {/* Orange-pink gradient ring — responsive size */}
-      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-br from-orange-400 via-pink-400 to-purple-400 z-10">
+      {/* Magenta-purple gradient ring — responsive size */}
+      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-br from-[#ec4899] via-[#c084fc] to-[#9333ea] z-10 shadow-lg shadow-purple-500/50">
         {/* Inner dark circle */}
         <div className="w-full h-full rounded-full bg-[#0a0a1a] p-1 flex items-center justify-center overflow-hidden">
           {!imgError ? (
