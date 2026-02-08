@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SiteHeader } from "@/components/site-header";
-import { BottomNav } from "@/components/navigation/bottom-nav";
-import { TopNavMobile } from "@/components/navigation/top-nav-mobile";
+import { BottomNavV2 } from "@/components/home-v2/bottom-nav-v2";
+import { TopNavV2 } from "@/components/home-v2/top-nav-v2";
 import { DonnaAvatarCompact } from "@/components/home-v2/donna-avatar-compact";
 import { DonnaMessage } from "@/components/home-v2/donna-message";
 import { BusinessCards } from "@/components/home-v2/business-cards";
@@ -55,7 +55,7 @@ export default async function HomeV2Page() {
     <main className="min-h-screen bg-[#1e2A56] pb-24 md:pb-8">
       <div className="flex flex-col min-h-screen">
         <SiteHeader />
-        <TopNavMobile />
+        <TopNavV2 />
 
         <section className="flex-1 px-4 py-3 md:px-8 overflow-auto">
           <div className="mx-auto w-full max-w-2xl space-y-4">
@@ -105,7 +105,7 @@ export default async function HomeV2Page() {
         </section>
       </div>
 
-      <BottomNav />
+      <BottomNavV2 />
     </main>
   );
 }
