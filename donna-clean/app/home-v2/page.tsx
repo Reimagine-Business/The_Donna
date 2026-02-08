@@ -71,34 +71,31 @@ export default async function HomeV2Page() {
               )}
             </div>
 
-            {/* Donna Section — Vibrant Purple Card */}
-            <div className="relative rounded-2xl p-5 overflow-hidden border border-purple-500/20">
+            {/* Donna Section — Purple Card with Speech Bubble */}
+            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-lg shadow-purple-500/10">
               {/* Vibrant purple gradient background */}
               <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#9333ea] to-[#a855f7]" />
-              {/* Subtle glow overlay */}
-              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-purple-400/10" />
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-white/5" />
 
-              <div className="relative flex items-center gap-3 sm:gap-4">
-                {/* Left: Donna Says Message */}
-                <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-2">
-                    <span className="text-lg sm:text-xl flex-shrink-0">💬</span>
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-sm sm:text-base font-semibold text-white mb-1 sm:mb-2">
-                        Donna says:
-                      </h3>
-                      <DonnaMessage
-                        entries={entries}
-                        reminders={reminders || []}
-                      />
-                    </div>
-                  </div>
+              {/* Top bar: "Donna says:" + Avatar */}
+              <div className="relative flex items-center justify-between px-5 pt-4 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="text-lg">💬</span>
+                  <h3 className="text-base font-semibold text-white">
+                    Donna says:
+                  </h3>
                 </div>
-
-                {/* Right: Donna Avatar — always visible */}
                 <div className="flex-shrink-0">
                   <DonnaAvatarCompact />
                 </div>
+              </div>
+
+              {/* Speech bubble: darker area for message */}
+              <div className="relative mx-3 mb-4 rounded-xl bg-[#111827]/80 border border-white/10 p-4">
+                <DonnaMessage
+                  entries={entries}
+                  reminders={reminders || []}
+                />
               </div>
             </div>
 

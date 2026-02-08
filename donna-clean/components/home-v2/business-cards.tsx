@@ -108,9 +108,9 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Section Header + Period Filter */}
-      <div>
-        <h2 className="text-xl font-semibold text-white mb-3">
+      {/* Section Header + Period Filter — dark muted bar */}
+      <div className="bg-[#1e293b] rounded-xl p-4 border border-white/5">
+        <h2 className="text-lg font-semibold text-white mb-3">
           How is your business doing?
         </h2>
         <PeriodFilter
@@ -121,9 +121,9 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
         />
       </div>
 
-      {/* What's Yours — Vibrant Purple */}
-      <div className="relative rounded-2xl p-6 border border-purple-500/20 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#9333ea] to-[#6d28d9]" />
+      {/* What's Yours — Vibrant Purple (#a855f7) */}
+      <div className="relative rounded-2xl p-6 border border-purple-400/30 overflow-hidden shadow-lg shadow-purple-500/10">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#a855f7] via-[#9333ea] to-[#7c3aed]" />
         <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
 
         <div className="relative flex items-start gap-4">
@@ -159,9 +159,9 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
 
       {/* What's Not Yours + Profit — Side by side */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* What's Not Yours — Rich Burgundy/Red */}
-        <div className="relative rounded-2xl p-5 border border-red-500/20 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#991b1b] via-[#7f1d1d] to-[#7c2d12]" />
+        {/* What's Not Yours — Red-tinted Purple (#ef4444 + purple blend) */}
+        <div className="relative rounded-2xl p-5 border border-red-400/20 overflow-hidden shadow-lg shadow-red-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#ef4444] via-[#b91c1c] to-[#7c3aed]/40" />
           <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
 
           <div className="relative flex items-start gap-3">
@@ -192,9 +192,9 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
           </div>
         </div>
 
-        {/* Profit from Sales — Electric Blue */}
-        <div className="relative rounded-2xl p-5 border border-blue-500/20 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#3b82f6] via-[#2563eb] to-[#1e40af]" />
+        {/* Profit from Sales — Blue-Green (#22c55e) */}
+        <div className="relative rounded-2xl p-5 border border-emerald-400/20 overflow-hidden shadow-lg shadow-emerald-500/10">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#22c55e] via-[#16a34a] to-[#15803d]" />
           <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
 
           <div className="relative flex items-start gap-3">
