@@ -52,7 +52,7 @@ export default async function HomeV2Page() {
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <main className="min-h-screen bg-gradient-to-br from-[#1a0033] via-[#0d001a] to-[#1a0033] text-foreground pb-24 md:pb-8">
+    <main className="min-h-screen bg-[#0a0e1a] pb-24 md:pb-8">
       <div className="flex flex-col min-h-screen">
         <SiteHeader />
         <TopNavMobile />
@@ -61,19 +61,24 @@ export default async function HomeV2Page() {
           <div className="mx-auto w-full max-w-2xl space-y-4">
             {/* Greeting */}
             <div className="text-center">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white drop-shadow-lg">
-                {greeting}
+              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
+                {greeting}, {user.user_metadata?.name || user.email?.split("@")[0]}
               </h1>
               {profile?.business_name && (
-                <p className="text-sm text-purple-300/70 mt-0.5">
+                <p className="text-sm text-gray-400 mt-0.5">
                   {profile.business_name}
                 </p>
               )}
             </div>
 
-            {/* Donna Section — Message Left, Avatar Right (all screen sizes) */}
-            <div className="bg-gradient-to-br from-[#4a148c]/40 via-[#7c3aed]/30 to-[#9333ea]/40 rounded-2xl border border-purple-500/40 p-4 backdrop-blur-sm">
-              <div className="flex items-center gap-3 sm:gap-4">
+            {/* Donna Section — Vibrant Purple Card */}
+            <div className="relative rounded-2xl p-5 overflow-hidden border border-purple-500/20">
+              {/* Vibrant purple gradient background */}
+              <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#9333ea] to-[#a855f7]" />
+              {/* Subtle glow overlay */}
+              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-purple-400/10" />
+
+              <div className="relative flex items-center gap-3 sm:gap-4">
                 {/* Left: Donna Says Message */}
                 <div className="flex-1 min-w-0">
                   <div className="flex items-start gap-2">
