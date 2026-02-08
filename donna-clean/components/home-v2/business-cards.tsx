@@ -108,9 +108,9 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
 
   return (
     <div className="space-y-4">
-      {/* Section Header + Period Filter — dark muted bar */}
-      <div className="bg-[#1e293b] rounded-xl p-4 border border-white/5">
-        <h2 className="text-lg font-semibold text-white mb-3">
+      {/* Section Header + Period Filter */}
+      <div>
+        <h2 className="text-xl font-semibold text-white mb-4">
           How is your business doing?
         </h2>
         <PeriodFilter
@@ -121,13 +121,12 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
         />
       </div>
 
-      {/* What's Yours — Vibrant Purple (#a855f7) */}
-      <div className="relative rounded-2xl p-6 border border-purple-400/30 overflow-hidden shadow-lg shadow-purple-500/10">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#a855f7] via-[#9333ea] to-[#7c3aed]" />
-        <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
+      {/* What's Yours — Purple Gradient */}
+      <div className="relative rounded-2xl p-6 overflow-hidden">
+        <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc]" />
 
         <div className="relative flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-white/20">
+          <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
             <svg
               className="w-7 h-7 text-white"
               fill="none"
@@ -144,28 +143,27 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
           </div>
 
           <div className="flex-1">
-            <p className="text-white/70 text-sm font-medium uppercase tracking-wide mb-2">
+            <p className="text-white/80 text-sm font-medium uppercase tracking-wide mb-2">
               What's Yours?
             </p>
             <p className="text-4xl font-bold text-white mb-1">
               {fmt(snapshotData.totalOwn)}
             </p>
-            <p className="text-white/60 text-sm">
+            <p className="text-white/70 text-sm">
               Total value of everything you own
             </p>
           </div>
         </div>
       </div>
 
-      {/* What's Not Yours + Profit — Side by side */}
+      {/* What's Not Yours + Profit — Side by side, BOTH Purple */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* What's Not Yours — Red-tinted Purple (#ef4444 + purple blend) */}
-        <div className="relative rounded-2xl p-5 border border-red-400/20 overflow-hidden shadow-lg shadow-red-500/10">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#ef4444] via-[#b91c1c] to-[#7c3aed]/40" />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
+        {/* What's Not Yours — Purple */}
+        <div className="relative rounded-2xl p-5 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc]" />
 
           <div className="relative flex items-start gap-3">
-            <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-white/20">
+            <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
               <svg
                 className="w-6 h-6 text-white"
                 fill="none"
@@ -182,7 +180,7 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-white/70 text-xs font-medium uppercase tracking-wide mb-1">
+              <p className="text-white/80 text-xs font-medium uppercase tracking-wide mb-1">
                 What is Not Yours?
               </p>
               <p className="text-2xl font-bold text-white truncate">
@@ -192,13 +190,12 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
           </div>
         </div>
 
-        {/* Profit from Sales — Blue-Green (#22c55e) */}
-        <div className="relative rounded-2xl p-5 border border-emerald-400/20 overflow-hidden shadow-lg shadow-emerald-500/10">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#22c55e] via-[#16a34a] to-[#15803d]" />
-          <div className="absolute inset-0 bg-gradient-to-b from-white/5 via-transparent to-transparent" />
+        {/* Profit from Sales — Purple */}
+        <div className="relative rounded-2xl p-5 overflow-hidden">
+          <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc]" />
 
           <div className="relative flex items-start gap-3">
-            <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0 border border-white/20">
+            <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
               <svg
                 className="w-6 h-6 text-white"
                 fill="none"
@@ -215,12 +212,10 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-white/70 text-xs font-medium uppercase tracking-wide mb-1">
+              <p className="text-white/80 text-xs font-medium uppercase tracking-wide mb-1">
                 Your Profit From Sales
               </p>
-              <p
-                className={`text-2xl font-bold truncate ${snapshotData.profit >= 0 ? "text-white" : "text-red-200"}`}
-              >
+              <p className="text-2xl font-bold text-white truncate">
                 {fmt(snapshotData.profit)}
               </p>
             </div>
@@ -231,43 +226,43 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
       {/* Expandable Details */}
       <div className="space-y-3">
         {/* What You Own Details */}
-        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-[#c084fc]/10 border border-[#c084fc]/20 rounded-xl overflow-hidden">
           <button
             onClick={() => setExpandedOwn(!expandedOwn)}
-            className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+            className="w-full p-3 flex items-center justify-between hover:bg-[#c084fc]/15 transition-colors"
           >
             <span className="text-sm text-white font-medium">
               What's Yours — Breakdown
             </span>
             {expandedOwn ? (
-              <ChevronUp className="w-4 h-4 text-gray-400" />
+              <ChevronUp className="w-4 h-4 text-[#c084fc]" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="w-4 h-4 text-[#c084fc]" />
             )}
           </button>
 
           {expandedOwn && (
-            <div className="px-3 pb-3 space-y-2 border-t border-white/10">
+            <div className="px-3 pb-3 space-y-2 border-t border-[#c084fc]/20">
               <div className="flex justify-between items-center pt-2">
-                <span className="text-xs text-gray-400">Cash in Bank/Hand</span>
+                <span className="text-xs text-white/60">Cash in Bank/Hand</span>
                 <span className="text-sm font-semibold text-white">
                   {fmt(snapshotData.cash)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Money to Collect</span>
+                <span className="text-xs text-white/60">Money to Collect</span>
                 <span className="text-sm font-semibold text-white">
                   {fmt(snapshotData.receivables)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Advances Paid</span>
+                <span className="text-xs text-white/60">Advances Paid</span>
                 <span className="text-sm font-semibold text-white">
                   {fmt(snapshotData.prepaid)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Fixed Assets</span>
+                <span className="text-xs text-white/60">Fixed Assets</span>
                 <span className="text-sm font-semibold text-white">
                   {fmt(snapshotData.fixedAssets)}
                 </span>
@@ -277,31 +272,31 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
         </div>
 
         {/* What You Owe Details */}
-        <div className="bg-white/5 border border-white/10 rounded-xl overflow-hidden">
+        <div className="bg-[#c084fc]/10 border border-[#c084fc]/20 rounded-xl overflow-hidden">
           <button
             onClick={() => setExpandedOwe(!expandedOwe)}
-            className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
+            className="w-full p-3 flex items-center justify-between hover:bg-[#c084fc]/15 transition-colors"
           >
             <span className="text-sm text-white font-medium">
               What's Left to Pay — Breakdown
             </span>
             {expandedOwe ? (
-              <ChevronUp className="w-4 h-4 text-gray-400" />
+              <ChevronUp className="w-4 h-4 text-[#c084fc]" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="w-4 h-4 text-[#c084fc]" />
             )}
           </button>
 
           {expandedOwe && (
-            <div className="px-3 pb-3 space-y-2 border-t border-white/10">
+            <div className="px-3 pb-3 space-y-2 border-t border-[#c084fc]/20">
               <div className="flex justify-between items-center pt-2">
-                <span className="text-xs text-gray-400">Bills to Pay</span>
+                <span className="text-xs text-white/60">Bills to Pay</span>
                 <span className="text-sm font-semibold text-white">
                   {fmt(snapshotData.creditBills)}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">
+                <span className="text-xs text-white/60">
                   Customer Advances
                 </span>
                 <span className="text-sm font-semibold text-white">
@@ -313,17 +308,17 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
         </div>
       </div>
 
-      {/* Quick Action Buttons */}
+      {/* Quick Action Buttons — Purple */}
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => router.push("/analytics/cashpulse")}
-          className="py-3 px-4 bg-[#a5b4fc]/10 border border-[#a5b4fc]/20 hover:bg-[#a5b4fc]/20 rounded-lg font-medium text-sm transition-all text-[#a5b4fc]"
+          className="py-3 px-4 bg-[#7c3aed] hover:bg-[#a855f7] rounded-lg font-medium text-sm transition-all text-white"
         >
           View Cash Pulse
         </button>
         <button
           onClick={() => router.push("/analytics/profitlens")}
-          className="py-3 px-4 bg-[#a5b4fc]/10 border border-[#a5b4fc]/20 hover:bg-[#a5b4fc]/20 rounded-lg font-medium text-sm transition-all text-[#a5b4fc]"
+          className="py-3 px-4 bg-[#7c3aed] hover:bg-[#a855f7] rounded-lg font-medium text-sm transition-all text-white"
         >
           View Profit Lens
         </button>
