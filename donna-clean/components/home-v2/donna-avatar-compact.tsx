@@ -8,23 +8,23 @@ export function DonnaAvatarCompact() {
 
   return (
     <div className="relative flex justify-center items-center w-32 h-36 sm:w-36 sm:h-40">
-      {/* Warm orange/gold glow behind avatar */}
+      {/* Cyan + purple neon glow behind avatar */}
       <div className="absolute inset-0 flex justify-center items-center">
         <div
           className="w-40 h-40 sm:w-44 sm:h-44 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(255,165,0,0.35) 0%, rgba(255,105,180,0.2) 40%, rgba(168,85,247,0.1) 60%, transparent 80%)",
+              "radial-gradient(circle, rgba(34,211,238,0.3) 0%, rgba(168,85,247,0.25) 40%, rgba(124,58,237,0.1) 60%, transparent 80%)",
             filter: "blur(20px)",
           }}
         />
       </div>
 
-      {/* Orange-gold gradient ring */}
+      {/* Cyan-purple gradient ring */}
       <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full p-[2.5px] z-10"
         style={{
-          background: "linear-gradient(135deg, #fbbf24, #f59e0b, #ec4899, #a855f7)",
-          boxShadow: "0 0 24px 4px rgba(251,191,36,0.3), 0 0 48px 8px rgba(236,72,153,0.15)",
+          background: "linear-gradient(135deg, #22d3ee, #a855f7, #c084fc, #22d3ee)",
+          boxShadow: "0 0 20px 4px rgba(34,211,238,0.3), 0 0 40px 8px rgba(168,85,247,0.2)",
         }}
       >
         {/* Inner deep blue circle */}
