@@ -69,12 +69,10 @@ export default async function HomeV2Page() {
               </p>
             </div>
 
-            {/* Donna Section — Card on left, big avatar on right */}
-            <div className="relative min-h-[220px] sm:min-h-[280px]">
-              {/* Message Box — only takes left ~55% */}
-              <div
-                className="relative w-[62%] sm:w-[55%] bg-purple-900/30 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-purple-500/30 z-[1]"
-              >
+            {/* Donna Section — Box on left, Avatar on right, side by side */}
+            <div className="flex items-center gap-0">
+              {/* Left: Message Box */}
+              <div className="flex-1 bg-purple-900/30 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-purple-500/30 z-10">
                 <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">Donna says:</h3>
 
                 <div className="space-y-3 text-white text-sm sm:text-base">
@@ -85,8 +83,8 @@ export default async function HomeV2Page() {
                 </div>
               </div>
 
-              {/* Donna Avatar — Large, separate from card, positioned on the right */}
-              <div className="absolute right-0 sm:-right-4 -top-6 sm:-top-4 z-10">
+              {/* Right: Donna Avatar — completely separate, slight overlap via negative margin */}
+              <div className="flex-shrink-0 -ml-10 sm:-ml-12 z-20">
                 <DonnaAvatarLarge />
               </div>
             </div>
