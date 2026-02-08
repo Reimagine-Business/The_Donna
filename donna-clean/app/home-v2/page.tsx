@@ -3,8 +3,8 @@ import { Suspense } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { BottomNavV2 } from "@/components/home-v2/bottom-nav-v2";
 import { TopNavV2 } from "@/components/home-v2/top-nav-v2";
-import { DonnaAvatarCompact } from "@/components/home-v2/donna-avatar-compact";
-import { DonnaMessage } from "@/components/home-v2/donna-message";
+import { DonnaAvatarLarge } from "@/components/home-v2/donna-avatar-large";
+import { DonnaMessageBullets } from "@/components/home-v2/donna-message-bullets";
 import { BusinessCards } from "@/components/home-v2/business-cards";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
@@ -52,71 +52,51 @@ export default async function HomeV2Page() {
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <main className="min-h-screen bg-[#1e2A56] pb-24 md:pb-8">
+    <main className="min-h-screen bg-[#0a0e1a] pb-24 md:pb-8">
       <div className="flex flex-col min-h-screen">
         <SiteHeader />
         <TopNavV2 />
 
         <section className="flex-1 px-4 py-3 md:px-8 overflow-auto">
-          <div className="mx-auto w-full max-w-2xl space-y-4">
-            {/* Greeting */}
-            <div className="text-center">
+          <div className="mx-auto w-full max-w-2xl space-y-6">
+            {/* Greeting — LEFT aligned */}
+            <div className="text-left">
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
                 {greeting}, {user.user_metadata?.name || user.email?.split("@")[0]}
               </h1>
-              {profile?.business_name && (
-                <p className="text-sm text-white/60 mt-0.5">
-                  {profile.business_name}
-                </p>
-              )}
+              <p className="text-sm text-white/50">
+                {profile?.business_name || "Reimagine Business"}
+              </p>
             </div>
 
-            {/* Donna Says Card — Futuristic Neon Fintech */}
+            {/* Donna Section — Speech bubble + Large avatar outside */}
             <div className="relative">
+              {/* Donna Says speech bubble */}
               <div
-                className="relative rounded-2xl p-[1.5px] overflow-visible"
+                className="relative rounded-2xl p-5 pr-32 sm:pr-40 min-h-[160px]"
                 style={{
-                  background: "linear-gradient(135deg, #7c3aed, #22d3ee, #a855f7, #22d3ee, #c084fc)",
-                  boxShadow: "0 0 20px 2px rgba(34,211,238,0.3), 0 0 40px 4px rgba(124,58,237,0.2), inset 0 0 20px rgba(34,211,238,0.1)",
+                  background: "rgba(124, 58, 237, 0.25)",
+                  border: "1px solid rgba(168, 85, 247, 0.35)",
+                  backdropFilter: "blur(12px)",
+                  boxShadow: "0 0 20px 2px rgba(124, 58, 237, 0.15)",
                 }}
               >
-                {/* Inner card with purple gradient */}
-                <div
-                  className="relative rounded-[14px] p-5 pr-28 sm:pr-36 overflow-visible"
-                  style={{
-                    background: "linear-gradient(135deg, #7c3aed, #a855f7, #c084fc)",
-                  }}
-                >
-                  <div className="relative z-[1]">
-                    <h3 className="text-base font-bold text-white mb-3 tracking-wide">
-                      Donna says:
-                    </h3>
-
-                    {/* Speech bubble with dark semi-transparent bg */}
-                    <div
-                      className="rounded-xl px-3.5 py-2.5"
-                      style={{
-                        background: "rgba(10, 14, 26, 0.35)",
-                        backdropFilter: "blur(8px)",
-                        border: "1px solid rgba(34,211,238,0.15)",
-                      }}
-                    >
-                      <DonnaMessage
-                        entries={entries}
-                        reminders={reminders || []}
-                      />
-                    </div>
-                  </div>
-                </div>
+                <h3 className="text-lg font-bold text-white mb-3">
+                  Donna says:
+                </h3>
+                <DonnaMessageBullets
+                  entries={entries}
+                  reminders={reminders || []}
+                />
               </div>
 
-              {/* Avatar positioned to overflow the card on the right */}
-              <div className="absolute -right-2 -top-4 sm:-right-1 sm:-top-3 z-20">
-                <DonnaAvatarCompact />
+              {/* Donna Avatar — positioned outside the card on the right */}
+              <div className="absolute -right-2 top-1/2 -translate-y-1/2 sm:right-[-16px] z-20">
+                <DonnaAvatarLarge />
               </div>
             </div>
 
-            {/* Business Cards (What's Yours, Not Yours, Profit) */}
+            {/* Business Cards */}
             <Suspense fallback={<EntryListSkeleton />}>
               <BusinessCards entries={entries} />
             </Suspense>
