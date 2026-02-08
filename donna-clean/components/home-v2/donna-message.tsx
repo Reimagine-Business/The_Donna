@@ -207,12 +207,12 @@ export function DonnaMessage({ entries, reminders = [] }: DonnaMessageProps) {
     return Math.max(0, count - 1);
   }, [entries, reminders]);
 
-  // Highlight ₹ amounts in cyan
+  // Highlight ₹ amounts
   const highlightAmounts = (text: string) => {
     const parts = text.split(/(₹[\d,]+)/g);
     return parts.map((part, i) =>
       part.startsWith("₹") ? (
-        <span key={i} className="text-[#22d3ee] font-semibold">
+        <span key={i} className="text-white font-bold">
           {part}
         </span>
       ) : (
@@ -242,7 +242,7 @@ export function DonnaMessage({ entries, reminders = [] }: DonnaMessageProps) {
       {additionalCount > 0 && (
         <Link
           href="/alerts"
-          className="inline-flex items-center gap-2 text-[#22d3ee] hover:text-[#22d3ee]/80 transition-colors text-sm font-medium"
+          className="inline-flex items-center gap-2 text-[#c084fc] hover:text-white transition-colors text-sm font-medium"
         >
           +{additionalCount} more update{additionalCount !== 1 ? "s" : ""} →
         </Link>

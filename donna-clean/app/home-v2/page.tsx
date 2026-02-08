@@ -52,7 +52,7 @@ export default async function HomeV2Page() {
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
   return (
-    <main className="min-h-screen bg-[#0a0e1a] pb-24 md:pb-8">
+    <main className="min-h-screen bg-[#1e2A56] pb-24 md:pb-8">
       <div className="flex flex-col min-h-screen">
         <SiteHeader />
         <TopNavMobile />
@@ -65,37 +65,35 @@ export default async function HomeV2Page() {
                 {greeting}, {user.user_metadata?.name || user.email?.split("@")[0]}
               </h1>
               {profile?.business_name && (
-                <p className="text-sm text-gray-400 mt-0.5">
+                <p className="text-sm text-white/60 mt-0.5">
                   {profile.business_name}
                 </p>
               )}
             </div>
 
-            {/* Donna Section — Purple Card with Speech Bubble */}
-            <div className="relative rounded-2xl overflow-hidden border border-purple-500/30 shadow-lg shadow-purple-500/10">
-              {/* Vibrant purple gradient background */}
-              <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#9333ea] to-[#a855f7]" />
-              <div className="absolute inset-0 bg-gradient-to-t from-transparent via-transparent to-white/5" />
+            {/* Donna Says Card — Purple Gradient */}
+            <div className="relative rounded-2xl p-5 overflow-hidden">
+              <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc]" />
 
-              {/* Top bar: "Donna says:" + Avatar */}
-              <div className="relative flex items-center justify-between px-5 pt-4 pb-3">
-                <div className="flex items-center gap-2">
-                  <span className="text-lg">💬</span>
-                  <h3 className="text-base font-semibold text-white">
-                    Donna says:
-                  </h3>
+              <div className="relative flex items-center gap-4">
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start gap-2">
+                    <span className="text-xl flex-shrink-0">💬</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-base font-semibold text-white mb-2">
+                        Donna says:
+                      </h3>
+                      <DonnaMessage
+                        entries={entries}
+                        reminders={reminders || []}
+                      />
+                    </div>
+                  </div>
                 </div>
+
                 <div className="flex-shrink-0">
                   <DonnaAvatarCompact />
                 </div>
-              </div>
-
-              {/* Speech bubble: darker area for message */}
-              <div className="relative mx-3 mb-4 rounded-xl bg-[#111827]/80 border border-white/10 p-4">
-                <DonnaMessage
-                  entries={entries}
-                  reminders={reminders || []}
-                />
               </div>
             </div>
 
