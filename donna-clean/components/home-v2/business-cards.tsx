@@ -30,7 +30,6 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
   const snapshotData = useMemo(() => {
     const { start, end } = getDateRangeForPeriod(period, selectedYear);
 
-    // Filter entries for the selected period (for profit calculation)
     const filteredEntries =
       start && end
         ? entries.filter((e) => {
@@ -39,7 +38,6 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
           })
         : entries;
 
-    // WHAT YOU OWN (Assets) — same logic as existing BusinessSnapshot
     const cash = calculateCashBalance(entries);
 
     const receivables = entries
@@ -64,7 +62,6 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
 
     const totalOwn = cash + receivables + prepaid + fixedAssets;
 
-    // WHAT YOU OWE (Liabilities)
     const creditBills = entries
       .filter(
         (e) =>
@@ -85,7 +82,6 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
 
     const totalOwe = creditBills + customerAdvances;
 
-    // PROFIT — for selected period using Profit Lens logic
     const profitMetrics = getProfitMetrics(
       filteredEntries,
       start ?? undefined,
@@ -121,14 +117,20 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
         />
       </div>
 
-      {/* What's Yours — #7c3aed (dark blue-purple) */}
-      <div className="relative rounded-2xl p-6 overflow-hidden">
-        <div className="absolute inset-0 bg-[#7c3aed]" />
-
-        <div className="relative flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+      {/* What's Yours — Transparent with purple/magenta neon border */}
+      <div
+        className="rounded-2xl p-6"
+        style={{
+          background: "rgba(124, 58, 237, 0.15)",
+          border: "2px solid rgba(192, 132, 252, 0.6)",
+          boxShadow: "0 0 16px 2px rgba(192, 132, 252, 0.2), inset 0 0 16px rgba(124, 58, 237, 0.1)",
+          backdropFilter: "blur(8px)",
+        }}
+      >
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 rounded-full bg-purple-500/20 border border-purple-400/30 flex items-center justify-center flex-shrink-0">
             <svg
-              className="w-7 h-7 text-white"
+              className="w-7 h-7 text-purple-300"
               fill="none"
               viewBox="0 0 24 24"
               stroke="currentColor"
@@ -143,29 +145,35 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
           </div>
 
           <div className="flex-1">
-            <p className="text-white/80 text-sm font-medium uppercase tracking-wide mb-2">
+            <p className="text-white/70 text-sm font-medium uppercase tracking-wide mb-2">
               What's Yours?
             </p>
             <p className="text-4xl font-bold text-white mb-1">
               {fmt(snapshotData.totalOwn)}
             </p>
-            <p className="text-white/70 text-sm">
+            <p className="text-white/50 text-sm">
               Total value of everything you own
             </p>
           </div>
         </div>
       </div>
 
-      {/* What's Not Yours + Profit — Side by side, BOTH Purple */}
+      {/* What's Not Yours + Profit — Side by side, transparent with neon borders */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* What's Not Yours — #a855f7 (medium purple) */}
-        <div className="relative rounded-2xl p-5 overflow-hidden">
-          <div className="absolute inset-0 bg-[#a855f7]" />
-
-          <div className="relative flex items-start gap-3">
-            <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+        {/* What's Not Yours — Purple border */}
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            background: "rgba(168, 85, 247, 0.12)",
+            border: "2px solid rgba(168, 85, 247, 0.5)",
+            boxShadow: "0 0 12px 2px rgba(168, 85, 247, 0.15)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-full bg-purple-500/20 border border-purple-400/30 flex items-center justify-center flex-shrink-0">
               <svg
-                className="w-6 h-6 text-white"
+                className="w-6 h-6 text-purple-300"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -180,7 +188,7 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-white/80 text-xs font-medium uppercase tracking-wide mb-1">
+              <p className="text-white/70 text-xs font-medium uppercase tracking-wide mb-1">
                 What is Not Yours?
               </p>
               <p className="text-2xl font-bold text-white truncate">
@@ -190,14 +198,20 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
           </div>
         </div>
 
-        {/* Profit from Sales — #c084fc (light purple/pink) */}
-        <div className="relative rounded-2xl p-5 overflow-hidden">
-          <div className="absolute inset-0 bg-[#c084fc]" />
-
-          <div className="relative flex items-start gap-3">
-            <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
+        {/* Profit from Sales — Cyan/teal border */}
+        <div
+          className="rounded-2xl p-5"
+          style={{
+            background: "rgba(34, 211, 238, 0.08)",
+            border: "2px solid rgba(34, 211, 238, 0.5)",
+            boxShadow: "0 0 12px 2px rgba(34, 211, 238, 0.15)",
+            backdropFilter: "blur(8px)",
+          }}
+        >
+          <div className="flex items-start gap-3">
+            <div className="w-12 h-12 rounded-full bg-emerald-500/20 border border-emerald-400/30 flex items-center justify-center flex-shrink-0">
               <svg
-                className="w-6 h-6 text-white"
+                className="w-6 h-6 text-emerald-300"
                 fill="none"
                 viewBox="0 0 24 24"
                 stroke="currentColor"
@@ -212,7 +226,7 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
             </div>
 
             <div className="flex-1 min-w-0">
-              <p className="text-white/80 text-xs font-medium uppercase tracking-wide mb-1">
+              <p className="text-white/70 text-xs font-medium uppercase tracking-wide mb-1">
                 Your Profit From Sales
               </p>
               <p className="text-2xl font-bold text-white truncate">
@@ -226,10 +240,16 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
       {/* Expandable Details */}
       <div className="space-y-3">
         {/* What You Own Details */}
-        <div className="bg-[#c084fc]/10 border border-[#c084fc]/20 rounded-xl overflow-hidden">
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{
+            background: "rgba(192, 132, 252, 0.08)",
+            border: "1px solid rgba(192, 132, 252, 0.2)",
+          }}
+        >
           <button
             onClick={() => setExpandedOwn(!expandedOwn)}
-            className="w-full p-3 flex items-center justify-between hover:bg-[#c084fc]/15 transition-colors"
+            className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
           >
             <span className="text-sm text-white font-medium">
               What's Yours — Breakdown
@@ -272,10 +292,16 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
         </div>
 
         {/* What You Owe Details */}
-        <div className="bg-[#c084fc]/10 border border-[#c084fc]/20 rounded-xl overflow-hidden">
+        <div
+          className="rounded-xl overflow-hidden"
+          style={{
+            background: "rgba(192, 132, 252, 0.08)",
+            border: "1px solid rgba(192, 132, 252, 0.2)",
+          }}
+        >
           <button
             onClick={() => setExpandedOwe(!expandedOwe)}
-            className="w-full p-3 flex items-center justify-between hover:bg-[#c084fc]/15 transition-colors"
+            className="w-full p-3 flex items-center justify-between hover:bg-white/5 transition-colors"
           >
             <span className="text-sm text-white font-medium">
               What's Left to Pay — Breakdown
@@ -308,17 +334,25 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
         </div>
       </div>
 
-      {/* Quick Action Buttons — Purple */}
+      {/* Quick Action Buttons */}
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => router.push("/analytics/cashpulse")}
-          className="py-3 px-4 bg-[#7c3aed] hover:bg-[#a855f7] rounded-lg font-medium text-sm transition-all text-white"
+          className="py-3 px-4 rounded-lg font-medium text-sm transition-all text-white"
+          style={{
+            background: "rgba(124, 58, 237, 0.3)",
+            border: "1px solid rgba(168, 85, 247, 0.4)",
+          }}
         >
           View Cash Pulse
         </button>
         <button
           onClick={() => router.push("/analytics/profitlens")}
-          className="py-3 px-4 bg-[#7c3aed] hover:bg-[#a855f7] rounded-lg font-medium text-sm transition-all text-white"
+          className="py-3 px-4 rounded-lg font-medium text-sm transition-all text-white"
+          style={{
+            background: "rgba(124, 58, 237, 0.3)",
+            border: "1px solid rgba(168, 85, 247, 0.4)",
+          }}
         >
           View Profit Lens
         </button>
