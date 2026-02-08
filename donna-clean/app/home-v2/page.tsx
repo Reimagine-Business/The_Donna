@@ -3,7 +3,7 @@ import { Suspense } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { BottomNav } from "@/components/navigation/bottom-nav";
 import { TopNavMobile } from "@/components/navigation/top-nav-mobile";
-import { DonnaAvatar } from "@/components/home-v2/donna-avatar";
+import { DonnaAvatarCompact } from "@/components/home-v2/donna-avatar-compact";
 import { DonnaMessage } from "@/components/home-v2/donna-message";
 import { BusinessCards } from "@/components/home-v2/business-cards";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
@@ -71,15 +71,15 @@ export default async function HomeV2Page() {
               )}
             </div>
 
-            {/* Donna Section — Message Left, Avatar Right */}
-            <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 rounded-2xl border border-purple-500/30 overflow-hidden">
-              <div className="flex items-center p-5 gap-4">
+            {/* Donna Section — Message Left, Avatar Right (all screen sizes) */}
+            <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 rounded-2xl border border-purple-500/30 p-4">
+              <div className="flex items-center gap-3 sm:gap-4">
                 {/* Left: Donna Says Message */}
                 <div className="flex-1 min-w-0">
-                  <div className="flex items-start gap-3">
-                    <span className="text-2xl flex-shrink-0">💬</span>
+                  <div className="flex items-start gap-2">
+                    <span className="text-lg sm:text-xl flex-shrink-0">💬</span>
                     <div className="flex-1 min-w-0">
-                      <h3 className="text-lg font-semibold text-white mb-2">
+                      <h3 className="text-sm sm:text-base font-semibold text-white mb-1 sm:mb-2">
                         Donna says:
                       </h3>
                       <DonnaMessage
@@ -90,16 +90,11 @@ export default async function HomeV2Page() {
                   </div>
                 </div>
 
-                {/* Right: Donna Avatar */}
-                <div className="flex-shrink-0 hidden sm:block">
-                  <DonnaAvatar />
+                {/* Right: Donna Avatar — always visible */}
+                <div className="flex-shrink-0">
+                  <DonnaAvatarCompact />
                 </div>
               </div>
-            </div>
-
-            {/* Mobile-only centered avatar (below message card) */}
-            <div className="sm:hidden flex justify-center -mt-2">
-              <DonnaAvatar />
             </div>
 
             {/* Business Cards (What's Yours, Not Yours, Profit) */}
