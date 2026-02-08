@@ -3,6 +3,7 @@ import { Suspense } from "react";
 import { SiteHeader } from "@/components/site-header";
 import { BottomNavV2 } from "@/components/home-v2/bottom-nav-v2";
 import { TopNavV2 } from "@/components/home-v2/top-nav-v2";
+import Image from "next/image";
 import { DonnaAvatarLarge } from "@/components/home-v2/donna-avatar-large";
 import { DonnaMessageBullets } from "@/components/home-v2/donna-message-bullets";
 import { BusinessCards } from "@/components/home-v2/business-cards";
@@ -69,30 +70,47 @@ export default async function HomeV2Page() {
               </p>
             </div>
 
-            {/* Donna Section — Speech bubble + Large avatar outside */}
+            {/* Donna Section — Avatar overlapping from right */}
             <div className="relative">
-              {/* Donna Says speech bubble */}
+              {/* Message Box */}
               <div
-                className="relative rounded-2xl p-5 pr-32 sm:pr-40 min-h-[160px]"
-                style={{
-                  background: "rgba(124, 58, 237, 0.25)",
-                  border: "1px solid rgba(168, 85, 247, 0.35)",
-                  backdropFilter: "blur(12px)",
-                  boxShadow: "0 0 20px 2px rgba(124, 58, 237, 0.15)",
-                }}
+                className="bg-purple-900/30 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30 pr-6 md:pr-40"
               >
-                <h3 className="text-lg font-bold text-white mb-3">
-                  Donna says:
-                </h3>
-                <DonnaMessageBullets
-                  entries={entries}
-                  reminders={reminders || []}
-                />
+                <h3 className="text-xl font-bold text-white mb-4">Donna says:</h3>
+
+                <div className="space-y-3 text-white text-sm md:text-base">
+                  <DonnaMessageBullets
+                    entries={entries}
+                    reminders={reminders || []}
+                  />
+                </div>
               </div>
 
-              {/* Donna Avatar — positioned outside the card on the right */}
-              <div className="absolute -right-2 top-1/2 -translate-y-1/2 sm:right-[-16px] z-20">
+              {/* Donna Avatar — Desktop: Large, overlapping from right */}
+              <div className="hidden md:block absolute -right-4 top-1/2 -translate-y-1/2 z-10">
                 <DonnaAvatarLarge />
+              </div>
+
+              {/* Donna Avatar — Mobile: Small avatar in top-right corner */}
+              <div className="md:hidden absolute top-4 right-4 z-10">
+                <div
+                  className="w-20 h-20 rounded-full p-[2px]"
+                  style={{
+                    background: "linear-gradient(135deg, #fbbf24, #f59e0b, #ec4899, #a855f7)",
+                    boxShadow: "0 0 16px 4px rgba(251,191,36,0.25)",
+                  }}
+                >
+                  <div className="w-full h-full rounded-full bg-black flex items-center justify-center overflow-hidden">
+                    <Image
+                      src="/images/donna/donna-avatar.png"
+                      alt="Donna"
+                      width={80}
+                      height={80}
+                      className="object-cover w-full h-full"
+                      priority
+                    />
+                  </div>
+                </div>
               </div>
             </div>
 
