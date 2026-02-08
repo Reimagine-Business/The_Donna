@@ -76,15 +76,8 @@ export default async function HomeV2Page() {
                 <DonnaAvatarLarge />
               </div>
 
-              {/* Message Box — on top, opaque background so avatar doesn't bleed through */}
-              <div
-                className="relative w-[70%] sm:w-[60%] rounded-2xl p-6 border border-purple-500/30 z-10"
-                style={{
-                  background: "linear-gradient(135deg, rgba(55,20,100,0.92), rgba(40,15,80,0.95))",
-                  backdropFilter: "blur(12px)",
-                  boxShadow: "0 0 20px 2px rgba(124, 58, 237, 0.2)",
-                }}
-              >
+              {/* Message Box — on top */}
+              <div className="relative w-[60%] sm:w-[55%] bg-purple-900/30 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30 z-10">
                 <h3 className="text-xl font-bold text-white mb-4">Donna says:</h3>
 
                 <div className="space-y-3 text-white">
