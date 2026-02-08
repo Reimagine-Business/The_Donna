@@ -10,13 +10,9 @@ export async function GET() {
     }, { status: 500 });
   }
 
-  const isValidFormat = apiKey.startsWith("sk-ant-");
-
   return NextResponse.json({
     status: "success",
     message: "API key found and configured",
-    keyFormat: isValidFormat ? "valid" : "unknown",
-    keyPrefix: apiKey.substring(0, 12) + "...",
-    keyLength: apiKey.length,
+    keyConfigured: true,
   });
 }
