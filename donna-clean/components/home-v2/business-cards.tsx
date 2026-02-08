@@ -121,9 +121,9 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
         />
       </div>
 
-      {/* What's Yours — Purple Gradient */}
+      {/* What's Yours — #7c3aed (dark blue-purple) */}
       <div className="relative rounded-2xl p-6 overflow-hidden">
-        <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc]" />
+        <div className="absolute inset-0 bg-[#7c3aed]" />
 
         <div className="relative flex items-start gap-4">
           <div className="w-14 h-14 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
@@ -158,9 +158,9 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
 
       {/* What's Not Yours + Profit — Side by side, BOTH Purple */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-        {/* What's Not Yours — Purple */}
+        {/* What's Not Yours — #a855f7 (medium purple) */}
         <div className="relative rounded-2xl p-5 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc]" />
+          <div className="absolute inset-0 bg-[#a855f7]" />
 
           <div className="relative flex items-start gap-3">
             <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
@@ -190,9 +190,9 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
           </div>
         </div>
 
-        {/* Profit from Sales — Purple */}
+        {/* Profit from Sales — #c084fc (light purple/pink) */}
         <div className="relative rounded-2xl p-5 overflow-hidden">
-          <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc]" />
+          <div className="absolute inset-0 bg-[#c084fc]" />
 
           <div className="relative flex items-start gap-3">
             <div className="w-12 h-12 rounded-full bg-white/10 backdrop-blur-sm flex items-center justify-center flex-shrink-0">
