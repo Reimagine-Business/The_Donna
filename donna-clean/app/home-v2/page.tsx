@@ -58,7 +58,7 @@ export default async function HomeV2Page() {
         <TopNavMobile />
 
         <section className="flex-1 px-4 py-3 md:px-8 overflow-auto">
-          <div className="mx-auto w-full max-w-2xl space-y-2">
+          <div className="mx-auto w-full max-w-2xl space-y-4">
             {/* Greeting */}
             <div className="text-center">
               <h1 className="text-2xl sm:text-3xl font-bold text-white">
@@ -71,11 +71,36 @@ export default async function HomeV2Page() {
               )}
             </div>
 
-            {/* Donna Avatar with Glow Ring */}
-            <DonnaAvatar />
+            {/* Donna Section — Message Left, Avatar Right */}
+            <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 rounded-2xl border border-purple-500/30 overflow-hidden">
+              <div className="flex items-center p-5 gap-4">
+                {/* Left: Donna Says Message */}
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start gap-3">
+                    <span className="text-2xl flex-shrink-0">💬</span>
+                    <div className="flex-1 min-w-0">
+                      <h3 className="text-lg font-semibold text-white mb-2">
+                        Donna says:
+                      </h3>
+                      <DonnaMessage
+                        entries={entries}
+                        reminders={reminders || []}
+                      />
+                    </div>
+                  </div>
+                </div>
 
-            {/* Donna Says Message */}
-            <DonnaMessage entries={entries} reminders={reminders || []} />
+                {/* Right: Donna Avatar */}
+                <div className="flex-shrink-0 hidden sm:block">
+                  <DonnaAvatar />
+                </div>
+              </div>
+            </div>
+
+            {/* Mobile-only centered avatar (below message card) */}
+            <div className="sm:hidden flex justify-center -mt-2">
+              <DonnaAvatar />
+            </div>
 
             {/* Business Cards (What's Yours, Not Yours, Profit) */}
             <Suspense fallback={<EntryListSkeleton />}>

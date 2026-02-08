@@ -29,8 +29,6 @@ export function DonnaMessage({ entries, reminders = [] }: DonnaMessageProps) {
     const today = new Date().toISOString().split("T")[0];
     const fmt = (amount: number) => `₹${amount.toLocaleString("en-IN")}`;
 
-    // Check for critical items first (priority order)
-
     // 1. Overdue reminders
     const overdueReminders = reminders.filter(
       (r) => r.status === "pending" && r.due_date < today
@@ -110,7 +108,11 @@ export function DonnaMessage({ entries, reminders = [] }: DonnaMessageProps) {
           (1000 * 60 * 60 * 24)
       );
       const when =
-        daysUntil === 0 ? "today" : daysUntil === 1 ? "tomorrow" : `in ${daysUntil} days`;
+        daysUntil === 0
+          ? "today"
+          : daysUntil === 1
+            ? "tomorrow"
+            : `in ${daysUntil} days`;
       return {
         emoji: "🤔",
         message:
@@ -163,7 +165,7 @@ export function DonnaMessage({ entries, reminders = [] }: DonnaMessageProps) {
       } as DonnaInsight;
     }
 
-    // Default: all good
+    // Default
     return null;
   }, [entries, reminders]);
 
@@ -171,7 +173,6 @@ export function DonnaMessage({ entries, reminders = [] }: DonnaMessageProps) {
     const today = new Date().toISOString().split("T")[0];
     let count = 0;
 
-    // Count distinct issue types beyond the primary one shown
     const overdueReminders = reminders.filter(
       (r) => r.status === "pending" && r.due_date < today
     );
@@ -203,52 +204,35 @@ export function DonnaMessage({ entries, reminders = [] }: DonnaMessageProps) {
     if (pendingCollections.length > 0) count++;
     if (upcomingReminders.length > 0) count++;
 
-    // Subtract 1 for the primary insight already shown
     return Math.max(0, count - 1);
   }, [entries, reminders]);
 
+  // No insight — everything is good
   if (!insight) {
     return (
-      <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 rounded-2xl p-6 border border-purple-500/30">
-        <div className="flex items-start gap-3">
-          <span className="text-2xl">💬</span>
-          <div className="flex-1">
-            <h3 className="text-lg font-semibold text-white mb-2">
-              Donna says:
-            </h3>
-            <p className="text-white/90 leading-relaxed">
-              Your business is looking good! Keep up the great work. I'll let
-              you know if I notice anything important.
-            </p>
-          </div>
-        </div>
+      <div>
+        <p className="text-white/90 text-sm leading-relaxed">
+          Your business is looking good! Keep up the great work. I'll let you
+          know if I notice anything important.
+        </p>
       </div>
     );
   }
 
   return (
-    <div className="bg-gradient-to-br from-purple-900/40 to-purple-800/40 rounded-2xl p-6 border border-purple-500/30">
-      <div className="flex items-start gap-3">
-        <span className="text-2xl">{insight.emoji}</span>
-        <div className="flex-1">
-          <h3 className="text-lg font-semibold text-white mb-2">
-            Donna says:
-          </h3>
-          <p className="text-white/90 leading-relaxed mb-3">
-            {insight.message}
-          </p>
+    <div>
+      <p className="text-white/90 text-sm leading-relaxed mb-3">
+        {insight.message}
+      </p>
 
-          {additionalCount > 0 && (
-            <Link
-              href="/alerts"
-              className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors text-sm font-medium"
-            >
-              +{additionalCount} more update{additionalCount !== 1 ? "s" : ""}{" "}
-              →
-            </Link>
-          )}
-        </div>
-      </div>
+      {additionalCount > 0 && (
+        <Link
+          href="/alerts"
+          className="inline-flex items-center gap-2 text-accent hover:text-accent/80 transition-colors text-sm font-medium"
+        >
+          +{additionalCount} more update{additionalCount !== 1 ? "s" : ""} →
+        </Link>
+      )}
     </div>
   );
 }
