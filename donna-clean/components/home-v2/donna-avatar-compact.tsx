@@ -7,30 +7,35 @@ export function DonnaAvatarCompact() {
   const [imgError, setImgError] = useState(false);
 
   return (
-    <div className="relative flex justify-center items-center">
-      {/* Purple glow behind avatar */}
+    <div className="relative flex justify-center items-center w-32 h-36 sm:w-36 sm:h-40">
+      {/* Warm orange/gold glow behind avatar */}
       <div className="absolute inset-0 flex justify-center items-center">
         <div
-          className="w-24 h-24 rounded-full"
+          className="w-40 h-40 sm:w-44 sm:h-44 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(168,85,247,0.4) 0%, rgba(192,132,252,0.15) 50%, transparent 80%)",
-            filter: "blur(16px)",
+              "radial-gradient(circle, rgba(255,165,0,0.35) 0%, rgba(255,105,180,0.2) 40%, rgba(168,85,247,0.1) 60%, transparent 80%)",
+            filter: "blur(20px)",
           }}
         />
       </div>
 
-      {/* Purple gradient ring — responsive size */}
-      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-br from-[#c084fc] via-[#a855f7] to-[#7c3aed] z-10 shadow-lg shadow-purple-500/30">
-        {/* Inner dark circle */}
+      {/* Orange-gold gradient ring */}
+      <div className="relative w-28 h-28 sm:w-32 sm:h-32 rounded-full p-[2.5px] z-10"
+        style={{
+          background: "linear-gradient(135deg, #fbbf24, #f59e0b, #ec4899, #a855f7)",
+          boxShadow: "0 0 24px 4px rgba(251,191,36,0.3), 0 0 48px 8px rgba(236,72,153,0.15)",
+        }}
+      >
+        {/* Inner deep blue circle */}
         <div className="w-full h-full rounded-full bg-[#1e2A56] p-1 flex items-center justify-center overflow-hidden">
           {!imgError ? (
             <Image
               src="/images/donna/donna-avatar.png"
               alt="Donna"
-              width={100}
-              height={100}
-              className="object-cover w-full h-full"
+              width={160}
+              height={160}
+              className="object-cover w-full h-full rounded-full"
               priority
               onError={() => setImgError(true)}
             />
