@@ -71,17 +71,36 @@ export default async function HomeV2Page() {
               )}
             </div>
 
-            {/* Donna Says Card — Purple Gradient with overflowing avatar */}
+            {/* Donna Says Card — Futuristic Neon Fintech */}
             <div className="relative">
-              <div className="relative rounded-2xl p-5 pr-28 sm:pr-36 overflow-visible">
-                <div className="absolute inset-0 bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc] rounded-2xl" />
+              <div
+                className="relative rounded-2xl p-[1.5px] overflow-visible"
+                style={{
+                  background: "linear-gradient(135deg, #7c3aed, #22d3ee, #a855f7, #22d3ee, #c084fc)",
+                  boxShadow: "0 0 20px 2px rgba(34,211,238,0.3), 0 0 40px 4px rgba(124,58,237,0.2), inset 0 0 20px rgba(34,211,238,0.1)",
+                }}
+              >
+                {/* Inner card with purple gradient */}
+                <div
+                  className="relative rounded-[14px] p-5 pr-28 sm:pr-36 overflow-visible"
+                  style={{
+                    background: "linear-gradient(135deg, #7c3aed, #a855f7, #c084fc)",
+                  }}
+                >
+                  <div className="relative z-[1]">
+                    <h3 className="text-base font-bold text-white mb-3 tracking-wide">
+                      Donna says:
+                    </h3>
 
-                <div className="relative">
-                  <div className="flex items-start gap-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="text-base font-semibold text-white mb-2">
-                        Donna says:
-                      </h3>
+                    {/* Speech bubble with dark semi-transparent bg */}
+                    <div
+                      className="rounded-xl px-3.5 py-2.5"
+                      style={{
+                        background: "rgba(10, 14, 26, 0.35)",
+                        backdropFilter: "blur(8px)",
+                        border: "1px solid rgba(34,211,238,0.15)",
+                      }}
+                    >
                       <DonnaMessage
                         entries={entries}
                         reminders={reminders || []}
@@ -92,7 +111,7 @@ export default async function HomeV2Page() {
               </div>
 
               {/* Avatar positioned to overflow the card on the right */}
-              <div className="absolute -right-2 -top-4 sm:-right-1 sm:-top-3 z-10">
+              <div className="absolute -right-2 -top-4 sm:-right-1 sm:-top-3 z-20">
                 <DonnaAvatarCompact />
               </div>
             </div>

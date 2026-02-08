@@ -242,7 +242,7 @@ export function DonnaMessage({ entries, reminders = [] }: DonnaMessageProps) {
       {additionalCount > 0 && (
         <Link
           href="/alerts"
-          className="inline-flex items-center gap-2 text-[#c084fc] hover:text-white transition-colors text-sm font-medium"
+          className="inline-flex items-center gap-2 text-[#22d3ee] hover:text-white transition-colors text-sm font-medium"
         >
           +{additionalCount} more update{additionalCount !== 1 ? "s" : ""} →
         </Link>
