@@ -69,13 +69,13 @@ export default async function HomeV2Page() {
               </p>
             </div>
 
-            {/* Donna Section — Box on left, Avatar on right, side by side */}
-            <div className="flex items-center gap-0">
-              {/* Left: Message Box */}
-              <div className="flex-1 bg-purple-900/30 backdrop-blur-sm rounded-2xl p-5 sm:p-6 border border-purple-500/30 z-10">
-                <h3 className="text-lg sm:text-xl font-bold text-white mb-3 sm:mb-4">Donna says:</h3>
+            {/* Donna Section — Simple grid: 2/3 text, 1/3 avatar */}
+            <div className="grid grid-cols-[2fr_1fr] gap-6 items-center">
+              {/* Left: Message Box - wide enough for all text */}
+              <div className="bg-purple-900/30 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30">
+                <h3 className="text-xl font-bold text-white mb-4">Donna says:</h3>
 
-                <div className="space-y-3 text-white text-sm sm:text-base">
+                <div className="space-y-3 text-white">
                   <DonnaMessageBullets
                     entries={entries}
                     reminders={reminders || []}
@@ -83,8 +83,8 @@ export default async function HomeV2Page() {
                 </div>
               </div>
 
-              {/* Right: Donna Avatar — completely separate, slight overlap via negative margin */}
-              <div className="flex-shrink-0 -ml-10 sm:-ml-12 z-20">
+              {/* Right: Avatar - separate, no overlap */}
+              <div className="flex justify-center">
                 <DonnaAvatarLarge />
               </div>
             </div>
