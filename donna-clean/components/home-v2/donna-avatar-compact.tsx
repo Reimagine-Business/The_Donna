@@ -8,22 +8,22 @@ export function DonnaAvatarCompact() {
 
   return (
     <div className="relative flex justify-center items-center">
-      {/* Purple glow ring for compact layout */}
+      {/* Soft glow behind avatar */}
       <div className="absolute inset-0 flex justify-center items-center">
         <div
           className="w-24 h-24 rounded-full"
           style={{
             background:
-              "radial-gradient(circle, rgba(147,51,234,0.4) 0%, rgba(192,132,252,0.3) 40%, rgba(236,72,153,0.2) 60%, transparent 80%)",
-            filter: "blur(20px)",
+              "radial-gradient(circle, rgba(168,85,247,0.35) 0%, rgba(192,132,252,0.2) 50%, transparent 80%)",
+            filter: "blur(16px)",
           }}
         />
       </div>
 
-      {/* Magenta-purple gradient ring — responsive size */}
-      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-br from-[#ec4899] via-[#c084fc] to-[#9333ea] z-10 shadow-lg shadow-purple-500/50">
+      {/* Gradient ring — responsive size */}
+      <div className="relative w-20 h-20 sm:w-24 sm:h-24 rounded-full p-[2px] bg-gradient-to-br from-[#c084fc] via-[#a855f7] to-[#7c3aed] z-10 shadow-lg shadow-purple-500/30">
         {/* Inner dark circle */}
-        <div className="w-full h-full rounded-full bg-[#0a0a1a] p-1 flex items-center justify-center overflow-hidden">
+        <div className="w-full h-full rounded-full bg-[#0a0e1a] p-1 flex items-center justify-center overflow-hidden">
           {!imgError ? (
             <Image
               src="/images/donna/donna-avatar.png"
