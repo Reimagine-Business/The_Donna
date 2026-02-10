@@ -34,7 +34,7 @@ export default async function HomeV2Page() {
   // Fetch user profile for business name (REUSE existing query)
   const { data: profile } = await supabase
     .from("profiles")
-    .select("business_name")
+    .select("business_name, username")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -62,7 +62,7 @@ export default async function HomeV2Page() {
             {/* Greeting — LEFT aligned */}
             <div className="text-left">
               <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
-                {greeting}, {user.user_metadata?.name || user.email?.split("@")[0]}
+                {greeting}{profile?.username ? `, ${profile.username}` : ""}
               </h1>
               <p className="text-sm text-white/50">
                 {profile?.business_name || "Reimagine Business"}
