@@ -4,9 +4,10 @@ import { useState, useEffect } from 'react'
 
 interface GreetingSectionProps {
   businessName: string | null
+  username: string | null
 }
 
-export function GreetingSection({ businessName }: GreetingSectionProps) {
+export function GreetingSection({ businessName, username }: GreetingSectionProps) {
   const [greeting, setGreeting] = useState('')
 
   useEffect(() => {
@@ -23,7 +24,7 @@ export function GreetingSection({ businessName }: GreetingSectionProps) {
   return (
     <div className="mb-3">
       <h1 className="text-xl sm:text-2xl font-bold text-white">
-        {greeting}
+        {greeting}{username ? `, ${username}` : ''}
       </h1>
       {businessName && (
         <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">

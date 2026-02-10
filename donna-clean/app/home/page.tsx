@@ -34,7 +34,7 @@ export default async function HomePage() {
   // Fetch user profile for business name
   const { data: profile } = await supabase
     .from('profiles')
-    .select('business_name')
+    .select('business_name, username')
     .eq('user_id', user.id)
     .maybeSingle();
 
@@ -55,7 +55,7 @@ export default async function HomePage() {
         <section className="flex-1 px-4 py-3 md:px-8 overflow-auto">
           <div className="mx-auto w-full max-w-6xl space-y-3">
             {/* Greeting Section */}
-            <GreetingSection businessName={profile?.business_name ?? null} />
+            <GreetingSection businessName={profile?.business_name ?? null} username={profile?.username ?? null} />
 
             {/* Business Insights */}
             <BusinessInsights entries={entries} reminders={reminders || []} />
