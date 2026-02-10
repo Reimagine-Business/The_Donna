@@ -69,15 +69,15 @@ export default async function HomeV2Page() {
               </p>
             </div>
 
-            {/* Donna Section — Box on top, avatar behind on the right */}
-            <div className="relative">
-              {/* Avatar — positioned behind the box on the right */}
-              <div className="absolute right-0 top-1/2 -translate-y-1/2 z-0">
+            {/* Donna Section — Avatar LEFT, Message box RIGHT */}
+            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
+              {/* Left: Donna Avatar */}
+              <div className="w-full md:w-auto flex justify-center md:justify-start flex-shrink-0">
                 <DonnaAvatarLarge />
               </div>
 
-              {/* Message Box — on top */}
-              <div className="relative w-[60%] sm:w-[55%] bg-purple-900/30 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30 z-10">
+              {/* Right: Message Box */}
+              <div className="w-full md:flex-1 bg-purple-900/30 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30">
                 <h3 className="text-xl font-bold text-white mb-4">Donna says:</h3>
 
                 <div className="space-y-3 text-white">
