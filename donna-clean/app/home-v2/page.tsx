@@ -61,12 +61,14 @@ export default async function HomeV2Page() {
           <div className="mx-auto w-full max-w-2xl space-y-6">
             {/* Greeting — LEFT aligned */}
             <div className="text-left">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white mb-1">
-                {greeting}{profile?.username ? `, ${profile.username}` : ""}
+              <h1 className="text-2xl sm:text-3xl font-bold text-white">
+                {greeting},
               </h1>
-              <p className="text-sm text-white/50">
-                {profile?.business_name || "Reimagine Business"}
-              </p>
+              {profile?.username && (
+                <p className="text-2xl sm:text-3xl font-bold text-white">
+                  {profile.username}!
+                </p>
+              )}
             </div>
 
             {/* Donna Section — Avatar LEFT, Message box RIGHT */}
