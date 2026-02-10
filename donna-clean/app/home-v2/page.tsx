@@ -10,6 +10,7 @@ import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getEntries } from "@/app/entries/actions";
 import { EntryListSkeleton } from "@/components/skeletons/entry-skeleton";
+import { DonnaChatWidget } from "@/components/home-v2/donna-chat-widget";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -100,6 +101,7 @@ export default async function HomeV2Page() {
       </div>
 
       <BottomNavV2 />
+      <DonnaChatWidget />
     </main>
   );
 }
