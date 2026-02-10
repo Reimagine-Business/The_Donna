@@ -248,26 +248,21 @@ export function DonnaChatWidget() {
         </div>
       )}
 
-      {/* Floating Action Button */}
-      <button
-        onClick={() => setIsOpen(!isOpen)}
-        className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg"
-        style={{
-          background: isOpen
-            ? "linear-gradient(135deg, #6b21a8, #4c1d95)"
-            : "linear-gradient(135deg, #a855f7, #7c3aed, #6d28d9)",
-          boxShadow: isOpen
-            ? "0 4px 15px rgba(107,33,168,0.4)"
-            : "0 4px 25px rgba(168,85,247,0.5), 0 0 40px rgba(168,85,247,0.2)",
-        }}
-        aria-label={isOpen ? "Close chat" : "Open chat with Donna"}
-      >
-        {isOpen ? (
-          <X size={24} className="text-white" />
-        ) : (
+      {/* Floating Action Button — hidden when chat is open */}
+      {!isOpen && (
+        <button
+          onClick={() => setIsOpen(true)}
+          className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg"
+          style={{
+            background: "linear-gradient(135deg, #a855f7, #7c3aed, #6d28d9)",
+            boxShadow:
+              "0 4px 25px rgba(168,85,247,0.5), 0 0 40px rgba(168,85,247,0.2)",
+          }}
+          aria-label="Open chat with Donna"
+        >
           <MessageCircle size={24} className="text-white" />
-        )}
-      </button>
+        </button>
+      )}
     </>
   );
 }
