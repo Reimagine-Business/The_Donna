@@ -3,11 +3,10 @@
 import { useState, useEffect } from 'react'
 
 interface GreetingSectionProps {
-  businessName: string | null
   username: string | null
 }
 
-export function GreetingSection({ businessName, username }: GreetingSectionProps) {
+export function GreetingSection({ username }: GreetingSectionProps) {
   const [greeting, setGreeting] = useState('')
 
   useEffect(() => {
@@ -24,11 +23,11 @@ export function GreetingSection({ businessName, username }: GreetingSectionProps
   return (
     <div className="mb-3">
       <h1 className="text-xl sm:text-2xl font-bold text-white">
-        {greeting}{username ? `, ${username}` : ''}
+        {greeting},
       </h1>
-      {businessName && (
-        <p className="text-xs sm:text-sm text-muted-foreground mt-0.5">
-          {businessName}
+      {username && (
+        <p className="text-xl sm:text-2xl font-bold text-white">
+          {username}!
         </p>
       )}
     </div>
