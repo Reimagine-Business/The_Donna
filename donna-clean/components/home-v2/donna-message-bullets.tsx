@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo } from "react";
+import { useMemo, useState, useEffect } from "react";
 import Link from "next/link";
 import type { Entry } from "@/lib/entries";
 
@@ -19,17 +19,45 @@ interface DonnaMessageBulletsProps {
 }
 
 export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBulletsProps) {
-  const fmt = (amount: number) =>
-    `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+  const [aiBullets, setAiBullets] = useState<string[] | null>(null);
+  const [aiAdditional, setAiAdditional] = useState(0);
+  const [loading, setLoading] = useState(true);
 
-  const insights = useMemo(() => {
+  // Fetch AI-powered insights
+  useEffect(() => {
+    let cancelled = false;
+
+    async function fetchAiInsights() {
+      try {
+        const res = await fetch("/api/donna-insights");
+        if (!res.ok) throw new Error("API error");
+        const data = await res.json();
+        if (!cancelled && data.bullets && data.bullets.length > 0) {
+          setAiBullets(data.bullets);
+          setAiAdditional(data.additionalCount || 0);
+        }
+      } catch {
+        // AI failed — fallback to rule-based insights below
+      } finally {
+        if (!cancelled) setLoading(false);
+      }
+    }
+
+    fetchAiInsights();
+    return () => { cancelled = true; };
+  }, []);
+
+  // Fallback: basic rule-based insights (used if AI is unavailable)
+  const fallback = useMemo(() => {
+    const fmt = (amount: number) =>
+      `₹${amount.toLocaleString("en-IN", { maximumFractionDigits: 2 })}`;
+
     const today = new Date();
     const weekAgo = new Date(Date.now() - 7 * 86400000);
     const todayStr = today.toISOString().split("T")[0];
     const weekAgoStr = weekAgo.toISOString().split("T")[0];
-    const bullets: { text: string; bold: string; amount: string; emoji?: string; extra?: string }[] = [];
+    const bullets: string[] = [];
 
-    // Cash IN this week
     const cashInThisWeek = entries
       .filter(
         (e) =>
@@ -40,35 +68,22 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
       .reduce((sum, e) => sum + (e.amount || 0), 0);
 
     if (cashInThisWeek > 0) {
-      bullets.push({
-        bold: "Cash IN",
-        text: " is good this week at ",
-        amount: fmt(cashInThisWeek),
-      });
+      bullets.push(`Cash IN is good this week at ${fmt(cashInThisWeek)}`);
     }
 
-    // Pending bills (Credit entries for COGS/Opex that are unsettled)
-    const pendingBills = entries.filter(
-      (e) =>
-        e.entry_type === "Credit" &&
-        ["COGS", "Opex"].includes(e.category) &&
-        !e.settled
-    );
-    const pendingTotal = pendingBills.reduce(
-      (sum, e) => sum + (e.remaining_amount ?? e.amount ?? 0),
-      0
-    );
+    const pendingTotal = entries
+      .filter(
+        (e) =>
+          e.entry_type === "Credit" &&
+          ["COGS", "Opex"].includes(e.category) &&
+          !e.settled
+      )
+      .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount ?? 0), 0);
 
     if (pendingTotal > 0) {
-      bullets.push({
-        bold: "",
-        text: "Check pending bills of ",
-        amount: fmt(pendingTotal),
-        emoji: "📅",
-      });
+      bullets.push(`Check pending bills of ${fmt(pendingTotal)} 📅`);
     }
 
-    // Profit from sales
     const salesRevenue = entries
       .filter((e) => e.entry_type === "Cash IN" && e.category === "Sales")
       .reduce((sum, e) => sum + (e.amount || 0), 0);
@@ -78,14 +93,9 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
     const profit = salesRevenue - salesCOGS;
 
     if (profit > 0) {
-      bullets.push({
-        bold: "Profit from sales",
-        text: " looks good at ",
-        amount: fmt(profit),
-      });
+      bullets.push(`Profit from sales looks good at ${fmt(profit)}`);
     }
 
-    // Count additional insights for "+N more update" link
     let additionalCount = 0;
     const overdueReminders = reminders.filter(
       (r) => r.status === "pending" && r.due_date < todayStr
@@ -105,7 +115,22 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
     return { bullets, additionalCount };
   }, [entries, reminders]);
 
-  if (insights.bullets.length === 0) {
+  // Loading skeleton
+  if (loading) {
+    return (
+      <div className="space-y-3 animate-pulse">
+        <div className="h-4 bg-white/10 rounded w-[90%]" />
+        <div className="h-4 bg-white/10 rounded w-[75%]" />
+        <div className="h-4 bg-white/10 rounded w-[85%]" />
+      </div>
+    );
+  }
+
+  // Use AI bullets if available, otherwise fallback
+  const bullets = aiBullets || fallback.bullets;
+  const additionalCount = aiBullets ? aiAdditional : fallback.additionalCount;
+
+  if (bullets.length === 0) {
     return (
       <p className="text-white/90 text-sm">
         Everything is looking good! I'll let you know if anything needs your attention.
@@ -115,23 +140,18 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
 
   return (
     <div className="space-y-3">
-      {insights.bullets.map((bullet, i) => (
+      {bullets.map((bullet, i) => (
         <div key={i} className="flex items-start gap-2">
           <span className="text-white mt-0.5 text-lg leading-none">•</span>
           <p className="text-white text-sm leading-relaxed">
-            {bullet.bold && (
-              <span className="font-semibold">{bullet.bold}</span>
-            )}
-            {bullet.text}
-            <span className="font-bold">{bullet.amount}</span>
-            {bullet.emoji && ` ${bullet.emoji}`}
+            {bullet}
             {/* Show "+N more update" on the last bullet */}
-            {i === insights.bullets.length - 1 && insights.additionalCount > 0 && (
+            {i === bullets.length - 1 && additionalCount > 0 && (
               <Link
                 href="/alerts"
                 className="ml-2 text-[#c084fc] hover:text-white transition-colors text-xs font-medium"
               >
-                +{insights.additionalCount} more update{insights.additionalCount !== 1 ? "s" : ""} →
+                +{additionalCount} more update{additionalCount !== 1 ? "s" : ""} →
               </Link>
             )}
           </p>
