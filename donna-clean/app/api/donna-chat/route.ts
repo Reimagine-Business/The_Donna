@@ -13,6 +13,7 @@ import {
   getProfitMetrics,
   getRecommendations,
 } from "@/lib/profit-calculations-new";
+import { buildDonnaPrompt } from "@/lib/donna-personality";
 
 export const dynamic = "force-dynamic";
 
@@ -216,19 +217,7 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
     const response = await client.messages.create({
       model: "claude-sonnet-4-5-20250929",
       max_tokens: 500,
-      system: `You are Donna, a warm and knowledgeable AI financial assistant for a small business in India. You help the business owner understand their finances through the app "The Donna".
-
-You have access to their complete business data below. Use it to answer their questions accurately.
-
-${businessContext}
-
-Rules:
-- Use ₹ symbol for all amounts (Indian Rupees, formatted in Indian style e.g. ₹1,42,000)
-- Be warm, friendly, and concise — 2-3 sentences max per answer
-- Reference specific app features: Cash Pulse, Profit Lens, Entries, Alerts, Parties
-- If you don't know something or the data doesn't cover it, say so honestly
-- Never make up numbers — only use data provided above
-- For action items, suggest which app section to visit`,
+      system: buildDonnaPrompt(businessContext),
       messages: conversationMessages,
     });
 

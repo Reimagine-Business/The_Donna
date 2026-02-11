@@ -5,6 +5,7 @@ import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { getEntries } from "@/app/entries/actions";
 import { calculateCashBalance, getMonthlyComparison, getTotalCashIn, getTotalCashOut } from "@/lib/analytics-new";
 import { getProfitMetrics, getRecommendations } from "@/lib/profit-calculations-new";
+import { buildDonnaPrompt } from "@/lib/donna-personality";
 
 export const dynamic = "force-dynamic";
 
@@ -109,27 +110,31 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
       return NextResponse.json({ error: "API key not configured" }, { status: 500 });
     }
 
+    // Build Donna's full personality + business context
+    const insightsContext = `${businessSummary}
+
+TASK: Generate exactly 3 short bullet-point insights for the HOME PAGE.
+
+RULES:
+- Each bullet must be ONE sentence only (max 12 words)
+- Be specific - use their actual numbers with ₹ symbol
+- Prioritize: overdue items > cash warnings > good news
+- Reference app features: Cash Pulse, Profit Lens, Alerts, Entries
+- If cash is low, warn them. If profit is good, celebrate with 🎉
+- If this is their best month, CELEBRATE
+
+Respond with ONLY a JSON array of 3 strings, no markdown, no explanation. Example:
+["Cash IN is strong at ₹42,000 this week — check Cash Pulse for the trend","Pending bills of ₹7,500 need attention — view in Entries","Profit margin at 23% is healthy — see Profit Lens for details"]`;
+
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
       model: "claude-sonnet-4-5-20250929",
       max_tokens: 250,
+      system: buildDonnaPrompt(insightsContext),
       messages: [
         {
           role: "user",
-          content: `You are Donna, a friendly AI financial assistant for a small business owner in India. Based on this business data, give exactly 3 short bullet-point insights. Each bullet should be 1 sentence, actionable, and mention specific amounts where relevant. Focus on the most important things the owner should know TODAY.
-
-Rules:
-- Use ₹ symbol for amounts (e.g. ₹42,000)
-- Be warm but direct
-- Prioritize: overdue items > cash warnings > good news
-- Reference specific features: Cash Pulse, Profit Lens, Alerts, Entries
-- If cash is low, warn them. If profit is good, celebrate.
-- Keep each bullet under 20 words
-
-${businessSummary}
-
-Respond with ONLY a JSON array of 3 strings, no markdown, no explanation. Example:
-["Cash IN is strong at ₹42,000 this week — check Cash Pulse for the trend","Pending bills of ₹7,500 need attention — view in Entries","Profit margin at 23% is healthy — see Profit Lens for details"]`,
+          content: "Generate the 3 insights now.",
         },
       ],
     });
