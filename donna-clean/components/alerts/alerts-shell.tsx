@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition, useMemo } from "react";
+import { useState, useTransition, useMemo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { markReminderDone } from "@/app/reminders/actions";
 import { EditReminderDialog } from "./edit-reminder-dialog";
@@ -78,16 +78,24 @@ export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) 
   const [customToDate, setCustomToDate] = useState<Date>();
   const [editingId, setEditingId] = useState<string | null>(null); // Track which reminder is being edited
 
+  // Local state for optimistic updates
+  const [reminders, setReminders] = useState<Reminder[]>(initialReminders);
+
+  // Sync when parent passes new data (e.g. React Query refetch)
+  useEffect(() => {
+    setReminders(initialReminders);
+  }, [initialReminders]);
+
   // Filter reminders based on date range AND status filter
   const filteredReminders = useMemo(() => {
     // First, filter by date range
     let dateFiltered: Reminder[];
     if (dateFilter === "customize" && customFromDate && customToDate) {
-      dateFiltered = filterByCustomDateRange(initialReminders, customFromDate, customToDate, "due_date");
+      dateFiltered = filterByCustomDateRange(reminders, customFromDate, customToDate, "due_date");
     } else if (dateFilter !== "customize") {
-      dateFiltered = filterByDateRange(initialReminders, dateFilter as DateRange, "due_date");
+      dateFiltered = filterByDateRange(reminders, dateFilter as DateRange, "due_date");
     } else {
-      dateFiltered = initialReminders;
+      dateFiltered = reminders;
     }
 
     // Then, filter by status
@@ -113,11 +121,22 @@ export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) 
         return true;
     }
     });
-  }, [initialReminders, dateFilter, activeFilter, customFromDate, customToDate]);
+  }, [reminders, dateFilter, activeFilter, customFromDate, customToDate]);
 
   const handleMarkDone = (reminderId: string) => {
+    // Optimistically update local state immediately
+    setReminders((prev) =>
+      prev.map((r) =>
+        r.id === reminderId ? { ...r, status: "completed" } : r
+      )
+    );
+
     startTransition(async () => {
-      await markReminderDone(reminderId);
+      const result = await markReminderDone(reminderId);
+      if (result?.error) {
+        // Revert on failure
+        setReminders(initialReminders);
+      }
     });
   };
 
