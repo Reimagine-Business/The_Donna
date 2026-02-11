@@ -1,57 +1,91 @@
-import { requireAdmin } from '@/lib/admin/check-admin';
-import { UserPlus, AlertCircle } from 'lucide-react';
-import { CreateUserDirect } from '@/components/admin/create-user-direct';
+import { requireAdmin } from "@/lib/admin/check-admin";
+import { createClient } from "@supabase/supabase-js";
+import { Users, UserPlus } from "lucide-react";
+import Link from "next/link";
+import { CreateUserDirect } from "@/components/admin/create-user-direct";
+import { UserActionsPanel } from "@/components/admin/user-actions-panel";
 
 export default async function UserManagementPage() {
   await requireAdmin();
 
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  // Fetch all users via admin API
+  const {
+    data: { users: authUsers },
+  } = await supabaseAdmin.auth.admin.listUsers();
+
+  const userList = (authUsers || []).map((u) => ({
+    id: u.id,
+    email: u.email || "No email",
+    banned_until: (u as unknown as { banned_until?: string }).banned_until || null,
+  }));
+
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
+      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
-          <h1 className="text-3xl font-bold">User Management</h1>
-          <p className="text-muted-foreground">
-            Create and manage user accounts
+          <h1 className="text-3xl font-bold text-white">User Management</h1>
+          <p className="text-white/60">
+            View, create, and manage user accounts
           </p>
         </div>
+        <Link
+          href="/admin"
+          className="px-4 py-2 text-sm font-medium rounded-lg bg-purple-500/10 text-purple-400 hover:bg-purple-500/20 transition-colors"
+        >
+          Back to Dashboard
+        </Link>
       </div>
 
-      {/* Create User Section */}
-      <div className="p-6 border rounded-lg">
-        <div className="flex items-center gap-3 mb-4">
-          <div className="p-2 rounded-lg bg-purple-500/10">
-            <UserPlus className="h-5 w-5 text-purple-500" />
+      {/* All Users Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-purple-500/20">
+            <Users className="h-5 w-5 text-purple-400" />
           </div>
           <div>
-            <h2 className="text-xl font-semibold">Create New User</h2>
-            <p className="text-sm text-muted-foreground">
-              Create a user account directly (works from mobile!)
+            <h2 className="text-xl font-semibold text-white">
+              All Users ({userList.length})
+            </h2>
+            <p className="text-sm text-white/60">
+              Deactivate, reactivate, or reset passwords
             </p>
           </div>
         </div>
 
-        <div className="p-4 bg-purple-500/10 border border-purple-500/20 rounded-lg mb-4">
-          <p className="text-sm">
-            Create user accounts instantly with a temporary password. Users can login immediately and change their password. Standard user access (no admin privileges).
-          </p>
-        </div>
-
-        <CreateUserDirect />
+        <UserActionsPanel users={userList} />
       </div>
 
-      {/* Future Features */}
-      <div className="p-6 border rounded-lg bg-muted/50">
-        <div className="flex items-start gap-3">
-          <AlertCircle className="h-5 w-5 text-muted-foreground mt-0.5" />
-          <div>
-            <h3 className="font-semibold mb-2">Additional Features Coming Soon</h3>
-            <ul className="text-sm text-muted-foreground space-y-1">
-              <li>• View all registered users</li>
-              <li>• Deactivate user accounts</li>
-              <li>• Reset user passwords</li>
-              <li>• Manage user permissions</li>
-            </ul>
+      {/* Create User Section */}
+      <div className="space-y-4">
+        <div className="flex items-center gap-3">
+          <div className="p-2 rounded-lg bg-purple-500/20">
+            <UserPlus className="h-5 w-5 text-purple-400" />
           </div>
+          <div>
+            <h2 className="text-xl font-semibold text-white">
+              Create New User
+            </h2>
+            <p className="text-sm text-white/60">
+              Create a user account directly with a temporary password
+            </p>
+          </div>
+        </div>
+
+        <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
+          <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg mb-4">
+            <p className="text-sm text-white/80">
+              Creates account instantly. Users can login immediately and change
+              their password. Standard user access (no admin privileges).
+            </p>
+          </div>
+          <CreateUserDirect />
         </div>
       </div>
     </div>
