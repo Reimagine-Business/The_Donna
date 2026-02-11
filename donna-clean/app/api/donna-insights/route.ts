@@ -33,6 +33,14 @@ export async function GET() {
       .eq("user_id", user.id)
       .maybeSingle();
 
+    // Fetch business profile for personalized context
+    const { data: businessProfile } = await supabase
+      .from("business_profiles")
+      .select("business_context")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const bCtx = businessProfile?.business_context || {};
+
     // Compute metrics from all features
     const cashBalance = calculateCashBalance(entries);
     const totalCashIn = getTotalCashIn(entries);
@@ -71,6 +79,11 @@ export async function GET() {
     // Build the business summary for Claude
     const businessSummary = `
 Business: ${profile?.business_name || "Small Business"}
+${bCtx.what_we_sell ? `What they sell: ${bCtx.what_we_sell}` : ""}
+${bCtx.main_customers ? `Main customers: ${bCtx.main_customers}` : ""}
+${bCtx.peak_season ? `Peak season: ${bCtx.peak_season}` : ""}
+${bCtx.typical_monthly_costs ? `Typical monthly costs: ${bCtx.typical_monthly_costs}` : ""}
+${bCtx.business_goals ? `Business goals: ${bCtx.business_goals}` : ""}
 
 === CASH PULSE (Cash-basis) ===
 Cash Balance: ${fmt(cashBalance)}
