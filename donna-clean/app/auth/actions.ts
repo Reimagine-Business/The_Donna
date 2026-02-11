@@ -12,12 +12,16 @@ type AuthState = {
 };
 
 const getOrigin = async () => {
+  // Prefer explicit site URL from env (most reliable on Vercel)
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
   const headerList = await headers();
   const origin = headerList.get("origin");
   if (origin) {
     return origin;
   }
-  return process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://localhost:3000";
+  return "http://localhost:3000";
 };
 
 export async function loginAction(_: AuthState, formData: FormData): Promise<AuthState> {
