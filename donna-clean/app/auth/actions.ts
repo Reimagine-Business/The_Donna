@@ -12,12 +12,16 @@ type AuthState = {
 };
 
 const getOrigin = async () => {
+  // Prefer explicit site URL from env (most reliable on Vercel)
+  if (process.env.NEXT_PUBLIC_SITE_URL) {
+    return process.env.NEXT_PUBLIC_SITE_URL;
+  }
   const headerList = await headers();
   const origin = headerList.get("origin");
   if (origin) {
     return origin;
   }
-  return process.env.NEXT_PUBLIC_SITE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "http://localhost:3000";
+  return "http://localhost:3000";
 };
 
 export async function loginAction(_: AuthState, formData: FormData): Promise<AuthState> {
@@ -119,18 +123,23 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
   try {
     const supabase = await createSupabaseServerClient();
     const origin = await getOrigin();
+    const redirectUrl = `${origin}/auth/update-password`;
+
+    console.log("[Forgot Password] Sending reset email to:", sanitizedEmail);
+    console.log("[Forgot Password] Redirect URL:", redirectUrl);
 
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
-      redirectTo: `${origin}/auth/update-password`,
+      redirectTo: redirectUrl,
     });
 
     if (error) {
+      console.error("[Forgot Password] Supabase error:", error.message, error);
       return { error: error.message };
     }
 
     return { success: true };
   } catch (error) {
-    console.error('Forgot password error:', error);
+    console.error("[Forgot Password] Unexpected error:", error);
     return { error: "An error occurred. Please try again." };
   }
 }
