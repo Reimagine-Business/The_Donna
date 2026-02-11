@@ -149,7 +149,7 @@ export async function updatePasswordAction(_: AuthState, formData: FormData): Pr
     return { error: error.message };
   }
 
-  redirect("/protected");
+  redirect("/auth/login");
 }
 
 export async function logoutAction() {

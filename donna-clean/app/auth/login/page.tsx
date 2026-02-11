@@ -5,6 +5,7 @@ export const dynamic = 'force-dynamic';
 
 import { useMemo, useState } from "react";
 import { useRouter } from "next/navigation";
+import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 
 export default function LoginPage() {
@@ -94,7 +95,12 @@ export default function LoginPage() {
               disabled={loading}
               className="mt-1 w-full rounded-lg border border-border bg-secondary/50 px-3 py-2 text-sm text-white focus:outline-none focus:ring-2 focus:ring-ring disabled:opacity-50"
             />
-            <p className="mt-1 text-xs text-muted-foreground">Forgot your password?</p>
+            <Link
+              href="/auth/forgot-password"
+              className="mt-1 inline-block text-xs text-purple-400 hover:text-purple-300 transition-colors"
+            >
+              Forgot your password?
+            </Link>
           </div>
 
           {error && <p className="text-sm text-red-400">{error}</p>}
