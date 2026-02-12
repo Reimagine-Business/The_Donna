@@ -55,14 +55,19 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.json();
 
-    // Build business_context JSONB object
-    const businessContext = {
+    // Build business_context JSONB — supports both new Bio fields and old fields
+    const businessContext: Record<string, unknown> = {
+      business_type: formData.business_type || null,
       what_we_sell: formData.what_we_sell || null,
-      main_customers: formData.main_customers || null,
+      product_source: formData.product_source || null,
+      main_customers: Array.isArray(formData.main_customers) ? formData.main_customers : (formData.main_customers || null),
+      other_customers: formData.other_customers || null,
+      monthly_sales_range: formData.monthly_sales_range || null,
+      extra_notes: formData.extra_notes || null,
       peak_season: formData.peak_season || null,
       typical_monthly_costs: formData.typical_monthly_costs || null,
       business_goals: formData.business_goals || null,
-      setup_completed_at: new Date().toISOString(),
+      updated_at: new Date().toISOString(),
     };
 
     // Try to update first (profile may already exist from trigger)

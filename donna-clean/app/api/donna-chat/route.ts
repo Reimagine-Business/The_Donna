@@ -14,7 +14,7 @@ import {
   getProfitMetrics,
   getRecommendations,
 } from "@/lib/profit-calculations-new";
-import { buildDonnaChatPrompt } from "@/lib/donna-personality";
+import { buildDonnaChatPrompt, buildBusinessBioContext } from "@/lib/donna-personality";
 
 export const dynamic = "force-dynamic";
 
@@ -151,14 +151,11 @@ export async function POST(req: NextRequest) {
       `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
 
     // Build context for Claude
+    const bioContext = buildBusinessBioContext(bCtx);
     const businessContext = `
 Business: ${profile?.business_name || "Small Business"}
 Owner: ${profile?.username || "Business Owner"}
-${bCtx.what_we_sell ? `What they sell: ${bCtx.what_we_sell}` : ""}
-${bCtx.main_customers ? `Main customers: ${bCtx.main_customers}` : ""}
-${bCtx.peak_season ? `Peak season: ${bCtx.peak_season}` : ""}
-${bCtx.typical_monthly_costs ? `Typical monthly costs: ${bCtx.typical_monthly_costs}` : ""}
-${bCtx.business_goals ? `Business goals: ${bCtx.business_goals}` : ""}
+${bioContext}
 
 === CASH PULSE (Cash-basis) ===
 Cash Balance: ${fmt(cashBalance)}
