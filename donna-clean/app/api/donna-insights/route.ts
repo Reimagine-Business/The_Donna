@@ -124,31 +124,18 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
       return NextResponse.json({ error: "API key not configured" }, { status: 500 });
     }
 
-    // Build Donna's full personality + business context
-    const insightsContext = `${businessSummary}
-
-TASK: Generate exactly 3 short bullet-point insights for the HOME PAGE.
-
-RULES:
-- Each bullet must be ONE sentence only (max 12 words)
-- Be specific - use their actual numbers with ₹ symbol
-- Prioritize: overdue items > cash warnings > good news
-- Reference app features: Cash Pulse, Profit Lens, Alerts, Entries
-- If cash is low, warn them. If profit is good, celebrate with 🎉
-- If this is their best month, CELEBRATE
-
-Respond with ONLY a JSON array of 3 strings, no markdown, no explanation. Example:
-["Cash IN is strong at ₹42,000 this week — check Cash Pulse for the trend","Pending bills of ₹7,500 need attention — view in Entries","Profit margin at 23% is healthy — see Profit Lens for details"]`;
+    // Build Donna's context — personality is in buildDonnaPrompt
+    const insightsContext = businessSummary;
 
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
       model: "claude-sonnet-4-5-20250929",
-      max_tokens: 250,
+      max_tokens: 300,
       system: buildDonnaPrompt(insightsContext),
       messages: [
         {
           role: "user",
-          content: "Generate the 3 insights now.",
+          content: "Generate exactly 3 calm, helpful home screen insights as plain text bullets. Use the Label: Fact. 👉 Action format.",
         },
       ],
     });
@@ -177,37 +164,68 @@ Respond with ONLY a JSON array of 3 strings, no markdown, no explanation. Exampl
       console.error("[Donna Insights] Usage log error:", logErr);
     }
 
-    // Parse the AI response — strip markdown code blocks if present
+    // Parse the AI response
     const textBlock = response.content.find((b) => b.type === "text");
-    let rawText = textBlock ? textBlock.text.trim() : "[]";
+    let insights = textBlock ? textBlock.text.trim() : "";
 
-    // Strip markdown code fences (```json ... ``` or ``` ... ```)
-    rawText = rawText.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
-    rawText = rawText.trim();
+    // Strip code blocks and markdown
+    insights = insights
+      .replace(/```[\s\S]*?```/g, "")
+      .replace(/`[^`]*`/g, "")
+      .replace(/\*\*/g, "")
+      .replace(/^#+\s*/gm, "")
+      .trim();
 
-    let bullets: string[];
-    try {
-      bullets = JSON.parse(rawText);
-      if (!Array.isArray(bullets)) throw new Error("Not an array");
-      // Strip any leftover markdown formatting from each bullet
-      bullets = bullets
-        .map((b) => String(b).replace(/\*\*/g, "").replace(/^#+\s*/, "").trim())
-        .filter(Boolean)
-        .slice(0, 3);
-    } catch {
-      // Fallback: try to extract JSON array from anywhere in the response
-      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
-      if (jsonMatch) {
-        try {
-          bullets = JSON.parse(jsonMatch[0]);
-          if (!Array.isArray(bullets)) throw new Error("Not an array");
-          bullets = bullets.map((b) => String(b).trim()).filter(Boolean).slice(0, 3);
-        } catch {
-          bullets = [];
+    // Safety net: replace banned phrases automatically
+    const bannedReplacements: [RegExp, string][] = [
+      [/urgent/gi, "worth looking at"],
+      [/critical/gi, "worth checking"],
+      [/crushing/gi, "higher than"],
+      [/injection needed/gi, "adding cash would help"],
+      [/immediately/gi, "soon"],
+      [/cost cutting/gi, "reviewing expenses"],
+      [/alarming/gi, "worth checking"],
+      [/dangerous/gi, "worth watching"],
+      [/you'?re failing/gi, "things are tight"],
+      [/negative variance/gi, "lower than last month"],
+      [/₹-(\d)/g, "short by ₹$1"],
+      [/-(\d+\.?\d*)%/g, "negative"],
+    ];
+
+    bannedReplacements.forEach(([pattern, replacement]) => {
+      insights = insights.replace(pattern, replacement);
+    });
+
+    // Round decimal percentages (e.g. 151.8% → 152%)
+    insights = insights.replace(/(\d+\.\d+)%/g, (_match, p1) => Math.round(parseFloat(p1)) + "%");
+
+    // Parse bullets from plain text (one per line, starting with - or •)
+    let bullets = insights
+      .split("\n")
+      .map((line) => line.replace(/^[-•]\s*/, "").trim())
+      .filter((line) => line.length > 10)
+      .slice(0, 3);
+
+    // If parsing as plain text didn't work, try JSON array
+    if (bullets.length === 0) {
+      try {
+        const rawText = insights.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "").trim();
+        const parsed = JSON.parse(rawText);
+        if (Array.isArray(parsed)) {
+          bullets = parsed.map((b) => String(b).trim()).filter(Boolean).slice(0, 3);
         }
-      } else {
-        bullets = [];
+      } catch {
+        // JSON parsing also failed
       }
+    }
+
+    // Fallback: calm default message
+    if (bullets.length === 0) {
+      bullets = [
+        "Cash update: Your cash position looks steady this week. 👉 Keep tracking daily.",
+        "Sales update: Entries are being recorded well. 👉 Great habit!",
+        "Reminder: Check your Alerts for any upcoming deadlines. 👉 Stay on top of things.",
+      ];
     }
 
     return NextResponse.json({
