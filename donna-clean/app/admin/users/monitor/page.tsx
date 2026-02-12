@@ -19,6 +19,15 @@ export default async function UserMonitoringPage() {
     data: { users: authUsers },
   } = await supabaseAdmin.auth.admin.listUsers();
 
+  // Get all profiles (for username + business_name)
+  const { data: profiles } = await supabaseAdmin
+    .from("profiles")
+    .select("id, username, business_name");
+
+  const profileMap = new Map(
+    (profiles || []).map((p) => [p.id, p])
+  );
+
   // Get entry counts per user — use admin client to bypass RLS
   const { data: entries } = await supabaseAdmin
     .from("entries")
@@ -40,15 +49,24 @@ export default async function UserMonitoringPage() {
 
   // Combine data
   const usersWithStats =
-    authUsers?.map((user) => ({
-      id: user.id,
-      email: user.email,
-      created_at: user.created_at,
-      last_sign_in_at: user.last_sign_in_at,
-      role: user.app_metadata?.role || "user",
-      entryCount: entryCounts[user.id] || 0,
-      lastEntryDate: lastEntryDates[user.id],
-    })) || [];
+    authUsers?.map((user) => {
+      const profile = profileMap.get(user.id);
+      return {
+        id: user.id,
+        email: user.email,
+        username:
+          profile?.username ||
+          user.user_metadata?.username ||
+          user.email?.split("@")[0] ||
+          "Unknown",
+        businessName: profile?.business_name || null,
+        created_at: user.created_at,
+        last_sign_in_at: user.last_sign_in_at,
+        role: user.app_metadata?.role || "user",
+        entryCount: entryCounts[user.id] || 0,
+        lastEntryDate: lastEntryDates[user.id],
+      };
+    }) || [];
 
   // Calculate stats
   const totalUsers = usersWithStats.length;
@@ -131,25 +149,25 @@ export default async function UserMonitoringPage() {
         </div>
       </div>
 
-      {/* Users Table */}
-      <div className="border border-purple-500/30 rounded-xl overflow-hidden">
+      {/* Desktop Table */}
+      <div className="border border-purple-500/30 rounded-xl overflow-hidden hidden md:block">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-purple-900/20">
               <tr>
-                <th className="text-left p-3 md:p-4 font-medium text-xs md:text-sm text-white/70">
-                  Email
+                <th className="text-left p-4 font-medium text-sm text-white/70">
+                  Username
                 </th>
-                <th className="text-left p-3 md:p-4 font-medium text-xs md:text-sm text-white/70">
+                <th className="text-left p-4 font-medium text-sm text-white/70">
                   Last Login
                 </th>
-                <th className="text-left p-3 md:p-4 font-medium text-xs md:text-sm text-white/70 hidden md:table-cell">
+                <th className="text-left p-4 font-medium text-sm text-white/70">
                   Last Entry
                 </th>
-                <th className="text-right p-3 md:p-4 font-medium text-xs md:text-sm text-white/70">
+                <th className="text-right p-4 font-medium text-sm text-white/70">
                   Entries
                 </th>
-                <th className="text-center p-3 md:p-4 font-medium text-xs md:text-sm text-white/70">
+                <th className="text-center p-4 font-medium text-sm text-white/70">
                   Status
                 </th>
               </tr>
@@ -174,20 +192,25 @@ export default async function UserMonitoringPage() {
                     key={user.id}
                     className="border-t border-purple-500/20 hover:bg-purple-900/10"
                   >
-                    {/* Email */}
-                    <td className="p-3 md:p-4">
-                      <div className="text-xs md:text-sm font-medium text-white truncate max-w-[120px] md:max-w-none">
-                        {user.email}
+                    {/* Username */}
+                    <td className="p-4">
+                      <div className="text-sm font-medium text-white">
+                        {user.username}
                       </div>
                       {user.role === "admin" && (
-                        <span className="text-[10px] md:text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400">
+                        <span className="text-xs px-1.5 py-0.5 rounded bg-purple-500/10 text-purple-400">
                           Admin
                         </span>
+                      )}
+                      {user.businessName && (
+                        <div className="text-xs text-white/40">
+                          {user.businessName}
+                        </div>
                       )}
                     </td>
 
                     {/* Last Login */}
-                    <td className="p-3 md:p-4 text-xs md:text-sm">
+                    <td className="p-4 text-sm">
                       {user.last_sign_in_at ? (
                         <div>
                           <div className="text-white/80">
@@ -196,7 +219,7 @@ export default async function UserMonitoringPage() {
                               "MMM dd, HH:mm"
                             )}
                           </div>
-                          <div className="text-[10px] md:text-xs text-white/40">
+                          <div className="text-xs text-white/40">
                             {formatDistanceToNow(
                               new Date(user.last_sign_in_at),
                               { addSuffix: true }
@@ -208,8 +231,8 @@ export default async function UserMonitoringPage() {
                       )}
                     </td>
 
-                    {/* Last Entry - hidden on mobile */}
-                    <td className="p-3 md:p-4 text-xs md:text-sm hidden md:table-cell">
+                    {/* Last Entry */}
+                    <td className="p-4 text-sm">
                       {user.lastEntryDate ? (
                         <div>
                           <div className="text-white/80">
@@ -228,26 +251,26 @@ export default async function UserMonitoringPage() {
                     </td>
 
                     {/* Entry Count */}
-                    <td className="p-3 md:p-4 text-right">
-                      <span className="font-semibold text-base md:text-lg text-white">
+                    <td className="p-4 text-right">
+                      <span className="font-semibold text-lg text-white">
                         {user.entryCount}
                       </span>
                     </td>
 
                     {/* Status */}
-                    <td className="p-3 md:p-4 text-center">
+                    <td className="p-4 text-center">
                       {isActive ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 text-[10px] md:text-xs rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
-                          <Activity className="h-3 w-3 hidden md:inline" />
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                          <Activity className="h-3 w-3" />
                           Active
                         </span>
                       ) : isInactive ? (
-                        <span className="inline-flex items-center gap-1 px-1.5 md:px-2 py-0.5 md:py-1 text-[10px] md:text-xs rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
-                          <AlertCircle className="h-3 w-3 hidden md:inline" />
+                        <span className="inline-flex items-center gap-1 px-2 py-1 text-xs rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                          <AlertCircle className="h-3 w-3" />
                           Inactive
                         </span>
                       ) : (
-                        <span className="px-1.5 md:px-2 py-0.5 md:py-1 text-[10px] md:text-xs rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                        <span className="px-2 py-1 text-xs rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
                           Moderate
                         </span>
                       )}
@@ -260,6 +283,75 @@ export default async function UserMonitoringPage() {
         </div>
       </div>
 
+      {/* Mobile Cards */}
+      <div className="md:hidden space-y-3">
+        {usersWithStats.map((user) => {
+          const daysSinceLogin = user.last_sign_in_at
+            ? Math.floor(
+                (Date.now() - new Date(user.last_sign_in_at).getTime()) /
+                  (1000 * 60 * 60 * 24)
+              )
+            : null;
+          const isActive = daysSinceLogin !== null && daysSinceLogin < 7;
+          const isInactive = daysSinceLogin !== null && daysSinceLogin > 30;
+
+          return (
+            <div
+              key={user.id}
+              className="border border-purple-500/20 rounded-xl bg-purple-900/10 p-4"
+            >
+              <div className="flex justify-between items-start mb-3">
+                <div>
+                  <p className="font-medium text-white">{user.username}</p>
+                  {user.businessName && (
+                    <p className="text-xs text-white/40">{user.businessName}</p>
+                  )}
+                </div>
+                {isActive ? (
+                  <span className="px-2 py-0.5 text-[10px] rounded-full bg-green-500/10 text-green-400 border border-green-500/20">
+                    Active
+                  </span>
+                ) : isInactive ? (
+                  <span className="px-2 py-0.5 text-[10px] rounded-full bg-red-500/10 text-red-400 border border-red-500/20">
+                    Inactive
+                  </span>
+                ) : (
+                  <span className="px-2 py-0.5 text-[10px] rounded-full bg-yellow-500/10 text-yellow-400 border border-yellow-500/20">
+                    Moderate
+                  </span>
+                )}
+              </div>
+              <div className="grid grid-cols-3 gap-2 text-xs">
+                <div>
+                  <p className="text-white/50">Last Login</p>
+                  <p className="text-white">
+                    {user.last_sign_in_at
+                      ? formatDistanceToNow(new Date(user.last_sign_in_at), {
+                          addSuffix: true,
+                        })
+                      : "Never"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-white/50">Last Entry</p>
+                  <p className="text-white">
+                    {user.lastEntryDate
+                      ? formatDistanceToNow(new Date(user.lastEntryDate), {
+                          addSuffix: true,
+                        })
+                      : "None"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-white/50">Entries</p>
+                  <p className="text-white font-bold">{user.entryCount}</p>
+                </div>
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
       {/* Activity Legend */}
       <div className="p-4 border border-purple-500/30 rounded-xl bg-purple-900/10">
         <h3 className="font-semibold mb-3 text-white">Activity Status</h3>
@@ -267,8 +359,8 @@ export default async function UserMonitoringPage() {
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-green-500"></div>
             <span className="text-white/70">
-              <strong className="text-white">Active:</strong> Logged in within
-              7 days
+              <strong className="text-white">Active:</strong> Logged in within 7
+              days
             </span>
           </div>
           <div className="flex items-center gap-2">

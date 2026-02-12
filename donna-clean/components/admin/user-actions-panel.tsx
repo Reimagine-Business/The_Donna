@@ -10,6 +10,7 @@ import {
 interface UserInfo {
   id: string;
   email: string;
+  username?: string;
   banned_until?: string | null;
 }
 
@@ -34,6 +35,7 @@ export function UserActionsPanel({ users }: UserActionsPanelProps) {
   const filteredUsers = users.filter(
     (u) =>
       u.email?.toLowerCase().includes(search.toLowerCase()) ||
+      u.username?.toLowerCase().includes(search.toLowerCase()) ||
       u.id.toLowerCase().includes(search.toLowerCase())
   );
 
@@ -89,7 +91,7 @@ export function UserActionsPanel({ users }: UserActionsPanelProps) {
       <div>
         <input
           type="text"
-          placeholder="Search by email or user ID..."
+          placeholder="Search by username, email, or user ID..."
           value={search}
           onChange={(e) => setSearch(e.target.value)}
           className="w-full px-4 py-2.5 border border-purple-500/30 bg-purple-900/10 rounded-lg text-sm text-white placeholder-white/40 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
@@ -116,7 +118,7 @@ export function UserActionsPanel({ users }: UserActionsPanelProps) {
             <thead className="bg-purple-900/20">
               <tr>
                 <th className="text-left p-3 md:p-4 font-medium text-xs md:text-sm text-white/70">
-                  Email
+                  User
                 </th>
                 <th className="text-center p-3 md:p-4 font-medium text-xs md:text-sm text-white/70">
                   Status
@@ -144,13 +146,13 @@ export function UserActionsPanel({ users }: UserActionsPanelProps) {
                       key={user.id}
                       className="border-t border-purple-500/20 hover:bg-purple-900/10"
                     >
-                      {/* Email */}
+                      {/* User */}
                       <td className="p-3 md:p-4">
-                        <div className="text-sm font-medium text-white truncate max-w-[200px] md:max-w-none">
-                          {user.email}
+                        <div className="text-sm font-medium text-white">
+                          {user.username || user.email}
                         </div>
-                        <div className="text-[10px] md:text-xs text-white/40 font-mono truncate max-w-[200px] md:max-w-none">
-                          {user.id}
+                        <div className="text-[10px] md:text-xs text-white/40 truncate max-w-[200px] md:max-w-none">
+                          {user.email}
                         </div>
                       </td>
 
