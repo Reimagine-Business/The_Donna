@@ -14,7 +14,7 @@ import {
   getProfitMetrics,
   getRecommendations,
 } from "@/lib/profit-calculations-new";
-import { buildDonnaChatPrompt, buildBusinessBioContext } from "@/lib/donna-personality";
+import { buildDonnaChatPrompt, buildBusinessBioContext, cleanDonnaResponse } from "@/lib/donna-personality";
 
 export const dynamic = "force-dynamic";
 
@@ -225,12 +225,13 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
       content: message,
     });
 
-    // Use the dedicated chat prompt with 3-part structure
+    // Use the dedicated chat prompt with 5-part structure
     const fullPrompt = buildDonnaChatPrompt(businessContext, message);
 
     const response = await client.messages.create({
       model: "claude-sonnet-4-5-20250929",
-      max_tokens: 400,
+      max_tokens: 500,
+      temperature: 0.7,
       system: fullPrompt,
       messages: conversationMessages,
     });
@@ -238,24 +239,11 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
     const textBlock = response.content.find((b) => b.type === "text");
     let reply = textBlock ? textBlock.text.trim() : "Sorry, I couldn't generate a response. Please try again.";
 
-    // Strip any markdown formatting that slipped through
-    reply = reply
+    // Clean with shared safety net (strips code, fixes numbers, banned words)
+    reply = cleanDonnaResponse(reply)
       .replace(/\*\*(.*?)\*\*/g, "$1")   // **bold** → bold
       .replace(/\*(.*?)\*/g, "$1")         // *italic* → italic
       .replace(/^#{1,6}\s+/gm, "")        // ## headers → plain text
-      .replace(/```[\s\S]*?```/g, "")      // code blocks → remove
-      .replace(/`([^`]+)`/g, "$1")         // inline code → plain
-      .trim();
-
-    // Safety net: replace banned words
-    reply = reply
-      .replace(/urgent/gi, "worth looking at")
-      .replace(/you need to/gi, "you could")
-      .replace(/you must/gi, "one option is")
-      .replace(/crushing/gi, "higher than")
-      .replace(/₹-(\d)/g, "short by ₹$1")
-      .replace(/-(\d+\.?\d*)%/g, "negative")
-      .replace(/(\d+\.\d+)%/g, (_match, p1) => Math.round(parseFloat(p1)) + "%")
       .trim();
 
     if (!reply || reply.length < 10) {
