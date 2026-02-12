@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/admin/check-admin";
 import { createClient } from "@supabase/supabase-js";
-import { Users, FileText, Sparkles } from "lucide-react";
+import { Users, FileText, MessageCircle, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminDashboardPage() {
@@ -24,13 +24,22 @@ export default async function AdminDashboardPage() {
     .from("entries")
     .select("*", { count: "exact", head: true });
 
-  // AI usage — count from ai_usage_logs if it exists, otherwise show 0
-  let aiInsightsCount = 0;
+  // AI usage — chat requests + cost from ai_usage_logs
+  let aiChatCount = 0;
+  let totalCostINR = 0;
   try {
     const { count } = await supabaseAdmin
       .from("ai_usage_logs")
-      .select("*", { count: "exact", head: true });
-    aiInsightsCount = count || 0;
+      .select("*", { count: "exact", head: true })
+      .eq("feature", "chat");
+    aiChatCount = count || 0;
+
+    const { data: costData } = await supabaseAdmin
+      .from("ai_usage_logs")
+      .select("cost_usd");
+    const totalCostUSD =
+      costData?.reduce((sum, row) => sum + (row.cost_usd || 0), 0) || 0;
+    totalCostINR = totalCostUSD * 83;
   } catch {
     // table may not exist yet
   }
@@ -81,12 +90,15 @@ export default async function AdminDashboardPage() {
         <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
           <div className="flex items-center gap-4">
             <div className="p-3 rounded-lg bg-purple-500/20">
-              <Sparkles className="h-6 w-6 text-purple-400" />
+              <MessageCircle className="h-6 w-6 text-purple-400" />
             </div>
             <div>
-              <div className="text-sm text-white/60">AI Insights Generated</div>
+              <div className="text-sm text-white/60">AI Chat Requests</div>
               <div className="text-3xl font-bold text-white">
-                {aiInsightsCount}
+                {aiChatCount}
+              </div>
+              <div className="text-xs text-white/40 mt-1">
+                Est. cost: ₹{totalCostINR.toFixed(2)}
               </div>
             </div>
           </div>

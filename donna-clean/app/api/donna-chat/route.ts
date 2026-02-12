@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { getEntries } from "@/app/entries/actions";
@@ -236,6 +237,31 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
 
     const textBlock = response.content.find((b) => b.type === "text");
     const reply = textBlock ? textBlock.text.trim() : "Sorry, I couldn't generate a response. Please try again.";
+
+    // Log AI usage for cost tracking
+    try {
+      const adminClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+      const inputTokens = response.usage?.input_tokens || 0;
+      const outputTokens = response.usage?.output_tokens || 0;
+      await adminClient.from("ai_usage_logs").insert({
+        user_id: user.id,
+        feature: "chat",
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
+        cost_usd:
+          (inputTokens / 1_000_000) * 3 + (outputTokens / 1_000_000) * 15,
+        model: "claude-sonnet-4-5-20250929",
+        created_at: new Date().toISOString(),
+      });
+    } catch (logErr) {
+      // Don't fail the response if logging fails
+      console.error("[Donna Chat] Usage log error:", logErr);
+    }
 
     return NextResponse.json({ reply });
   } catch (error) {

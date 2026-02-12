@@ -74,7 +74,13 @@ export default async function UserMonitoringPage() {
   sevenDaysAgo.setDate(sevenDaysAgo.getDate() - 7);
 
   const activeUsers = usersWithStats.filter(
-    (u) => u.last_sign_in_at && new Date(u.last_sign_in_at) > sevenDaysAgo
+    (u) => {
+      if (!u.lastEntryDate) return false;
+      const daysSinceEntry = Math.floor(
+        (Date.now() - new Date(u.lastEntryDate).getTime()) / (1000 * 60 * 60 * 24)
+      );
+      return daysSinceEntry < 7;
+    }
   ).length;
 
   const totalEntries = Object.values(entryCounts).reduce(
@@ -123,7 +129,7 @@ export default async function UserMonitoringPage() {
             </div>
             <div>
               <div className="text-[10px] md:text-sm text-white/60">
-                Active (7d)
+                Active Users
               </div>
               <div className="text-xl md:text-3xl font-bold text-white">
                 {activeUsers}
@@ -174,18 +180,18 @@ export default async function UserMonitoringPage() {
             </thead>
             <tbody>
               {usersWithStats.map((user) => {
-                const daysSinceLogin = user.last_sign_in_at
+                const daysSinceEntry = user.lastEntryDate
                   ? Math.floor(
                       (Date.now() -
-                        new Date(user.last_sign_in_at).getTime()) /
+                        new Date(user.lastEntryDate).getTime()) /
                         (1000 * 60 * 60 * 24)
                     )
                   : null;
 
                 const isActive =
-                  daysSinceLogin !== null && daysSinceLogin < 7;
+                  daysSinceEntry !== null && daysSinceEntry < 7;
                 const isInactive =
-                  daysSinceLogin !== null && daysSinceLogin > 30;
+                  daysSinceEntry === null || daysSinceEntry > 30;
 
                 return (
                   <tr
@@ -286,14 +292,14 @@ export default async function UserMonitoringPage() {
       {/* Mobile Cards */}
       <div className="md:hidden space-y-3">
         {usersWithStats.map((user) => {
-          const daysSinceLogin = user.last_sign_in_at
+          const daysSinceEntry = user.lastEntryDate
             ? Math.floor(
-                (Date.now() - new Date(user.last_sign_in_at).getTime()) /
+                (Date.now() - new Date(user.lastEntryDate).getTime()) /
                   (1000 * 60 * 60 * 24)
               )
             : null;
-          const isActive = daysSinceLogin !== null && daysSinceLogin < 7;
-          const isInactive = daysSinceLogin !== null && daysSinceLogin > 30;
+          const isActive = daysSinceEntry !== null && daysSinceEntry < 7;
+          const isInactive = daysSinceEntry === null || daysSinceEntry > 30;
 
           return (
             <div
@@ -359,22 +365,22 @@ export default async function UserMonitoringPage() {
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-green-500"></div>
             <span className="text-white/70">
-              <strong className="text-white">Active:</strong> Logged in within 7
-              days
+              <strong className="text-white">Active:</strong> Made an entry
+              within 7 days
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-yellow-500"></div>
             <span className="text-white/70">
-              <strong className="text-white">Moderate:</strong> 7-30 days since
-              login
+              <strong className="text-white">Moderate:</strong> Last entry 7-30
+              days ago
             </span>
           </div>
           <div className="flex items-center gap-2">
             <div className="w-3 h-3 rounded bg-red-500"></div>
             <span className="text-white/70">
-              <strong className="text-white">Inactive:</strong> Over 30 days
-              since login
+              <strong className="text-white">Inactive:</strong> No entry for 30+
+              days
             </span>
           </div>
         </div>
