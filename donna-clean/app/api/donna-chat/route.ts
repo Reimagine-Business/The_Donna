@@ -3,20 +3,17 @@ import Anthropic from "@anthropic-ai/sdk";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
-import { getEntries } from "@/app/entries/actions";
 import {
-  calculateCashBalance,
-  getMonthlyComparison,
-  getTotalCashIn,
-  getTotalCashOut,
-} from "@/lib/analytics-new";
-import {
-  getProfitMetrics,
-  getRecommendations,
-} from "@/lib/profit-calculations-new";
-import { buildDonnaChatPrompt, buildBusinessBioContext, cleanDonnaResponse } from "@/lib/donna-personality";
+  buildDonnaChatPromptV2,
+  buildBusinessBioContext,
+  cleanDonnaResponse,
+} from "@/lib/donna-personality";
+import { buildChatFinancialContext } from "@/lib/financial-summary";
 
 export const dynamic = "force-dynamic";
+
+const DAILY_LIMIT = 10;
+const MONTHLY_LIMIT = 100;
 
 interface ChatMessage {
   role: "user" | "assistant";
@@ -46,157 +43,101 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    // Fetch all business data
-    const { entries } = await getEntries();
+    // ─────────────────────────────────────────────
+    // RATE LIMIT CHECK
+    // ─────────────────────────────────────────────
+    const today = new Date().toISOString().split("T")[0];
+    const monthYear = today.substring(0, 7);
 
-    const { data: reminders } = await supabase
-      .from("reminders")
-      .select("*")
+    // Get today's usage
+    const { data: todayUsage } = await supabase
+      .from("chat_usage")
+      .select("daily_count")
       .eq("user_id", user.id)
-      .eq("status", "pending")
-      .order("due_date", { ascending: true });
-
-    const { data: profile } = await supabase
-      .from("profiles")
-      .select("business_name, username")
-      .eq("user_id", user.id)
+      .eq("date", today)
       .maybeSingle();
 
-    const { data: parties } = await supabase
-      .from("parties")
-      .select("id, name, party_type, opening_balance")
+    // Get monthly total (sum all days this month)
+    const { data: monthUsage } = await supabase
+      .from("chat_usage")
+      .select("daily_count")
       .eq("user_id", user.id)
-      .order("name");
+      .like("date", `${monthYear}%`);
 
-    // Fetch business profile for personalized context
+    const dailyCount = todayUsage?.daily_count || 0;
+    const monthlyCount =
+      monthUsage?.reduce(
+        (sum: number, row: { daily_count: number }) =>
+          sum + (row.daily_count || 0),
+        0
+      ) || 0;
+
+    // Check limits
+    if (dailyCount >= DAILY_LIMIT) {
+      return NextResponse.json(
+        {
+          reply: `You've used all ${DAILY_LIMIT} chats for today. Come back tomorrow — I'll be right here!`,
+          usage: {
+            dailyCount,
+            monthlyCount,
+            dailyLimit: DAILY_LIMIT,
+            monthlyLimit: MONTHLY_LIMIT,
+            dailyRemaining: 0,
+            monthlyRemaining: Math.max(0, MONTHLY_LIMIT - monthlyCount),
+          },
+        },
+        { status: 429 }
+      );
+    }
+
+    if (monthlyCount >= MONTHLY_LIMIT) {
+      return NextResponse.json(
+        {
+          reply: `You've used all ${MONTHLY_LIMIT} chats this month. Limit resets on the 1st. Your entries and data are all safe!`,
+          usage: {
+            dailyCount,
+            monthlyCount,
+            dailyLimit: DAILY_LIMIT,
+            monthlyLimit: MONTHLY_LIMIT,
+            dailyRemaining: 0,
+            monthlyRemaining: 0,
+          },
+        },
+        { status: 429 }
+      );
+    }
+
+    // ─────────────────────────────────────────────
+    // BUILD CONTEXT
+    // ─────────────────────────────────────────────
+
+    // Get business bio
     const { data: businessProfile } = await supabase
       .from("business_profiles")
       .select("business_context")
       .eq("user_id", user.id)
       .maybeSingle();
-    const bCtx = businessProfile?.business_context || {};
 
-    // Compute metrics
-    const cashBalance = calculateCashBalance(entries);
-    const totalCashIn = getTotalCashIn(entries);
-    const totalCashOut = getTotalCashOut(entries);
-    const monthly = getMonthlyComparison(entries);
-    const profitMetrics = getProfitMetrics(entries);
-    const recommendations = getRecommendations(entries);
-
-    const today = new Date().toISOString().split("T")[0];
-    const weekAgo = new Date(Date.now() - 7 * 86400000)
-      .toISOString()
-      .split("T")[0];
-
-    const overdueReminders = (reminders || []).filter(
-      (r: { status: string; due_date: string }) =>
-        r.status === "pending" && r.due_date < today
-    );
-    const upcomingReminders = (reminders || []).filter(
-      (r: { status: string; due_date: string }) => {
-        const oneWeek = new Date(Date.now() + 7 * 86400000)
-          .toISOString()
-          .split("T")[0];
-        return r.status === "pending" && r.due_date >= today && r.due_date <= oneWeek;
-      }
+    const bioContext = buildBusinessBioContext(
+      businessProfile?.business_context || {}
     );
 
-    // Pending collections and bills
-    const pendingCollections = entries
-      .filter(
-        (e) =>
-          e.entry_type === "Credit" && e.category === "Sales" && !e.settled
-      )
-      .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
-    const pendingBills = entries
-      .filter(
-        (e) =>
-          e.entry_type === "Credit" &&
-          ["COGS", "Opex"].includes(e.category) &&
-          !e.settled
-      )
-      .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
-
-    // Weekly cash in
-    const cashInThisWeek = entries
-      .filter(
-        (e) =>
-          e.entry_type === "Cash IN" &&
-          e.entry_date >= weekAgo &&
-          e.entry_date <= today
-      )
-      .reduce((sum, e) => sum + (e.amount || 0), 0);
-
-    // Recent entries summary
-    const recentEntries = entries.slice(0, 10).map((e) => ({
-      type: e.entry_type,
-      category: e.category,
-      amount: e.amount,
-      date: e.entry_date,
-      party: e.party?.name || "No party",
-      notes: e.notes || "",
-    }));
-
-    // Parties summary
-    const partiesSummary = (parties || []).map(
-      (p: { name: string; party_type: string; opening_balance: number }) => ({
-        name: p.name,
-        type: p.party_type,
-        openingBalance: p.opening_balance,
-      })
+    // Get compact financial context (pre-calculated summaries)
+    const financialContext = await buildChatFinancialContext(
+      supabase,
+      user.id
     );
 
-    const fmt = (n: number) =>
-      `₹${n.toLocaleString("en-IN", { maximumFractionDigits: 0 })}`;
+    // Build compact prompt (~800 tokens vs ~3,500 before)
+    const fullPrompt = buildDonnaChatPromptV2(
+      financialContext,
+      message,
+      bioContext
+    );
 
-    // Build context for Claude
-    const bioContext = buildBusinessBioContext(bCtx);
-    const businessContext = `
-Business: ${profile?.business_name || "Small Business"}
-Owner: ${profile?.username || "Business Owner"}
-${bioContext}
-
-=== CASH PULSE (Cash-basis) ===
-Cash Balance: ${fmt(cashBalance)}
-Total Cash IN (all-time): ${fmt(totalCashIn)}
-Total Cash OUT (all-time): ${fmt(totalCashOut)}
-Cash IN this week: ${fmt(cashInThisWeek)}
-
-=== MONTHLY COMPARISON ===
-This Month - Cash IN: ${fmt(monthly.currentMonth.cashIn)}, Cash OUT: ${fmt(monthly.currentMonth.cashOut)}, Balance: ${fmt(monthly.currentMonth.balance)}
-Last Month - Cash IN: ${fmt(monthly.lastMonth.cashIn)}, Cash OUT: ${fmt(monthly.lastMonth.cashOut)}, Balance: ${fmt(monthly.lastMonth.balance)}
-Change: Cash IN ${monthly.percentChange.cashIn > 0 ? "+" : ""}${monthly.percentChange.cashIn.toFixed(1)}%, Cash OUT ${monthly.percentChange.cashOut > 0 ? "+" : ""}${monthly.percentChange.cashOut.toFixed(1)}%
-
-=== PROFIT LENS (Accrual-basis) ===
-Revenue: ${fmt(profitMetrics.revenue)}
-COGS: ${fmt(profitMetrics.cogs)}
-Gross Profit: ${fmt(profitMetrics.grossProfit)}
-Operating Expenses: ${fmt(profitMetrics.operatingExpenses)}
-Net Profit: ${fmt(profitMetrics.netProfit)}
-Profit Margin: ${profitMetrics.profitMargin.toFixed(1)}%
-
-=== RECEIVABLES & PAYABLES ===
-Pending Collections (money owed to you): ${fmt(pendingCollections)}
-Pending Bills (you owe): ${fmt(pendingBills)}
-
-=== REMINDERS ===
-Overdue: ${overdueReminders.length}${overdueReminders.length > 0 ? ` (${overdueReminders.map((r: { title: string }) => r.title).join(", ")})` : ""}
-Upcoming this week: ${upcomingReminders.length}${upcomingReminders.length > 0 ? ` (${upcomingReminders.map((r: { title: string }) => r.title).join(", ")})` : ""}
-Total pending: ${(reminders || []).length}
-
-=== PARTIES ===
-Total: ${partiesSummary.length}
-${partiesSummary.length > 0 ? partiesSummary.map((p: { name: string; type: string }) => `- ${p.name} (${p.type})`).join("\n") : "No parties yet"}
-
-=== RECENT ENTRIES (last 10) ===
-${recentEntries.length > 0 ? recentEntries.map((e) => `- ${e.date}: ${e.type} | ${e.category} | ${fmt(e.amount)} | ${e.party}${e.notes ? ` | ${e.notes}` : ""}`).join("\n") : "No entries yet"}
-
-=== SYSTEM RECOMMENDATIONS ===
-${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations at this time."}
-`.trim();
-
-    // Build conversation messages
+    // ─────────────────────────────────────────────
+    // CALL CLAUDE
+    // ─────────────────────────────────────────────
     const apiKey = process.env.ANTHROPIC_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
@@ -207,10 +148,8 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
 
     const client = new Anthropic({ apiKey });
 
-    // Convert history + new message into Claude format
+    // Build conversation messages (keep history for context)
     const conversationMessages: Anthropic.MessageParam[] = [];
-
-    // Add conversation history (limit to last 10 exchanges)
     const recentHistory = history.slice(-20);
     for (const msg of recentHistory) {
       conversationMessages.push({
@@ -218,39 +157,60 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
         content: msg.content,
       });
     }
-
-    // Add the new user message
     conversationMessages.push({
       role: "user",
       content: message,
     });
 
-    // Use the dedicated chat prompt with 5-part structure
-    const fullPrompt = buildDonnaChatPrompt(businessContext, message);
-
     const response = await client.messages.create({
       model: "claude-sonnet-4-5-20250929",
-      max_tokens: 500,
+      max_tokens: 400,
       temperature: 0.7,
       system: fullPrompt,
       messages: conversationMessages,
     });
 
     const textBlock = response.content.find((b) => b.type === "text");
-    let reply = textBlock ? textBlock.text.trim() : "Sorry, I couldn't generate a response. Please try again.";
+    let reply = textBlock
+      ? textBlock.text.trim()
+      : "Sorry, I couldn't generate a response. Please try again.";
 
-    // Clean with shared safety net (strips code, fixes numbers, banned words)
+    // Clean with shared safety net
     reply = cleanDonnaResponse(reply)
-      .replace(/\*\*(.*?)\*\*/g, "$1")   // **bold** → bold
-      .replace(/\*(.*?)\*/g, "$1")         // *italic* → italic
-      .replace(/^#{1,6}\s+/gm, "")        // ## headers → plain text
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/^#{1,6}\s+/gm, "")
       .trim();
 
     if (!reply || reply.length < 10) {
-      reply = "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!";
+      reply =
+        "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!";
     }
 
-    // Log AI usage for cost tracking
+    // ─────────────────────────────────────────────
+    // UPDATE USAGE COUNT
+    // ─────────────────────────────────────────────
+    if (todayUsage) {
+      await supabase
+        .from("chat_usage")
+        .update({
+          daily_count: dailyCount + 1,
+          updated_at: new Date().toISOString(),
+        })
+        .eq("user_id", user.id)
+        .eq("date", today);
+    } else {
+      await supabase.from("chat_usage").insert({
+        user_id: user.id,
+        date: today,
+        month_year: monthYear,
+        daily_count: 1,
+      });
+    }
+
+    // ─────────────────────────────────────────────
+    // LOG USAGE FOR ADMIN
+    // ─────────────────────────────────────────────
     try {
       const adminClient = createClient(
         process.env.NEXT_PUBLIC_SUPABASE_URL!,
@@ -271,15 +231,74 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
         created_at: new Date().toISOString(),
       });
     } catch (logErr) {
-      // Don't fail the response if logging fails
       console.error("[Donna Chat] Usage log error:", logErr);
     }
 
-    return NextResponse.json({ reply });
+    return NextResponse.json({
+      reply,
+      usage: {
+        dailyCount: dailyCount + 1,
+        monthlyCount: monthlyCount + 1,
+        dailyLimit: DAILY_LIMIT,
+        monthlyLimit: MONTHLY_LIMIT,
+        dailyRemaining: DAILY_LIMIT - (dailyCount + 1),
+        monthlyRemaining: MONTHLY_LIMIT - (monthlyCount + 1),
+      },
+    });
   } catch (error) {
     console.error("[Donna Chat] Error:", error);
     return NextResponse.json(
       { error: "Failed to generate response" },
+      { status: 500 }
+    );
+  }
+}
+
+// GET endpoint to check usage
+export async function GET() {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { user } = await getOrRefreshUser(supabase);
+    if (!user) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const today = new Date().toISOString().split("T")[0];
+    const monthYear = today.substring(0, 7);
+
+    const { data: todayUsage } = await supabase
+      .from("chat_usage")
+      .select("daily_count")
+      .eq("user_id", user.id)
+      .eq("date", today)
+      .maybeSingle();
+
+    const { data: monthUsage } = await supabase
+      .from("chat_usage")
+      .select("daily_count")
+      .eq("user_id", user.id)
+      .like("date", `${monthYear}%`);
+
+    const dailyCount = todayUsage?.daily_count || 0;
+    const monthlyCount =
+      monthUsage?.reduce(
+        (sum: number, row: { daily_count: number }) =>
+          sum + (row.daily_count || 0),
+        0
+      ) || 0;
+
+    return NextResponse.json({
+      dailyCount,
+      monthlyCount,
+      dailyLimit: DAILY_LIMIT,
+      monthlyLimit: MONTHLY_LIMIT,
+      dailyRemaining: Math.max(0, DAILY_LIMIT - dailyCount),
+      monthlyRemaining: Math.max(0, MONTHLY_LIMIT - monthlyCount),
+    });
+  } catch (error) {
+    console.error("[Donna Chat] Usage check error:", error);
+    return NextResponse.json(
+      { error: "Failed to check usage" },
       { status: 500 }
     );
   }

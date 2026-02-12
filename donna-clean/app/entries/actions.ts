@@ -340,6 +340,16 @@ export async function createEntry(input: CreateEntryInput) {
   // Generate alerts based on entry data
   await generateAlertsForEntry(supabase, user.id, sanitizedData)
 
+  // Invalidate Donna's cached insights so next home page load gets fresh insights
+  try {
+    await supabase
+      .from('profiles')
+      .update({ insights_cache_date: null })
+      .eq('user_id', user.id)
+  } catch {
+    // Non-critical, ignore
+  }
+
   revalidatePath('/entries')
   revalidatePath('/analytics/cashpulse')
   revalidatePath('/analytics/profitlens')
@@ -441,6 +451,16 @@ export async function updateEntry(id: string, input: UpdateEntryInput) {
     return { success: false, error: error.message }
   }
 
+  // Invalidate Donna's cached insights
+  try {
+    await supabase
+      .from('profiles')
+      .update({ insights_cache_date: null })
+      .eq('user_id', user.id)
+  } catch {
+    // Non-critical
+  }
+
   revalidatePath('/entries')
   revalidatePath('/analytics/cashpulse')
   revalidatePath('/analytics/profitlens')
@@ -536,6 +556,16 @@ export async function deleteEntry(id: string) {
       level: 'error',
     })
     return { success: false, error: error.message }
+  }
+
+  // Invalidate Donna's cached insights
+  try {
+    await supabase
+      .from('profiles')
+      .update({ insights_cache_date: null })
+      .eq('user_id', user.id)
+  } catch {
+    // Non-critical
   }
 
   revalidatePath('/entries')
