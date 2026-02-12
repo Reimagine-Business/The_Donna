@@ -81,12 +81,25 @@ function DonnaMessageContent({ text }: { text: string }) {
   );
 }
 
+interface ChatUsage {
+  dailyRemaining: number;
+  monthlyRemaining: number;
+  dailyLimit: number;
+  monthlyLimit: number;
+}
+
 export function DonnaChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [input, setInput] = useState("");
   const [loading, setLoading] = useState(false);
   const [imageError, setImageError] = useState(false);
+  const [usage, setUsage] = useState<ChatUsage>({
+    dailyRemaining: 10,
+    monthlyRemaining: 100,
+    dailyLimit: 10,
+    monthlyLimit: 100,
+  });
   const messagesEndRef = useRef<HTMLDivElement>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
@@ -101,6 +114,23 @@ export function DonnaChatWidget() {
       setTimeout(() => inputRef.current?.focus(), 100);
     }
   }, [isOpen]);
+
+  // Fetch usage on mount
+  useEffect(() => {
+    fetch("/api/donna-chat")
+      .then((r) => r.json())
+      .then((data) => {
+        if (data.dailyRemaining !== undefined) {
+          setUsage({
+            dailyRemaining: data.dailyRemaining,
+            monthlyRemaining: data.monthlyRemaining,
+            dailyLimit: data.dailyLimit || 10,
+            monthlyLimit: data.monthlyLimit || 100,
+          });
+        }
+      })
+      .catch(() => {});
+  }, []);
 
   async function sendMessage(text: string) {
     const trimmed = text.trim();
@@ -121,9 +151,32 @@ export function DonnaChatWidget() {
         }),
       });
 
+      const data = await res.json();
+
+      // Update usage from response
+      if (data.usage) {
+        setUsage({
+          dailyRemaining: data.usage.dailyRemaining ?? usage.dailyRemaining,
+          monthlyRemaining: data.usage.monthlyRemaining ?? usage.monthlyRemaining,
+          dailyLimit: data.usage.dailyLimit || 10,
+          monthlyLimit: data.usage.monthlyLimit || 100,
+        });
+      }
+
+      // Handle rate limit (429) — show Donna's friendly message
+      if (res.status === 429) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content: data.reply || "You've reached today's chat limit. Come back tomorrow!",
+          },
+        ]);
+        return;
+      }
+
       if (!res.ok) throw new Error("API error");
 
-      const data = await res.json();
       const assistantMessage: ChatMessage = {
         role: "assistant",
         content: data.reply || "Sorry, I couldn't process that. Please try again.",
@@ -318,6 +371,14 @@ export function DonnaChatWidget() {
                     <Send size={16} className="text-white" />
                   )}
                 </button>
+              </div>
+              <div className="flex justify-between items-center px-1 mt-1">
+                <p className="text-white/30 text-xs">
+                  {usage.dailyRemaining} of {usage.dailyLimit} chats left today
+                </p>
+                <p className="text-white/30 text-xs">
+                  {usage.monthlyRemaining} this month
+                </p>
               </div>
             </div>
           </div>
