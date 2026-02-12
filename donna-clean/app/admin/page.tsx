@@ -1,19 +1,17 @@
 import { requireAdmin } from "@/lib/admin/check-admin";
 import { createClient } from "@supabase/supabase-js";
-import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { Users, FileText, Sparkles } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
 
+  // Use service role client for ALL admin queries (bypasses RLS)
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
-
-  const supabase = await createSupabaseServerClient();
 
   // Total users
   const {
@@ -21,15 +19,15 @@ export default async function AdminDashboardPage() {
   } = await supabaseAdmin.auth.admin.listUsers();
   const totalUsers = authUsers?.length || 0;
 
-  // Total entries (all users)
-  const { count: totalEntries } = await supabase
+  // Total entries (all users) — use admin client to bypass RLS
+  const { count: totalEntries } = await supabaseAdmin
     .from("entries")
     .select("*", { count: "exact", head: true });
 
   // AI usage — count from ai_usage_logs if it exists, otherwise show 0
   let aiInsightsCount = 0;
   try {
-    const { count } = await supabase
+    const { count } = await supabaseAdmin
       .from("ai_usage_logs")
       .select("*", { count: "exact", head: true });
     aiInsightsCount = count || 0;
