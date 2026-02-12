@@ -11,7 +11,6 @@ import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getEntries } from "@/app/entries/actions";
 import { EntryListSkeleton } from "@/components/skeletons/entry-skeleton";
 import { DonnaChatWidget } from "@/components/home-v2/donna-chat-widget";
-import { ProfileSetupTrigger } from "@/components/business-profile/profile-setup-trigger";
 
 export const dynamic = "force-dynamic";
 export const revalidate = 0;
@@ -103,7 +102,6 @@ export default async function HomeV2Page() {
 
       <BottomNavV2 />
       <DonnaChatWidget />
-      <ProfileSetupTrigger />
     </main>
   );
 }

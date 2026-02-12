@@ -371,3 +371,79 @@ USER QUESTION: "${question}"
 
 Respond as Donna now:`;
 }
+
+/**
+ * Convert business bio context into an AI-readable block.
+ * Returns empty string if no bio data exists.
+ */
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+export function buildBusinessBioContext(businessContext: any): string {
+  if (!businessContext || Object.keys(businessContext).length === 0) {
+    return "";
+  }
+
+  const ctx = businessContext;
+  const lines: string[] = [];
+
+  lines.push("=== WHAT DONNA KNOWS ABOUT THIS BUSINESS ===");
+
+  if (ctx.business_type) {
+    lines.push(`Business type: ${ctx.business_type}`);
+  }
+  if (ctx.what_we_sell) {
+    lines.push(`What they sell: ${ctx.what_we_sell}`);
+  }
+  if (ctx.product_source) {
+    lines.push(`How they get products: ${ctx.product_source}`);
+    if (ctx.product_source === "I buy from suppliers") {
+      lines.push("→ Can suggest supplier negotiation for margins");
+    } else if (ctx.product_source === "I make them myself") {
+      lines.push("→ Focus on production costs and time");
+    } else if (ctx.product_source === "I mainly sell services") {
+      lines.push("→ COGS is low, focus on pricing and time");
+    }
+  }
+  if (Array.isArray(ctx.main_customers) && ctx.main_customers.length > 0) {
+    const customers = ctx.main_customers.join(", ");
+    lines.push(`Main customers: ${customers}${ctx.other_customers ? `, ${ctx.other_customers}` : ""}`);
+    if (ctx.main_customers.includes("Tourists")) {
+      lines.push("→ Mention tourist season when relevant");
+    }
+    if (ctx.main_customers.includes("Corporate clients")) {
+      lines.push("→ Can suggest B2B strategies");
+    }
+    if (ctx.main_customers.includes("Walk-in customers")) {
+      lines.push("→ Footfall and location tips are relevant");
+    }
+  } else if (typeof ctx.main_customers === "string" && ctx.main_customers) {
+    lines.push(`Main customers: ${ctx.main_customers}`);
+  }
+  if (ctx.monthly_sales_range) {
+    lines.push(`Monthly sales scale: ${ctx.monthly_sales_range}`);
+    if (ctx.monthly_sales_range.includes("Below")) {
+      lines.push("→ TONE: Simple, practical advice. Focus on basics.");
+    } else if (ctx.monthly_sales_range.includes("Above")) {
+      lines.push("→ TONE: Can be more strategic and growth-focused.");
+    } else {
+      lines.push("→ TONE: Balanced mix of stability and growth.");
+    }
+  }
+  if (ctx.extra_notes) {
+    lines.push(`Important context: ${ctx.extra_notes}`);
+    lines.push("→ Always consider this context in responses");
+  }
+  if (ctx.peak_season) {
+    lines.push(`Peak season: ${ctx.peak_season}`);
+  }
+  if (ctx.typical_monthly_costs) {
+    lines.push(`Typical monthly costs: ${ctx.typical_monthly_costs}`);
+  }
+  if (ctx.business_goals) {
+    lines.push(`Goals: ${ctx.business_goals}`);
+  }
+
+  lines.push("USE THIS CONTEXT TO PERSONALIZE EVERY RESPONSE.");
+  lines.push("===");
+
+  return lines.join("\n");
+}

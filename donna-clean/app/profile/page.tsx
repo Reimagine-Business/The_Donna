@@ -6,7 +6,8 @@ import { useRouter } from 'next/navigation'
 import { SiteHeader } from '@/components/site-header'
 import { BottomNav } from '@/components/navigation/bottom-nav'
 import { TopNavMobile } from '@/components/navigation/top-nav-mobile'
-import { User, Building2, MapPin, Mail, ImageIcon, Lock, LogOut } from 'lucide-react'
+import Link from 'next/link'
+import { User, Building2, MapPin, Mail, ImageIcon, Lock, LogOut, Sparkles, ChevronRight } from 'lucide-react'
 import { EditProfileModal } from '@/components/profile/edit-profile-modal'
 import { ChangePasswordModal } from '@/components/profile/change-password-modal'
 import { UploadLogoModal } from '@/components/profile/upload-logo-modal'
@@ -29,6 +30,7 @@ export default function ProfilePage() {
   const [editingField, setEditingField] = useState<string | null>(null)
   const [isLoggingOut, setIsLoggingOut] = useState(false)
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
+  const [hasBusinessBio, setHasBusinessBio] = useState(false)
 
   const supabase = createClient()
   const router = useRouter()
@@ -82,6 +84,19 @@ export default function ProfilePage() {
         setProfile(newProfile)
       } else {
         setProfile(data)
+      }
+      // Check if business bio exists
+      try {
+        const bioRes = await fetch('/api/business-profile')
+        if (bioRes.ok) {
+          const bioData = await bioRes.json()
+          setHasBusinessBio(
+            bioData?.profile_completed === true ||
+            (bioData?.business_context && Object.keys(bioData.business_context).length > 0)
+          )
+        }
+      } catch {
+        // Silently ignore — business_profiles table may not exist
       }
     } catch (error) {
       console.error('Error loading profile:', error)
@@ -268,6 +283,35 @@ export default function ProfilePage() {
               <LogOut className="w-5 h-5" />
               {isLoggingOut ? 'Logging out...' : 'Logout'}
             </button>
+          </div>
+
+          {/* Business Bio Button */}
+          <div className="mt-4">
+            <Link href="/profile/business-bio">
+              <button className="w-full flex items-center justify-between bg-purple-900/30 hover:bg-purple-900/50 border border-purple-500/30 hover:border-purple-500/60 rounded-2xl px-6 py-4 transition-all duration-200 group">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center">
+                    <Sparkles className="w-5 h-5 text-purple-400" />
+                  </div>
+                  <div className="text-left">
+                    <p className="text-white font-medium">Business Bio</p>
+                    <p className="text-white/50 text-xs">Help Donna know your business</p>
+                  </div>
+                </div>
+                <div className="flex items-center gap-2">
+                  {hasBusinessBio ? (
+                    <span className="text-xs bg-green-500/20 text-green-400 px-2 py-1 rounded-full">
+                      ✓ Added
+                    </span>
+                  ) : (
+                    <span className="text-xs bg-purple-500/20 text-purple-400 px-2 py-1 rounded-full">
+                      Optional
+                    </span>
+                  )}
+                  <ChevronRight className="w-4 h-4 text-white/40 group-hover:text-white/70 transition-colors" />
+                </div>
+              </button>
+            </Link>
           </div>
 
           {/* Account Info */}
