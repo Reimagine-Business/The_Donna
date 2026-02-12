@@ -1,6 +1,5 @@
 import { requireAdmin } from "@/lib/admin/check-admin";
 import { createClient } from "@supabase/supabase-js";
-import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { format, formatDistanceToNow } from "date-fns";
 import { Activity, Clock, AlertCircle } from "lucide-react";
 import Link from "next/link";
@@ -8,23 +7,20 @@ import Link from "next/link";
 export default async function UserMonitoringPage() {
   await requireAdmin();
 
-  // Admin client for auth operations (needs service role)
+  // Use service role client for ALL admin queries (bypasses RLS)
   const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.SUPABASE_SERVICE_ROLE_KEY!,
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  // Regular client for data queries
-  const supabase = await createSupabaseServerClient();
-
   // Get all users via admin API
   const {
     data: { users: authUsers },
   } = await supabaseAdmin.auth.admin.listUsers();
 
-  // Get entry counts per user
-  const { data: entries } = await supabase
+  // Get entry counts per user — use admin client to bypass RLS
+  const { data: entries } = await supabaseAdmin
     .from("entries")
     .select("user_id, created_at");
 
