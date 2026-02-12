@@ -1,15 +1,12 @@
 import { createServerClient } from "@supabase/ssr";
-import type { AuthError } from "@supabase/supabase-js";
 import { NextResponse, type NextRequest } from "next/server";
 import { hasEnvVars } from "../utils";
 
-const SESSION_MAX_AGE_SECONDS = 60 * 60 * 24; // 24 hours
-
 export async function updateSession(request: NextRequest) {
-  let response = NextResponse.next({ request });
+  let supabaseResponse = NextResponse.next({ request });
 
   if (!hasEnvVars) {
-    return response;
+    return supabaseResponse;
   }
 
   const supabase = createServerClient(
@@ -21,53 +18,41 @@ export async function updateSession(request: NextRequest) {
           return request.cookies.getAll();
         },
         setAll(cookiesToSet) {
-          // CRITICAL: Set all cookies on the SAME response object
-          // Creating a new response for each cookie would lose previous cookies!
-          cookiesToSet.forEach(({ name, value, options }) => {
-            response.cookies.set(name, value, {
-              ...options,
-              maxAge: options?.maxAge ?? SESSION_MAX_AGE_SECONDS,
-            });
-          });
+          cookiesToSet.forEach(({ name, value }) =>
+            request.cookies.set(name, value)
+          );
+          supabaseResponse = NextResponse.next({ request });
+          cookiesToSet.forEach(({ name, value, options }) =>
+            supabaseResponse.cookies.set(name, value, options)
+          );
         },
       },
     },
   );
 
-  // IMPORTANT: Use getSession() first (doesn't make API call)
-  // This checks if we have session cookies without hitting Supabase
+  // IMPORTANT: Use getUser() instead of getSession()
+  // getUser() validates the JWT against the Supabase server
+  // getSession() only reads from cookies without validation
+  // This fixes the race condition after login/logout
   const {
-    data: { session },
-  } = await supabase.auth.getSession();
+    data: { user },
+  } = await supabase.auth.getUser();
 
-  if (session) {
-    // We have a session - validate it's not expired
-    const now = Math.floor(Date.now() / 1000);
-    const expiresAt = session.expires_at ?? 0;
-    
-    // If session expires in more than 5 minutes, it's good
-    if (expiresAt > now + 300) {
-      response.headers.set("x-auth-session", "active");
-      return response;
-    }
-    
-    // Session is expiring soon (< 5 min), try to refresh
-    const { data: refreshData, error: refreshError } = await supabase.auth.refreshSession();
-    
-    if (!refreshError && refreshData.session) {
-      response.headers.set("x-auth-session", "active");
-      return response;
-    }
-    
-    // Refresh failed - session will expire, but let request continue
-    // Page will redirect to login if needed
-    response.headers.set("x-auth-session", "expiring");
-    return response;
+  // Protected routes that require authentication
+  const isProtectedRoute =
+    request.nextUrl.pathname.startsWith("/analytics") ||
+    request.nextUrl.pathname.startsWith("/home") ||
+    request.nextUrl.pathname.startsWith("/entries") ||
+    request.nextUrl.pathname.startsWith("/dashboard") ||
+    request.nextUrl.pathname.startsWith("/admin") ||
+    request.nextUrl.pathname.startsWith("/profile") ||
+    request.nextUrl.pathname.startsWith("/settlements");
+
+  if (!user && isProtectedRoute) {
+    const url = request.nextUrl.clone();
+    url.pathname = "/auth/login";
+    return NextResponse.redirect(url);
   }
 
-  // No session at all - user is not logged in
-  // DON'T try to refresh - there's nothing to refresh!
-  // Let the request continue, page will redirect to login if needed
-  response.headers.set("x-auth-session", "missing");
-  return response;
+  return supabaseResponse;
 }
