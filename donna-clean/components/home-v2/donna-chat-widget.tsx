@@ -9,6 +9,78 @@ interface ChatMessage {
   content: string;
 }
 
+/** Render Donna's structured response (paragraphs, bullets, numbered lists) */
+function DonnaMessageContent({ text }: { text: string }) {
+  const paragraphs = text.split("\n\n").filter((p) => p.trim());
+
+  return (
+    <div className="space-y-2.5">
+      {paragraphs.map((paragraph, idx) => {
+        const lines = paragraph.split("\n").filter((l) => l.trim());
+
+        // Numbered list paragraph (1. 2. 3.)
+        if (lines.some((l) => /^\d+\./.test(l.trim()))) {
+          return (
+            <div key={idx} className="space-y-1">
+              {lines.map((line, i) => {
+                const trimmed = line.trim();
+                if (/^\d+\./.test(trimmed)) {
+                  const num = trimmed.match(/^(\d+)\./)?.[1];
+                  const rest = trimmed.replace(/^\d+\.\s*/, "");
+                  return (
+                    <p key={i} className="flex gap-2">
+                      <span className="text-purple-400 font-medium min-w-[16px]">
+                        {num}.
+                      </span>
+                      <span>{rest}</span>
+                    </p>
+                  );
+                }
+                return (
+                  <p key={i} className="text-white/60 text-xs font-medium mb-0.5">
+                    {trimmed}
+                  </p>
+                );
+              })}
+            </div>
+          );
+        }
+
+        // Bullet point paragraph (- item)
+        if (lines.some((l) => /^[-•]/.test(l.trim()))) {
+          return (
+            <div key={idx} className="space-y-1">
+              {lines.map((line, i) => {
+                const trimmed = line.trim();
+                if (/^[-•]/.test(trimmed)) {
+                  return (
+                    <p key={i} className="flex gap-2">
+                      <span className="text-purple-400 mt-0.5">•</span>
+                      <span>{trimmed.replace(/^[-•]\s*/, "")}</span>
+                    </p>
+                  );
+                }
+                return (
+                  <p key={i} className="text-white/60 text-xs font-medium mb-0.5">
+                    {trimmed}
+                  </p>
+                );
+              })}
+            </div>
+          );
+        }
+
+        // Regular paragraph
+        return (
+          <p key={idx} className="leading-relaxed">
+            {paragraph.trim()}
+          </p>
+        );
+      })}
+    </div>
+  );
+}
+
 export function DonnaChatWidget() {
   const [isOpen, setIsOpen] = useState(false);
   const [messages, setMessages] = useState<ChatMessage[]>([]);
@@ -191,7 +263,11 @@ export function DonnaChatWidget() {
                         : "bg-white/5 text-white/90 border border-white/10"
                     }`}
                   >
-                    {msg.content}
+                    {msg.role === "assistant" ? (
+                      <DonnaMessageContent text={msg.content} />
+                    ) : (
+                      msg.content
+                    )}
                   </div>
                 </div>
               ))}

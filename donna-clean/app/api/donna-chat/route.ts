@@ -14,7 +14,7 @@ import {
   getProfitMetrics,
   getRecommendations,
 } from "@/lib/profit-calculations-new";
-import { buildDonnaPrompt } from "@/lib/donna-personality";
+import { buildDonnaChatPrompt } from "@/lib/donna-personality";
 
 export const dynamic = "force-dynamic";
 
@@ -228,10 +228,13 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
       content: message,
     });
 
+    // Use the dedicated chat prompt with 3-part structure
+    const fullPrompt = buildDonnaChatPrompt(businessContext, message);
+
     const response = await client.messages.create({
       model: "claude-sonnet-4-5-20250929",
-      max_tokens: 500,
-      system: buildDonnaPrompt(businessContext),
+      max_tokens: 400,
+      system: fullPrompt,
       messages: conversationMessages,
     });
 
@@ -245,8 +248,22 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
       .replace(/^#{1,6}\s+/gm, "")        // ## headers → plain text
       .replace(/```[\s\S]*?```/g, "")      // code blocks → remove
       .replace(/`([^`]+)`/g, "$1")         // inline code → plain
-      .replace(/^[-*]\s+/gm, "")           // bullet points → plain
       .trim();
+
+    // Safety net: replace banned words
+    reply = reply
+      .replace(/urgent/gi, "worth looking at")
+      .replace(/you need to/gi, "you could")
+      .replace(/you must/gi, "one option is")
+      .replace(/crushing/gi, "higher than")
+      .replace(/₹-(\d)/g, "short by ₹$1")
+      .replace(/-(\d+\.?\d*)%/g, "negative")
+      .replace(/(\d+\.\d+)%/g, (_match, p1) => Math.round(parseFloat(p1)) + "%")
+      .trim();
+
+    if (!reply || reply.length < 10) {
+      reply = "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!";
+    }
 
     // Log AI usage for cost tracking
     try {
