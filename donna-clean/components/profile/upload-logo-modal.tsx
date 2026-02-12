@@ -106,7 +106,8 @@ export function UploadLogoModal({ currentLogoUrl, userId, onSuccess, onClose }: 
     } catch (error: unknown) {
       clearInterval(progressInterval)
       setUploadProgress(0)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      const err = error as { message?: string }
+      const errorMessage = err?.message || 'Unknown error'
       setMessage(`❌ Upload failed: ${errorMessage}`)
     } finally {
       setUploading(false)
