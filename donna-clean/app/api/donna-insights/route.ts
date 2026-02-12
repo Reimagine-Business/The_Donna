@@ -6,7 +6,7 @@ import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { getEntries } from "@/app/entries/actions";
 import { calculateCashBalance, getMonthlyComparison, getTotalCashIn, getTotalCashOut } from "@/lib/analytics-new";
 import { getProfitMetrics, getRecommendations } from "@/lib/profit-calculations-new";
-import { buildDonnaPrompt, buildBusinessBioContext } from "@/lib/donna-personality";
+import { buildDonnaPrompt, buildBusinessBioContext, cleanDonnaResponse } from "@/lib/donna-personality";
 
 export const dynamic = "force-dynamic";
 
@@ -127,7 +127,8 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
     const client = new Anthropic({ apiKey });
     const response = await client.messages.create({
       model: "claude-sonnet-4-5-20250929",
-      max_tokens: 300,
+      max_tokens: 250,
+      temperature: 0.7,
       system: buildDonnaPrompt(insightsContext),
       messages: [
         {
@@ -161,40 +162,15 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
       console.error("[Donna Insights] Usage log error:", logErr);
     }
 
-    // Parse the AI response
+    // Parse the AI response and clean it
     const textBlock = response.content.find((b) => b.type === "text");
     let insights = textBlock ? textBlock.text.trim() : "";
 
-    // Strip code blocks and markdown
-    insights = insights
-      .replace(/```[\s\S]*?```/g, "")
-      .replace(/`[^`]*`/g, "")
+    // Clean with shared safety net (strips code, fixes numbers, banned words)
+    insights = cleanDonnaResponse(insights)
       .replace(/\*\*/g, "")
       .replace(/^#+\s*/gm, "")
       .trim();
-
-    // Safety net: replace banned phrases automatically
-    const bannedReplacements: [RegExp, string][] = [
-      [/urgent/gi, "worth looking at"],
-      [/critical/gi, "worth checking"],
-      [/crushing/gi, "higher than"],
-      [/injection needed/gi, "adding cash would help"],
-      [/immediately/gi, "soon"],
-      [/cost cutting/gi, "reviewing expenses"],
-      [/alarming/gi, "worth checking"],
-      [/dangerous/gi, "worth watching"],
-      [/you'?re failing/gi, "things are tight"],
-      [/negative variance/gi, "lower than last month"],
-      [/₹-(\d)/g, "short by ₹$1"],
-      [/-(\d+\.?\d*)%/g, "negative"],
-    ];
-
-    bannedReplacements.forEach(([pattern, replacement]) => {
-      insights = insights.replace(pattern, replacement);
-    });
-
-    // Round decimal percentages (e.g. 151.8% → 152%)
-    insights = insights.replace(/(\d+\.\d+)%/g, (_match, p1) => Math.round(parseFloat(p1)) + "%");
 
     // Parse bullets from plain text (one per line, starting with - or •)
     let bullets = insights
