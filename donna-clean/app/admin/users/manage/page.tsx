@@ -19,11 +19,29 @@ export default async function UserManagementPage() {
     data: { users: authUsers },
   } = await supabaseAdmin.auth.admin.listUsers();
 
-  const userList = (authUsers || []).map((u) => ({
-    id: u.id,
-    email: u.email || "No email",
-    banned_until: (u as unknown as { banned_until?: string }).banned_until || null,
-  }));
+  // Fetch all profiles (for username)
+  const { data: profiles } = await supabaseAdmin
+    .from("profiles")
+    .select("id, username");
+
+  const profileMap = new Map(
+    (profiles || []).map((p) => [p.id, p])
+  );
+
+  const userList = (authUsers || []).map((u) => {
+    const profile = profileMap.get(u.id);
+    return {
+      id: u.id,
+      email: u.email || "No email",
+      username:
+        profile?.username ||
+        u.user_metadata?.username ||
+        u.email?.split("@")[0] ||
+        "Unknown",
+      banned_until:
+        (u as unknown as { banned_until?: string }).banned_until || null,
+    };
+  });
 
   return (
     <div className="space-y-8">
