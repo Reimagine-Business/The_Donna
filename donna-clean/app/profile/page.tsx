@@ -46,14 +46,43 @@ export default function ProfilePage() {
       }
       setUser(user)
 
+      // Use maybeSingle to avoid throwing when row doesn't exist
       const { data, error } = await supabase
         .from('profiles')
         .select('*')
         .eq('user_id', user.id)
-        .single()
+        .maybeSingle()
 
-      if (error) throw error
-      setProfile(data)
+      if (error) {
+        console.error('Profile fetch error:', error.message, error.code, error.hint)
+        // Don't throw — show empty profile instead of breaking
+        setProfile(null)
+        return
+      }
+
+      if (!data) {
+        // Profile row doesn't exist — create one
+        const { data: newProfile, error: insertError } = await supabase
+          .from('profiles')
+          .insert({
+            user_id: user.id,
+            email: user.email || '',
+            username: user.user_metadata?.username || user.email?.split('@')[0] || '',
+            business_name: '',
+            address: '',
+          })
+          .select()
+          .single()
+
+        if (insertError) {
+          console.error('Profile auto-create error:', insertError.message)
+          setProfile(null)
+          return
+        }
+        setProfile(newProfile)
+      } else {
+        setProfile(data)
+      }
     } catch (error) {
       console.error('Error loading profile:', error)
     } finally {
@@ -88,7 +117,9 @@ export default function ProfilePage() {
       setEditingField(null)
     } catch (error: unknown) {
       console.error('❌ Failed to update profile:', error)
-      const errorMessage = error instanceof Error ? error.message : 'Unknown error'
+      // Handle both Error instances and Supabase PostgrestError objects
+      const err = error as { message?: string; code?: string }
+      const errorMessage = err?.message || 'Unknown error'
       showError(`Failed to update profile: ${errorMessage}`)
     }
   }

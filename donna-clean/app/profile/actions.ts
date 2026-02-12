@@ -78,7 +78,7 @@ export async function deleteAccount(confirmationText: string) {
 
     // 7. Delete profile (if you have a profiles table)
     try {
-      await supabase.from("profiles").delete().eq("id", user.id);
+      await supabase.from("profiles").delete().eq("user_id", user.id);
     } catch (e) {
       // Table might not exist, continue
       // Table might not exist, continue
