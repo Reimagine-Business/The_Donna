@@ -1,5 +1,6 @@
 import { NextResponse } from "next/server";
 import Anthropic from "@anthropic-ai/sdk";
+import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { getEntries } from "@/app/entries/actions";
@@ -151,6 +152,30 @@ Respond with ONLY a JSON array of 3 strings, no markdown, no explanation. Exampl
         },
       ],
     });
+
+    // Log AI usage for cost tracking
+    try {
+      const adminClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+      const inputTokens = response.usage?.input_tokens || 0;
+      const outputTokens = response.usage?.output_tokens || 0;
+      await adminClient.from("ai_usage_logs").insert({
+        user_id: user.id,
+        feature: "insights",
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
+        cost_usd:
+          (inputTokens / 1_000_000) * 3 + (outputTokens / 1_000_000) * 15,
+        model: "claude-sonnet-4-5-20250929",
+        created_at: new Date().toISOString(),
+      });
+    } catch (logErr) {
+      console.error("[Donna Insights] Usage log error:", logErr);
+    }
 
     // Parse the AI response
     const textBlock = response.content.find((b) => b.type === "text");
