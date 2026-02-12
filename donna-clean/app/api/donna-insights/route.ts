@@ -177,22 +177,37 @@ Respond with ONLY a JSON array of 3 strings, no markdown, no explanation. Exampl
       console.error("[Donna Insights] Usage log error:", logErr);
     }
 
-    // Parse the AI response
+    // Parse the AI response — strip markdown code blocks if present
     const textBlock = response.content.find((b) => b.type === "text");
-    const text = textBlock ? textBlock.text.trim() : "[]";
+    let rawText = textBlock ? textBlock.text.trim() : "[]";
+
+    // Strip markdown code fences (```json ... ``` or ``` ... ```)
+    rawText = rawText.replace(/^```(?:json)?\s*\n?/i, "").replace(/\n?```\s*$/i, "");
+    rawText = rawText.trim();
 
     let bullets: string[];
     try {
-      bullets = JSON.parse(text);
+      bullets = JSON.parse(rawText);
       if (!Array.isArray(bullets)) throw new Error("Not an array");
-    } catch {
-      // Fallback: try to extract strings from the response
-      bullets = text
-        .replace(/[\[\]"]/g, "")
-        .split(",")
-        .map((s: string) => s.trim())
+      // Strip any leftover markdown formatting from each bullet
+      bullets = bullets
+        .map((b) => String(b).replace(/\*\*/g, "").replace(/^#+\s*/, "").trim())
         .filter(Boolean)
         .slice(0, 3);
+    } catch {
+      // Fallback: try to extract JSON array from anywhere in the response
+      const jsonMatch = rawText.match(/\[[\s\S]*\]/);
+      if (jsonMatch) {
+        try {
+          bullets = JSON.parse(jsonMatch[0]);
+          if (!Array.isArray(bullets)) throw new Error("Not an array");
+          bullets = bullets.map((b) => String(b).trim()).filter(Boolean).slice(0, 3);
+        } catch {
+          bullets = [];
+        }
+      } else {
+        bullets = [];
+      }
     }
 
     return NextResponse.json({

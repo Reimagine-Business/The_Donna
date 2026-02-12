@@ -236,7 +236,17 @@ ${recommendations.length > 0 ? recommendations.join("\n") : "No recommendations 
     });
 
     const textBlock = response.content.find((b) => b.type === "text");
-    const reply = textBlock ? textBlock.text.trim() : "Sorry, I couldn't generate a response. Please try again.";
+    let reply = textBlock ? textBlock.text.trim() : "Sorry, I couldn't generate a response. Please try again.";
+
+    // Strip any markdown formatting that slipped through
+    reply = reply
+      .replace(/\*\*(.*?)\*\*/g, "$1")   // **bold** → bold
+      .replace(/\*(.*?)\*/g, "$1")         // *italic* → italic
+      .replace(/^#{1,6}\s+/gm, "")        // ## headers → plain text
+      .replace(/```[\s\S]*?```/g, "")      // code blocks → remove
+      .replace(/`([^`]+)`/g, "$1")         // inline code → plain
+      .replace(/^[-*]\s+/gm, "")           // bullet points → plain
+      .trim();
 
     // Log AI usage for cost tracking
     try {
