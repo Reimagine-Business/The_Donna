@@ -1,7 +1,6 @@
 "use client";
 
 import { useMemo, useState, useEffect } from "react";
-import Link from "next/link";
 import type { Entry } from "@/lib/entries";
 
 interface Reminder {
@@ -22,6 +21,7 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
   const [aiBullets, setAiBullets] = useState<string[] | null>(null);
   const [aiAdditional, setAiAdditional] = useState(0);
   const [loading, setLoading] = useState(true);
+  const [expanded, setExpanded] = useState(false);
 
   // Fetch AI-powered insights
   useEffect(() => {
@@ -46,6 +46,38 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
     fetchAiInsights();
     return () => { cancelled = true; };
   }, []);
+
+  // Build extra reminder bullets for inline expand
+  const extraBullets = useMemo(() => {
+    const todayStr = new Date().toISOString().split("T")[0];
+    const oneWeekFromNow = new Date(Date.now() + 7 * 86400000)
+      .toISOString()
+      .split("T")[0];
+    const extras: string[] = [];
+
+    const overdueReminders = reminders.filter(
+      (r) => r.status === "pending" && r.due_date < todayStr
+    );
+    const upcomingReminders = reminders.filter(
+      (r) =>
+        r.status === "pending" &&
+        r.due_date >= todayStr &&
+        r.due_date <= oneWeekFromNow
+    );
+
+    if (overdueReminders.length > 0) {
+      extras.push(
+        `${overdueReminders.length} overdue reminder${overdueReminders.length !== 1 ? "s" : ""}: ${overdueReminders.map((r) => r.title).join(", ")}`
+      );
+    }
+    if (upcomingReminders.length > 0) {
+      extras.push(
+        `${upcomingReminders.length} upcoming this week: ${upcomingReminders.map((r) => r.title).join(", ")}`
+      );
+    }
+
+    return extras;
+  }, [reminders]);
 
   // Fallback: basic rule-based insights (used if AI is unavailable)
   const fallback = useMemo(() => {
@@ -81,7 +113,7 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount ?? 0), 0);
 
     if (pendingTotal > 0) {
-      bullets.push(`Check pending bills of ${fmt(pendingTotal)} 📅`);
+      bullets.push(`Check pending bills of ${fmt(pendingTotal)}`);
     }
 
     const salesRevenue = entries
@@ -133,7 +165,7 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
   if (bullets.length === 0) {
     return (
       <p className="text-white/90 text-sm">
-        Everything is looking good! I'll let you know if anything needs your attention.
+        Everything is looking good! I&apos;ll let you know if anything needs your attention.
       </p>
     );
   }
@@ -142,21 +174,39 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
     <div className="space-y-3">
       {bullets.map((bullet, i) => (
         <div key={i} className="flex items-start gap-2">
-          <span className="text-white mt-0.5 text-lg leading-none">•</span>
+          <span className="text-white mt-0.5 text-lg leading-none">&bull;</span>
           <p className="text-white text-sm leading-relaxed">
             {bullet}
-            {/* Show "+N more update" on the last bullet */}
-            {i === bullets.length - 1 && additionalCount > 0 && (
-              <Link
-                href="/alerts"
+            {/* Show "+N more updates" button on the last bullet — expands inline */}
+            {i === bullets.length - 1 && additionalCount > 0 && !expanded && (
+              <button
+                onClick={() => setExpanded(true)}
                 className="ml-2 text-[#c084fc] hover:text-white transition-colors text-xs font-medium"
               >
-                +{additionalCount} more update{additionalCount !== 1 ? "s" : ""} →
-              </Link>
+                +{additionalCount} more update{additionalCount !== 1 ? "s" : ""} &darr;
+              </button>
             )}
           </p>
         </div>
       ))}
+
+      {/* Expanded reminder bullets */}
+      {expanded && extraBullets.length > 0 && (
+        <div className="space-y-3 pt-1 border-t border-white/10 mt-2">
+          {extraBullets.map((bullet, i) => (
+            <div key={`extra-${i}`} className="flex items-start gap-2">
+              <span className="text-[#c084fc] mt-0.5 text-lg leading-none">&bull;</span>
+              <p className="text-white/80 text-sm leading-relaxed">{bullet}</p>
+            </div>
+          ))}
+          <button
+            onClick={() => setExpanded(false)}
+            className="text-[#c084fc] hover:text-white transition-colors text-xs font-medium ml-5"
+          >
+            Show less &uarr;
+          </button>
+        </div>
+      )}
     </div>
   );
 }
