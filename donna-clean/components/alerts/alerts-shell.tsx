@@ -24,6 +24,7 @@ interface Reminder {
 interface AlertsShellProps {
   initialReminders: Reminder[];
   onAddClick?: () => void;
+  onDataChange?: () => void;
 }
 
 const formatDate = (dateString: string): string => {
@@ -67,7 +68,7 @@ const getCategoryIcon = (category: string) => {
   }
 };
 
-export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) {
+export function AlertsShell({ initialReminders, onAddClick, onDataChange }: AlertsShellProps) {
   const [activeFilter, setActiveFilter] = useState<FilterOption>("due_soon");
   const [isPending, startTransition] = useTransition();
   const [editingReminder, setEditingReminder] = useState<Reminder | null>(null);
@@ -136,6 +137,8 @@ export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) 
       if (result?.error) {
         // Revert on failure
         setReminders(initialReminders);
+      } else {
+        onDataChange?.();
       }
     });
   };
@@ -153,7 +156,7 @@ export function AlertsShell({ initialReminders, onAddClick }: AlertsShellProps) 
   };
 
   const handleEditSuccess = () => {
-    // The page will be revalidated by the server action
+    onDataChange?.();
   };
 
   return (

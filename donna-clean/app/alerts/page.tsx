@@ -4,12 +4,19 @@ import { BottomNav } from "@/components/navigation/bottom-nav";
 import { TopNavMobile } from "@/components/navigation/top-nav-mobile";
 import { AlertsPageClient } from "@/components/alerts/alerts-page-client";
 import { createClient } from "@/lib/supabase/client";
-import { useQuery } from "@tanstack/react-query";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useRouter } from "next/navigation";
+import { useCallback } from "react";
 
 export default function AlertsPage() {
   const supabase = createClient();
   const router = useRouter();
+  const queryClient = useQueryClient();
+
+  // Callback to refresh reminders list after add/edit/delete/markDone
+  const refreshReminders = useCallback(() => {
+    queryClient.invalidateQueries({ queryKey: ['alerts-reminders'] });
+  }, [queryClient]);
 
   // Fetch user with React Query
   const { data: userData, isLoading: userLoading } = useQuery({
@@ -81,7 +88,7 @@ export default function AlertsPage() {
 
         <section className="flex-1 px-4 py-4 md:px-8 overflow-auto">
           <div className="mx-auto w-full max-w-6xl">
-            <AlertsPageClient initialReminders={reminders || []} />
+            <AlertsPageClient initialReminders={reminders || []} onDataChange={refreshReminders} />
           </div>
         </section>
       </div>
