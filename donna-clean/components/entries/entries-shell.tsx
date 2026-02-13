@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Download } from 'lucide-react'
-import { type Entry, type Category, getEntries, getCategories, createEntry, type EntryType, type CategoryType, type PaymentMethodType } from '@/app/entries/actions'
+import { type Entry, type Category, getEntries, getAllEntries, getCategories, createEntry, type EntryType, type CategoryType, type PaymentMethodType } from '@/app/entries/actions'
 import { EntryList } from './entry-list'
 import { ErrorState } from '@/components/ui/error-state'
 import { showSuccess, showError, showLoading, dismissToast } from '@/lib/toast'
@@ -17,15 +17,53 @@ import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover
 
 interface EntriesShellProps {
   initialEntries: Entry[]
+  initialTotalCount: number
+  initialTotalPages: number
   categories: Category[]
   error: string | null
   showFormAtTop?: boolean
 }
 
-const ITEMS_PER_PAGE = 20
+const ITEMS_PER_PAGE = 50
 
-export function EntriesShell({ initialEntries, categories, error: initialError, showFormAtTop = false }: EntriesShellProps) {
+/** Convert a UI date filter into startDate/endDate strings for the server. */
+function getDateRange(filter: string, customFrom?: Date, customTo?: Date) {
+  const now = new Date()
+  switch (filter) {
+    case 'this-month':
+      return {
+        startDate: `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`,
+        endDate: undefined,
+      }
+    case 'last-month': {
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1)
+      const end = new Date(now.getFullYear(), now.getMonth(), 0)
+      return {
+        startDate: format(start, 'yyyy-MM-dd'),
+        endDate: format(end, 'yyyy-MM-dd'),
+      }
+    }
+    case 'this-year':
+      return {
+        startDate: `${now.getFullYear()}-01-01`,
+        endDate: undefined,
+      }
+    case 'all-time':
+      return { startDate: undefined, endDate: undefined }
+    case 'customize':
+      return {
+        startDate: customFrom ? format(customFrom, 'yyyy-MM-dd') : undefined,
+        endDate: customTo ? format(customTo, 'yyyy-MM-dd') : undefined,
+      }
+    default:
+      return { startDate: undefined, endDate: undefined }
+  }
+}
+
+export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPages, categories, error: initialError, showFormAtTop = false }: EntriesShellProps) {
   const [entries, setEntries] = useState<Entry[]>(initialEntries)
+  const [totalCount, setTotalCount] = useState(initialTotalCount)
+  const [totalPages, setTotalPages] = useState(initialTotalPages)
   const [allCategories, setAllCategories] = useState<Category[]>(categories)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState<string | null>(initialError)
@@ -93,99 +131,78 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
     }
   }, [formData.entryType, formData.paymentMethod])
 
-  // Filter entries by date and entry type
-  const filteredEntries = useMemo(() => {
-    let result = [...entries]
-
-    // Apply entry type filter
-    if (entryTypeFilter !== 'all') {
-      result = result.filter(e => e.entry_type === entryTypeFilter)
-    }
-
-    // Apply date filter
-    const now = new Date()
-    let startDate: Date | null = null
-    let endDate: Date | null = null
-
-    // Handle custom date range
-    if (dateFilter === 'customize' && customFromDate && customToDate) {
-      startDate = customFromDate
-      endDate = customToDate
-    } else {
-      switch (dateFilter) {
-        case 'this-month':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-          break
-        case 'last-month':
-          startDate = new Date(now.getFullYear(), now.getMonth() - 1, 1)
-          endDate = new Date(now.getFullYear(), now.getMonth(), 0)
-          break
-        case 'this-year':
-          startDate = new Date(now.getFullYear(), 0, 1)
-          break
-        case 'all-time':
-          // No date filtering
-          break
-      }
-    }
-
-    if (startDate) {
-      // Compare using date strings (YYYY-MM-DD) to avoid timezone issues.
-      // new Date(year, month, day) uses local timezone, but
-      // new Date("YYYY-MM-DD") parses as UTC, causing the last day of
-      // the month to be excluded for users east of UTC.
-      const toDateStr = (d: Date) =>
-        `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
-      const startStr = toDateStr(startDate)
-      const endStr = endDate ? toDateStr(endDate) : null
-
-      result = result.filter(e => {
-        const entryDateStr = e.entry_date.split('T')[0]
-        if (endStr) {
-          return entryDateStr >= startStr && entryDateStr <= endStr
-        }
-        return entryDateStr >= startStr
-      })
-    }
-
-    return result
-  }, [entries, dateFilter, entryTypeFilter, customFromDate, customToDate])
-
-  // Paginate entries
-  const paginatedEntries = useMemo(() => {
-    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE
-    const endIndex = startIndex + ITEMS_PER_PAGE
-    return filteredEntries.slice(startIndex, endIndex)
-  }, [filteredEntries, currentPage])
-
-  const totalPages = Math.ceil(filteredEntries.length / ITEMS_PER_PAGE)
-
-  // Refresh data
-  const handleRefresh = async () => {
+  // Fetch a page of entries from the server with current filters
+  const fetchPage = useCallback(async (page: number, dateFilterOverride?: string, typeOverride?: string, customFrom?: Date, customTo?: Date) => {
     setLoading(true)
     setError(null)
 
+    const activeDate = dateFilterOverride ?? dateFilter
+    const activeType = typeOverride ?? entryTypeFilter
+    const { startDate, endDate } = getDateRange(
+      activeDate,
+      customFrom ?? customFromDate,
+      customTo ?? customToDate,
+    )
+
     try {
-      const [entriesResult, categoriesResult] = await Promise.all([
-        getEntries(),
-        getCategories(),
-      ])
+      const result = await getEntries({
+        page,
+        pageSize: ITEMS_PER_PAGE,
+        startDate,
+        endDate,
+        entryType: activeType,
+      })
 
-      if (entriesResult.error) {
-        setError(entriesResult.error)
+      if (result.error) {
+        setError(result.error)
       } else {
-        setEntries(entriesResult.entries)
-      }
-
-      if (!categoriesResult.error && categoriesResult.categories) {
-        setAllCategories(categoriesResult.categories)
+        setEntries(result.entries)
+        setTotalCount(result.totalCount)
+        setTotalPages(result.totalPages)
+        setCurrentPage(page)
       }
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : 'Failed to refresh data')
+      setError(err instanceof Error ? err.message : 'Failed to load entries')
     } finally {
       setLoading(false)
     }
+  }, [dateFilter, entryTypeFilter, customFromDate, customToDate])
+
+  // Refresh current page (after create/edit/delete)
+  const handleRefresh = async () => {
+    await fetchPage(currentPage)
+    // Also refresh categories
+    try {
+      const categoriesResult = await getCategories()
+      if (!categoriesResult.error && categoriesResult.categories) {
+        setAllCategories(categoriesResult.categories)
+      }
+    } catch {
+      // Non-critical
+    }
   }
+
+  // When date filter changes, re-fetch from page 1
+  const handleDateFilterChange = (value: string) => {
+    setDateFilter(value)
+    setShowCustomDatePickers(value === 'customize')
+    if (value !== 'customize') {
+      fetchPage(1, value)
+    }
+  }
+
+  // When entry type filter changes, re-fetch from page 1
+  const handleEntryTypeFilterChange = (value: string) => {
+    setEntryTypeFilter(value)
+    fetchPage(1, undefined, value)
+  }
+
+  // When custom date range is fully selected, fetch
+  useEffect(() => {
+    if (dateFilter === 'customize' && customFromDate && customToDate) {
+      fetchPage(1, 'customize', undefined, customFromDate, customToDate)
+    }
+  }, [customFromDate, customToDate, dateFilter, fetchPage])
 
   // Form submission handler
   const handleFormSubmit = async (e: React.FormEvent) => {
@@ -242,10 +259,29 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
     }
   }
 
-  const handleExportToExcel = () => {
+  const handleExportToExcel = async () => {
+    // Fetch ALL entries for the current filter (not just the current page)
+    const { startDate, endDate } = getDateRange(dateFilter, customFromDate, customToDate)
+    let exportEntries = entries
+
+    try {
+      const result = await getEntries({
+        page: 1,
+        pageSize: 10000,
+        startDate,
+        endDate,
+        entryType: entryTypeFilter,
+      })
+      if (!result.error) {
+        exportEntries = result.entries
+      }
+    } catch {
+      // Fall back to current page data
+    }
+
     // Create CSV content
     const headers = ['Date', 'Entry Type', 'Category', 'Amount', 'Payment Method', 'Notes']
-    const rows = filteredEntries.map(entry => [
+    const rows = exportEntries.map(entry => [
       format(new Date(entry.entry_date), 'dd/MM/yyyy'),
       entry.entry_type,
       entry.category,
@@ -269,11 +305,11 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
     // Track analytics event
     analytics.reportExported('entries-csv')
 
-    showSuccess('Exported to Excel')
+    showSuccess(`Exported ${exportEntries.length} entries to CSV`)
   }
 
   const handlePageChange = (page: number) => {
-    setCurrentPage(page)
+    fetchPage(page)
     // Scroll to top
     window.scrollTo({ top: 0, behavior: 'smooth' })
   }
@@ -474,7 +510,12 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
             <div>
               {/* Simple Header - Date + Export Only */}
               <div className="flex items-center justify-between mb-4">
-                <h2 className="text-base md:text-xl font-semibold text-white">Transaction History</h2>
+                <div>
+                  <h2 className="text-base md:text-xl font-semibold text-white">Transaction History</h2>
+                  <p className="text-xs text-purple-400 mt-0.5">
+                    Showing {entries.length} of {totalCount} entries
+                  </p>
+                </div>
 
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Entry Type Filter */}
@@ -482,7 +523,7 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
                     <span className="text-xs text-purple-400">Type:</span>
                     <select
                       value={entryTypeFilter}
-                      onChange={(e) => setEntryTypeFilter(e.target.value)}
+                      onChange={(e) => handleEntryTypeFilterChange(e.target.value)}
                       className="px-2 py-1 rounded-md border border-purple-500/30 bg-purple-900/20 text-white text-xs focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                     >
                       <option value="all">All Types</option>
@@ -502,10 +543,7 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
                     <span className="text-xs text-purple-400">Date:</span>
                     <select
                       value={dateFilter}
-                      onChange={(e) => {
-                        setDateFilter(e.target.value);
-                        setShowCustomDatePickers(e.target.value === 'customize');
-                      }}
+                      onChange={(e) => handleDateFilterChange(e.target.value)}
                       className="px-2 py-1 rounded-md border border-purple-500/30 bg-purple-900/20 text-white text-xs focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                     >
                       <option value="this-month">This Month</option>
@@ -566,19 +604,27 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
                 </div>
               </div>
 
+              {/* Loading indicator */}
+              {loading && (
+                <div className="flex items-center justify-center py-4">
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
+                  <span className="ml-2 text-sm text-purple-300">Loading entries...</span>
+                </div>
+              )}
+
               {/* Entry List with Fixed Alignment */}
               <EntryList
-                entries={paginatedEntries}
+                entries={entries}
                 categories={allCategories}
                 onRefresh={handleRefresh}
               />
 
         {/* Pagination */}
         {totalPages > 1 && (
-          <div className="flex items-center justify-center gap-2">
+          <div className="flex items-center justify-center gap-2 mt-4">
             <button
               onClick={() => handlePageChange(currentPage - 1)}
-              disabled={currentPage === 1}
+              disabled={currentPage === 1 || loading}
               className="px-4 py-2 bg-purple-900/30 hover:bg-purple-900/50 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
@@ -588,7 +634,7 @@ export function EntriesShell({ initialEntries, categories, error: initialError, 
             </span>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
-              disabled={currentPage === totalPages}
+              disabled={currentPage === totalPages || loading}
               className="px-4 py-2 bg-purple-900/30 hover:bg-purple-900/50 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next

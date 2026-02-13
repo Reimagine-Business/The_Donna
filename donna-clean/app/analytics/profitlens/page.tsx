@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getEntries } from '@/app/entries/actions'
+import { getEntriesByDateRange } from '@/app/entries/actions'
 import { ProfitLensAnalytics } from '@/components/analytics/profit-lens-analytics'
 import { EntryListSkeleton } from '@/components/skeletons/entry-skeleton'
 import { SiteHeader } from '@/components/site-header'
@@ -14,8 +14,13 @@ export default async function ProfitLensAnalyticsPage() {
   let entries: Entry[] = []
   let error: string | null = null
 
+  // Load 2 years of data (covers This Month, Last Month, This Year, Last Year presets)
+  const now = new Date()
+  const startDate = `${now.getFullYear() - 1}-01-01`
+  const endDate = now.toISOString().split('T')[0]
+
   try {
-    const result = await getEntries()
+    const result = await getEntriesByDateRange(startDate, endDate)
     entries = result.entries
     error = result.error
   } catch (e) {

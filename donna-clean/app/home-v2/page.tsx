@@ -8,7 +8,7 @@ import { DonnaMessageBullets } from "@/components/home-v2/donna-message-bullets"
 import { BusinessCards } from "@/components/home-v2/business-cards";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
-import { getEntries } from "@/app/entries/actions";
+import { getAllEntries } from "@/app/entries/actions";
 import { EntryListSkeleton } from "@/components/skeletons/entry-skeleton";
 import { DonnaChatWidget } from "@/components/home-v2/donna-chat-widget";
 
@@ -29,8 +29,8 @@ export default async function HomeV2Page() {
     redirect("/auth/login");
   }
 
-  // Fetch entries for dashboard (REUSE existing server action)
-  const { entries } = await getEntries();
+  // Fetch all entries for dashboard (needs complete data for calculations)
+  const { entries } = await getAllEntries();
 
   // Fetch user profile for business name (REUSE existing query)
   const { data: profile } = await supabase
@@ -77,7 +77,7 @@ export default async function HomeV2Page() {
         <section className="flex-1 px-4 py-3 md:px-8 overflow-auto">
           <div className="mx-auto w-full max-w-2xl space-y-4">
             {/* Header: Greeting left, Avatar right */}
-            <div className="flex items-start justify-between pt-2 pb-1">
+            <div className="flex items-start justify-between pt-2 pb-1 relative z-10">
               {/* Greeting text */}
               <div className="flex-1 pr-4">
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
@@ -91,8 +91,8 @@ export default async function HomeV2Page() {
                 </p>
               </div>
 
-              {/* Avatar - smaller, top right */}
-              <div className="flex-shrink-0">
+              {/* Avatar - smaller, top right, overlaps purple card */}
+              <div className="flex-shrink-0 relative z-20 translate-y-4">
                 <DonnaAvatarLarge />
               </div>
             </div>

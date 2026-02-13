@@ -55,7 +55,7 @@ export async function createUserDirect(userData: CreateUserData) {
       .from('profiles')
       .select('username')
       .eq('username', userData.username)
-      .single();
+      .maybeSingle();
 
     if (existingUsername) {
       return {

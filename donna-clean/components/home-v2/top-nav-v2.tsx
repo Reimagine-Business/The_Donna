@@ -35,7 +35,7 @@ export function TopNavV2() {
           .from("profiles")
           .select("username, business_name, logo_url")
           .eq("user_id", user.id)
-          .single();
+          .maybeSingle();
 
         if (profileData) setProfile(profileData);
       }

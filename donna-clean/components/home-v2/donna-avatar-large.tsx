@@ -7,7 +7,7 @@ export function DonnaAvatarLarge() {
   const [imageError, setImageError] = useState(false);
 
   return (
-    <div className="relative w-24 h-24">
+    <div className="relative w-52 h-52">
       {/* Glowing ring background - orange to pink */}
       <div
         className="absolute inset-0 rounded-full opacity-60 blur-sm"
@@ -23,7 +23,7 @@ export function DonnaAvatarLarge() {
         style={{
           background: "linear-gradient(135deg, #fbbf24, #f59e0b, #ec4899, #a855f7)",
           boxShadow:
-            "0 0 15px 4px rgba(251,191,36,0.3), 0 0 30px 8px rgba(236,72,153,0.15)",
+            "0 0 20px 6px rgba(251,191,36,0.3), 0 0 40px 12px rgba(236,72,153,0.15)",
         }}
       >
         {/* Inner dark circle */}
@@ -32,8 +32,8 @@ export function DonnaAvatarLarge() {
             <Image
               src="/images/donna/donna-avatar.png"
               alt="Donna - Your Financial Assistant"
-              width={120}
-              height={120}
+              width={208}
+              height={208}
               className="object-cover object-top w-full h-full scale-110"
               priority
               onError={() => setImageError(true)}
