@@ -19,9 +19,8 @@ interface DonnaMessageBulletsProps {
 
 export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBulletsProps) {
   const [aiBullets, setAiBullets] = useState<string[] | null>(null);
-  const [aiAdditional, setAiAdditional] = useState(0);
   const [loading, setLoading] = useState(true);
-  const [expanded, setExpanded] = useState(false);
+  const [showReminders, setShowReminders] = useState(false);
 
   // Fetch AI-powered insights
   useEffect(() => {
@@ -34,7 +33,6 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
         const data = await res.json();
         if (!cancelled && data.bullets && data.bullets.length > 0) {
           setAiBullets(data.bullets);
-          setAiAdditional(data.additionalCount || 0);
         }
       } catch {
         // AI failed — fallback to rule-based insights below
@@ -47,36 +45,16 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
     return () => { cancelled = true; };
   }, []);
 
-  // Build extra reminder bullets for inline expand
-  const extraBullets = useMemo(() => {
-    const todayStr = new Date().toISOString().split("T")[0];
+  // Pending reminders for pill display (overdue + upcoming this week)
+  const pendingReminders = useMemo(() => {
     const oneWeekFromNow = new Date(Date.now() + 7 * 86400000)
       .toISOString()
       .split("T")[0];
-    const extras: string[] = [];
-
-    const overdueReminders = reminders.filter(
-      (r) => r.status === "pending" && r.due_date < todayStr
-    );
-    const upcomingReminders = reminders.filter(
+    return reminders.filter(
       (r) =>
         r.status === "pending" &&
-        r.due_date >= todayStr &&
         r.due_date <= oneWeekFromNow
     );
-
-    if (overdueReminders.length > 0) {
-      extras.push(
-        `${overdueReminders.length} overdue reminder${overdueReminders.length !== 1 ? "s" : ""}: ${overdueReminders.map((r) => r.title).join(", ")}`
-      );
-    }
-    if (upcomingReminders.length > 0) {
-      extras.push(
-        `${upcomingReminders.length} upcoming this week: ${upcomingReminders.map((r) => r.title).join(", ")}`
-      );
-    }
-
-    return extras;
   }, [reminders]);
 
   // Fallback: basic rule-based insights (used if AI is unavailable)
@@ -128,24 +106,12 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
       bullets.push(`Profit from sales looks good at ${fmt(profit)}`);
     }
 
-    let additionalCount = 0;
-    const overdueReminders = reminders.filter(
-      (r) => r.status === "pending" && r.due_date < todayStr
-    );
-    const oneWeekFromNow = new Date(Date.now() + 7 * 86400000)
-      .toISOString()
-      .split("T")[0];
-    const upcomingReminders = reminders.filter(
-      (r) =>
-        r.status === "pending" &&
-        r.due_date >= todayStr &&
-        r.due_date <= oneWeekFromNow
-    );
-    if (overdueReminders.length > 0) additionalCount++;
-    if (upcomingReminders.length > 0) additionalCount++;
+    return bullets;
+  }, [entries]);
 
-    return { bullets, additionalCount };
-  }, [entries, reminders]);
+  const handleOpenChat = () => {
+    window.dispatchEvent(new CustomEvent("openDonnaChat"));
+  };
 
   // Loading skeleton
   if (loading) {
@@ -159,54 +125,86 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
   }
 
   // Use AI bullets if available, otherwise fallback
-  const bullets = aiBullets || fallback.bullets;
-  const additionalCount = aiBullets ? aiAdditional : fallback.additionalCount;
+  const bullets = aiBullets || fallback;
 
   if (bullets.length === 0) {
     return (
-      <p className="text-white/90 text-sm">
-        Everything is looking good! I&apos;ll let you know if anything needs your attention.
-      </p>
+      <div>
+        <p className="text-white/90 text-sm">
+          Everything is looking good! I&apos;ll let you know if anything needs your attention.
+        </p>
+
+        {/* Ask Donna prompt — even when no bullets */}
+        <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
+          <p className="text-white/30 text-xs italic">
+            Ask Donna anything about your business...
+          </p>
+          <button
+            onClick={handleOpenChat}
+            className="text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors flex items-center gap-1"
+          >
+            Chat
+            <span className="text-xs">→</span>
+          </button>
+        </div>
+      </div>
     );
   }
 
   return (
     <div className="space-y-3">
+      {/* Insight bullets */}
       {bullets.map((bullet, i) => (
         <div key={i} className="flex items-start gap-2">
           <span className="text-white mt-0.5 text-lg leading-none">&bull;</span>
           <p className="text-white text-sm leading-relaxed">
             {bullet}
-            {/* Show "+N more updates" button on the last bullet — expands inline */}
-            {i === bullets.length - 1 && additionalCount > 0 && !expanded && (
-              <button
-                onClick={() => setExpanded(true)}
-                className="ml-2 text-[#c084fc] hover:text-white transition-colors text-xs font-medium"
-              >
-                +{additionalCount} more update{additionalCount !== 1 ? "s" : ""} &darr;
-              </button>
-            )}
           </p>
         </div>
       ))}
 
-      {/* Expanded reminder bullets */}
-      {expanded && extraBullets.length > 0 && (
-        <div className="space-y-3 pt-1 border-t border-white/10 mt-2">
-          {extraBullets.map((bullet, i) => (
-            <div key={`extra-${i}`} className="flex items-start gap-2">
-              <span className="text-[#c084fc] mt-0.5 text-lg leading-none">&bull;</span>
-              <p className="text-white/80 text-sm leading-relaxed">{bullet}</p>
-            </div>
-          ))}
+      {/* Reminders pill - always visible when reminders exist */}
+      {pendingReminders.length > 0 && (
+        <div className="mt-3 pt-3 border-t border-white/10">
           <button
-            onClick={() => setExpanded(false)}
-            className="text-[#c084fc] hover:text-white transition-colors text-xs font-medium ml-5"
+            onClick={() => setShowReminders(!showReminders)}
+            className="flex items-center gap-2 text-purple-300 hover:text-purple-200 transition-colors"
           >
-            Show less &uarr;
+            <span className="text-sm">📅</span>
+            <span className="text-xs font-medium">
+              {pendingReminders.length} reminder{pendingReminders.length > 1 ? "s" : ""} this week
+            </span>
+            <span className="text-xs text-white/40 ml-1">
+              {showReminders ? "↑ hide" : "→ see"}
+            </span>
           </button>
+
+          {/* Expanded reminders */}
+          {showReminders && (
+            <div className="mt-2 space-y-1">
+              {pendingReminders.map((reminder) => (
+                <p key={reminder.id} className="text-white/60 text-xs pl-5">
+                  • {reminder.title}
+                </p>
+              ))}
+            </div>
+          )}
         </div>
       )}
+
+      {/* Ask Donna prompt */}
+      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
+        <p className="text-white/30 text-xs italic">
+          Ask Donna anything about your business...
+        </p>
+        <button
+          onClick={handleOpenChat}
+          className="text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors flex items-center gap-1"
+        >
+          Chat
+          <span className="text-xs">→</span>
+        </button>
+      </div>
     </div>
   );
 }
