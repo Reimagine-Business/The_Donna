@@ -115,6 +115,13 @@ export function DonnaChatWidget() {
     }
   }, [isOpen]);
 
+  // Listen for custom event to open chat from other components
+  useEffect(() => {
+    const handleOpenChat = () => setIsOpen(true);
+    window.addEventListener("openDonnaChat", handleOpenChat);
+    return () => window.removeEventListener("openDonnaChat", handleOpenChat);
+  }, []);
+
   // Fetch usage on mount
   useEffect(() => {
     fetch("/api/donna-chat")

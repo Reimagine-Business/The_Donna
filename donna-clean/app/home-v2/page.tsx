@@ -52,6 +52,14 @@ export default async function HomeV2Page() {
   const greeting =
     hour < 12 ? "Good morning" : hour < 18 ? "Good afternoon" : "Good evening";
 
+  // Current date for display
+  const currentDate = new Date().toLocaleDateString("en-IN", {
+    weekday: "long",
+    day: "numeric",
+    month: "long",
+    year: "numeric",
+  });
+
   return (
     <main className="min-h-screen bg-[#0a0e1a] pb-24 md:pb-8">
       <div className="flex flex-col min-h-screen">
@@ -59,36 +67,39 @@ export default async function HomeV2Page() {
         <TopNavV2 />
 
         <section className="flex-1 px-4 py-3 md:px-8 overflow-auto">
-          <div className="mx-auto w-full max-w-2xl space-y-6">
-            {/* Greeting — LEFT aligned */}
-            <div className="text-left">
-              <h1 className="text-2xl sm:text-3xl font-bold text-white">
-                {greeting},
-              </h1>
-              {profile?.username && (
-                <p className="text-2xl sm:text-3xl font-bold text-white">
-                  {profile.username}!
+          <div className="mx-auto w-full max-w-2xl space-y-4">
+            {/* Header: Greeting left, Avatar right */}
+            <div className="flex items-start justify-between pt-2 pb-1">
+              {/* Greeting text */}
+              <div className="flex-1 pr-4">
+                <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
+                  {greeting},<br />
+                  <span className="text-purple-300">
+                    {profile?.username || "there"}!
+                  </span>
+                </h1>
+                <p className="text-white/40 text-xs mt-1">
+                  {currentDate}
                 </p>
-              )}
-            </div>
-
-            {/* Donna Section — Avatar LEFT, Message box RIGHT */}
-            <div className="flex flex-col md:flex-row items-center md:items-start gap-6">
-              {/* Left: Donna Avatar */}
-              <div className="w-full md:w-auto flex justify-center md:justify-start flex-shrink-0">
-                <DonnaAvatarLarge />
               </div>
 
-              {/* Right: Message Box */}
-              <div className="w-full md:flex-1 bg-purple-900/30 backdrop-blur-sm rounded-2xl p-6 border border-purple-500/30">
-                <h3 className="text-xl font-bold text-white mb-4">Donna says:</h3>
+              {/* Avatar - smaller, top right */}
+              <div className="flex-shrink-0">
+                <DonnaAvatarLarge />
+              </div>
+            </div>
 
-                <div className="space-y-3 text-white">
-                  <DonnaMessageBullets
-                    entries={entries}
-                    reminders={reminders || []}
-                  />
-                </div>
+            {/* Donna says card - speech bubble feel */}
+            <div className="rounded-2xl rounded-tr-sm bg-gradient-to-br from-purple-900/80 to-purple-950/90 border border-purple-500/30 shadow-lg shadow-purple-900/30 p-4">
+              <p className="text-white font-bold text-base mb-3">
+                Donna says:
+              </p>
+
+              <div className="space-y-3 text-white">
+                <DonnaMessageBullets
+                  entries={entries}
+                  reminders={reminders || []}
+                />
               </div>
             </div>
 
