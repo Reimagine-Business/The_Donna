@@ -182,13 +182,87 @@ async function generateAlertsForEntry(
   }
 }
 
-export async function getEntries() {
+/**
+ * Paginated entry fetch for the entries list page.
+ * Supports server-side filtering by date range and entry type.
+ */
+export async function getEntries(options: {
+  page?: number
+  pageSize?: number
+  startDate?: string
+  endDate?: string
+  entryType?: string
+} = {}) {
   try {
     const supabase = await createSupabaseServerClient()
     const { user } = await getOrRefreshUser(supabase)
 
     if (!user) {
       console.error('[GET_ENTRIES] Not authenticated')
+      return { entries: [], totalCount: 0, page: 1, pageSize: 50, totalPages: 0, hasMore: false, error: "Not authenticated" }
+    }
+
+    const {
+      page = 1,
+      pageSize = 50,
+      startDate,
+      endDate,
+      entryType
+    } = options
+
+    const from = (page - 1) * pageSize
+    const to = from + pageSize - 1
+
+    let query = supabase
+      .from('entries')
+      .select(`
+        *,
+        party:parties(name)
+      `, { count: 'exact' })
+      .eq('user_id', user.id)
+      .order('entry_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (startDate) query = query.gte('entry_date', startDate)
+    if (endDate) query = query.lte('entry_date', endDate)
+    if (entryType && entryType !== 'all') query = query.eq('entry_type', entryType)
+
+    const { data, error, count } = await query
+
+    if (error) {
+      console.error('[GET_ENTRIES] Query error:', error.message)
+      return { entries: [], totalCount: 0, page, pageSize, totalPages: 0, hasMore: false, error: error.message }
+    }
+
+    const totalCount = count || 0
+
+    return {
+      entries: data as Entry[],
+      totalCount,
+      page,
+      pageSize,
+      totalPages: Math.ceil(totalCount / pageSize),
+      hasMore: to < totalCount - 1,
+      error: null
+    }
+  } catch (error) {
+    console.error('[GET_ENTRIES] Unexpected error:', error)
+    return { entries: [], totalCount: 0, page: 1, pageSize: 50, totalPages: 0, hasMore: false, error: error instanceof Error ? error.message : 'Unknown error occurred' }
+  }
+}
+
+/**
+ * Fetch ALL entries for a user (no limit).
+ * Used by home dashboards and analytics that need complete data for calculations.
+ */
+export async function getAllEntries() {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { user } = await getOrRefreshUser(supabase)
+
+    if (!user) {
+      console.error('[GET_ALL_ENTRIES] Not authenticated')
       return { entries: [], error: "Not authenticated" }
     }
 
@@ -201,16 +275,53 @@ export async function getEntries() {
       .eq('user_id', user.id)
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false })
-      .limit(100)
 
     if (error) {
-      console.error('[GET_ENTRIES] Query error:', error.message)
+      console.error('[GET_ALL_ENTRIES] Query error:', error.message)
       return { entries: [], error: error.message }
     }
 
     return { entries: data as Entry[], error: null }
   } catch (error) {
-    console.error('[GET_ENTRIES] Unexpected error:', error)
+    console.error('[GET_ALL_ENTRIES] Unexpected error:', error)
+    return { entries: [], error: error instanceof Error ? error.message : 'Unknown error occurred' }
+  }
+}
+
+/**
+ * Fetch entries within a specific date range (no limit).
+ * Used by CashPulse and ProfitLens analytics that need
+ * complete data for a specific period.
+ */
+export async function getEntriesByDateRange(startDate: string, endDate: string) {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { user } = await getOrRefreshUser(supabase)
+
+    if (!user) {
+      console.error('[GET_ENTRIES_BY_DATE_RANGE] Not authenticated')
+      return { entries: [], error: "Not authenticated" }
+    }
+
+    const { data, error } = await supabase
+      .from('entries')
+      .select(`
+        *,
+        party:parties(name)
+      `)
+      .eq('user_id', user.id)
+      .gte('entry_date', startDate)
+      .lte('entry_date', endDate)
+      .order('entry_date', { ascending: false })
+
+    if (error) {
+      console.error('[GET_ENTRIES_BY_DATE_RANGE] Query error:', error.message)
+      return { entries: [], error: error.message }
+    }
+
+    return { entries: data as Entry[], error: null }
+  } catch (error) {
+    console.error('[GET_ENTRIES_BY_DATE_RANGE] Unexpected error:', error)
     return { entries: [], error: error instanceof Error ? error.message : 'Unknown error occurred' }
   }
 }

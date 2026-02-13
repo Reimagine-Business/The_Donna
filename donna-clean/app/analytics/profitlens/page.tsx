@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getEntries } from '@/app/entries/actions'
+import { getAllEntries } from '@/app/entries/actions'
 import { ProfitLensAnalytics } from '@/components/analytics/profit-lens-analytics'
 import { EntryListSkeleton } from '@/components/skeletons/entry-skeleton'
 import { SiteHeader } from '@/components/site-header'
@@ -15,7 +15,7 @@ export default async function ProfitLensAnalyticsPage() {
   let error: string | null = null
 
   try {
-    const result = await getEntries()
+    const result = await getAllEntries()
     entries = result.entries
     error = result.error
   } catch (e) {
