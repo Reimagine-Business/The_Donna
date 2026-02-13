@@ -52,8 +52,8 @@ export function TopNavV2() {
 
   return (
     <>
-      {/* Deep Blue Header Bar */}
-      <div className="md:hidden bg-[#1e2A56] border-b border-white/10 px-4 py-3 sticky top-0 z-30">
+      {/* Deep Navy Header Bar */}
+      <div className="md:hidden bg-[#0f0f23] border-b border-white/10 px-4 py-3 sticky top-0 z-30">
         <div className="flex items-center justify-between">
           {/* Left: Donna Logo */}
           <div className="flex-shrink-0">
@@ -72,17 +72,21 @@ export function TopNavV2() {
               <img
                 src={profile.logo_url}
                 alt="Business"
-                className="w-8 h-8 rounded-full object-cover border-2 border-[#a855f7]"
+                className="w-8 h-8 rounded-full object-cover border-2 border-[#c084fc]"
+                style={{ boxShadow: '0 0 16px rgba(192,132,252,0.35)' }}
               />
             ) : (
-              <div className="w-8 h-8 rounded-full bg-[#7c3aed] border-2 border-[#a855f7] flex items-center justify-center">
-                <span className="text-white text-xs font-semibold">
+              <div
+                className="w-8 h-8 rounded-full bg-[#7c3aed] border-2 border-[#c084fc] flex items-center justify-center"
+                style={{ boxShadow: '0 0 16px rgba(192,132,252,0.35)' }}
+              >
+                <span className="text-[#c084fc] text-xs font-semibold">
                   {displayName.substring(0, 2).toUpperCase()}
                 </span>
               </div>
             )}
 
-            <span className="text-white text-sm font-medium truncate max-w-[140px]">
+            <span className="text-[#e9d5ff] text-sm font-semibold truncate max-w-[140px]">
               {displayName}
             </span>
           </div>
@@ -90,7 +94,7 @@ export function TopNavV2() {
           {/* Right: Hamburger Menu */}
           <button
             onClick={() => setIsMenuOpen(true)}
-            className="flex-shrink-0 text-white p-2 hover:bg-white/10 rounded-lg transition-colors"
+            className="flex-shrink-0 text-[#94a3b8] p-2 hover:bg-white/10 rounded-lg transition-colors"
             aria-label="Menu"
           >
             <Menu className="w-6 h-6" />
