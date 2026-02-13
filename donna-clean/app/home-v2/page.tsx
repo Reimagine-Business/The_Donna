@@ -84,7 +84,7 @@ export default async function HomeV2Page() {
               </div>
 
               {/* Avatar - smaller, top right */}
-              <div className="flex-shrink-0 relative z-20 translate-y-6">
+              <div className="flex-shrink-0 relative z-20 translate-y-16">
                 <DonnaAvatarLarge />
               </div>
             </div>
@@ -96,7 +96,7 @@ export default async function HomeV2Page() {
               </p>
 
               {/* Bullets with avatar clearance */}
-              <div className="pr-0 pt-8">
+              <div className="pr-0 pt-20">
                 <div className="space-y-3 text-white">
                   <DonnaMessageBullets
                     entries={entries}
