@@ -12,6 +12,7 @@ import {
 import { checkRateLimit, RateLimitError } from "@/lib/rate-limit"
 import * as Sentry from "@sentry/nextjs"
 import type { SupabaseClient } from "@supabase/supabase-js"
+import { updateRunningBalance } from "@/lib/balance"
 // Re-export Entry type from canonical location
 import type { Entry as LibEntry } from "@/lib/entries"
 
@@ -48,55 +49,19 @@ export type Category = {
   created_at: string
 }
 
-// Helper function to generate alerts based on entry data
+/**
+ * Generate alerts based on entry data.
+ * Uses the pre-calculated running balance (from profiles table) instead of
+ * scanning the entire entries table. Only queries current-month entries
+ * for profit lens alerts (scoped, not full scan).
+ */
 async function generateAlertsForEntry(
   supabase: SupabaseClient,
   userId: string,
-  entry: { entry_type: EntryType; category: CategoryType; amount: number; entry_date: string }
+  entry: { entry_type: EntryType; category: CategoryType; amount: number; entry_date: string },
+  currentBalance: number
 ) {
   try {
-    // Fetch all entries for this user to calculate balances and trends
-    const { data: allEntries, error: entriesError } = await supabase
-      .from('entries')
-      .select('entry_type, category, amount, entry_date')
-      .eq('user_id', userId)
-
-    if (entriesError || !allEntries) {
-      console.error('Failed to fetch entries for alert generation:', entriesError)
-      return
-    }
-
-    // Calculate Cash Pulse balance (Cash IN/OUT + Advance only)
-    const cashIn = allEntries
-      .filter(e =>
-        e.entry_type === 'Cash IN' ||
-        (e.entry_type === 'Advance' && e.category === 'Sales')
-      )
-      .reduce((sum, e) => sum + e.amount, 0)
-    const cashOut = allEntries
-      .filter(e =>
-        e.entry_type === 'Cash OUT' ||
-        (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
-      )
-      .reduce((sum, e) => sum + e.amount, 0)
-    const balance = cashIn - cashOut
-
-    // Calculate monthly Profit Lens totals (Cash + Credit, no Advance)
-    const currentMonth = new Date().toISOString().substring(0, 7) // YYYY-MM
-    const monthlyEntries = allEntries.filter(e => e.entry_date.startsWith(currentMonth))
-    const monthlyRevenue = monthlyEntries
-      .filter(e =>
-        e.category === 'Sales' &&
-        (e.entry_type === 'Cash IN' || e.entry_type === 'Credit')
-      )
-      .reduce((sum, e) => sum + e.amount, 0)
-    const monthlyExpenses = monthlyEntries
-      .filter(e =>
-        ['COGS', 'Opex'].includes(e.category) &&
-        (e.entry_type === 'Cash OUT' || e.entry_type === 'Credit')
-      )
-      .reduce((sum, e) => sum + e.amount, 0)
-
     const alerts: Array<{
       user_id: string
       type: 'critical' | 'warning' | 'info'
@@ -118,53 +83,77 @@ async function generateAlertsForEntry(
       })
     }
 
-    // Alert 2: Low cash balance (< ₹10,000)
-    if (balance < 10000 && balance >= 0) {
+    // Alert 2: Low cash balance (< ₹10,000) — uses pre-calculated balance
+    if (currentBalance < 10000 && currentBalance >= 0) {
       alerts.push({
         user_id: userId,
         type: 'critical',
         priority: 9,
         title: 'Low Cash Balance',
-        message: `Your current Cash Pulse balance is ₹${balance.toLocaleString('en-IN')}. Consider reviewing cash outflows.`,
+        message: `Your current Cash Pulse balance is ₹${currentBalance.toLocaleString('en-IN')}. Consider reviewing cash outflows.`,
         is_read: false,
       })
     }
 
-    // Alert 3: Negative balance
-    if (balance < 0) {
+    // Alert 3: Negative balance — uses pre-calculated balance
+    if (currentBalance < 0) {
       alerts.push({
         user_id: userId,
         type: 'critical',
         priority: 10,
         title: 'Negative Cash Balance Alert',
-        message: `Your Cash Pulse balance is negative: ₹${balance.toLocaleString('en-IN')}. Immediate attention required.`,
+        message: `Your Cash Pulse balance is negative: ₹${currentBalance.toLocaleString('en-IN')}. Immediate attention required.`,
         is_read: false,
       })
     }
 
-    // Alert 4: Monthly expenses exceed revenue (Profit Lens)
-    if (monthlyExpenses > monthlyRevenue && monthlyRevenue > 0) {
-      const difference = monthlyExpenses - monthlyRevenue
-      alerts.push({
-        user_id: userId,
-        type: 'warning',
-        priority: 8,
-        title: 'Monthly Expenses Exceed Revenue',
-        message: `This month's expenses (₹${monthlyExpenses.toLocaleString('en-IN')}) exceed revenue (₹${monthlyRevenue.toLocaleString('en-IN')}) by ₹${difference.toLocaleString('en-IN')}.`,
-        is_read: false,
-      })
-    }
+    // For monthly profit lens alerts, query ONLY the current month (scoped query)
+    const now = new Date()
+    const monthStart = `${now.getFullYear()}-${String(now.getMonth() + 1).padStart(2, '0')}-01`
+    const { data: monthlyEntries } = await supabase
+      .from('entries')
+      .select('entry_type, category, amount')
+      .eq('user_id', userId)
+      .gte('entry_date', monthStart)
 
-    // Alert 5: Expenses significantly exceed revenue (>150%)
-    if (monthlyRevenue > 0 && monthlyExpenses > monthlyRevenue * 1.5) {
-      alerts.push({
-        user_id: userId,
-        type: 'critical',
-        priority: 9,
-        title: 'Excessive Spending Alert',
-        message: `Your monthly expenses are ${((monthlyExpenses / monthlyRevenue) * 100).toFixed(0)}% of your revenue. This is not sustainable.`,
-        is_read: false,
-      })
+    if (monthlyEntries && monthlyEntries.length > 0) {
+      const monthlyRevenue = monthlyEntries
+        .filter((e: { entry_type: string; category: string }) =>
+          e.category === 'Sales' &&
+          (e.entry_type === 'Cash IN' || e.entry_type === 'Credit')
+        )
+        .reduce((sum: number, e: { amount: number }) => sum + e.amount, 0)
+      const monthlyExpenses = monthlyEntries
+        .filter((e: { entry_type: string; category: string }) =>
+          ['COGS', 'Opex'].includes(e.category) &&
+          (e.entry_type === 'Cash OUT' || e.entry_type === 'Credit')
+        )
+        .reduce((sum: number, e: { amount: number }) => sum + e.amount, 0)
+
+      // Alert 4: Monthly expenses exceed revenue (Profit Lens)
+      if (monthlyExpenses > monthlyRevenue && monthlyRevenue > 0) {
+        const difference = monthlyExpenses - monthlyRevenue
+        alerts.push({
+          user_id: userId,
+          type: 'warning',
+          priority: 8,
+          title: 'Monthly Expenses Exceed Revenue',
+          message: `This month's expenses (₹${monthlyExpenses.toLocaleString('en-IN')}) exceed revenue (₹${monthlyRevenue.toLocaleString('en-IN')}) by ₹${difference.toLocaleString('en-IN')}.`,
+          is_read: false,
+        })
+      }
+
+      // Alert 5: Expenses significantly exceed revenue (>150%)
+      if (monthlyRevenue > 0 && monthlyExpenses > monthlyRevenue * 1.5) {
+        alerts.push({
+          user_id: userId,
+          type: 'critical',
+          priority: 9,
+          title: 'Excessive Spending Alert',
+          message: `Your monthly expenses are ${((monthlyExpenses / monthlyRevenue) * 100).toFixed(0)}% of your revenue. This is not sustainable.`,
+          is_read: false,
+        })
+      }
     }
 
     // Insert alerts into database (only if there are any)
@@ -448,8 +437,18 @@ export async function createEntry(input: CreateEntryInput) {
     return { success: false, error: error.message }
   }
 
-  // Generate alerts based on entry data
-  await generateAlertsForEntry(supabase, user.id, sanitizedData)
+  // Update running balance (fast, no table scan)
+  const newBalance = await updateRunningBalance(
+    supabase,
+    user.id,
+    sanitizedData.entry_type,
+    sanitizedData.category,
+    sanitizedData.amount,
+    'create'
+  )
+
+  // Generate alerts using the balance we just calculated (no extra query needed)
+  await generateAlertsForEntry(supabase, user.id, sanitizedData, newBalance)
 
   // Invalidate Donna's cached insights so next home page load gets fresh insights
   try {
@@ -526,23 +525,21 @@ export async function updateEntry(id: string, input: UpdateEntryInput) {
     payload.image_url = input.image_url || null
   }
 
-  // Validate the update data (if we have enough fields)
-  if (Object.keys(payload).length > 0) {
-    // Fetch current entry to merge with updates for validation
-    const { data: currentEntry } = await supabase
-      .from('entries')
-      .select('*')
-      .eq('id', id)
-      .eq('user_id', user.id)
-      .single()
+  // Fetch current entry for validation and balance tracking
+  const { data: currentEntry } = await supabase
+    .from('entries')
+    .select('*')
+    .eq('id', id)
+    .eq('user_id', user.id)
+    .single()
 
-    if (currentEntry) {
-      const mergedData = { ...currentEntry, ...payload }
-      const validation = validateEntry(mergedData)
-      if (!validation.isValid) {
-        console.error('Validation failed:', validation.error)
-        return { success: false, error: validation.error }
-      }
+  // Validate the update data (if we have enough fields)
+  if (Object.keys(payload).length > 0 && currentEntry) {
+    const mergedData = { ...currentEntry, ...payload }
+    const validation = validateEntry(mergedData)
+    if (!validation.isValid) {
+      console.error('Validation failed:', validation.error)
+      return { success: false, error: validation.error }
     }
   }
 
@@ -560,6 +557,27 @@ export async function updateEntry(id: string, input: UpdateEntryInput) {
       level: 'error',
     })
     return { success: false, error: error.message }
+  }
+
+  // Update running balance if entry_type, category, or amount changed
+  if (currentEntry && (payload.entry_type || payload.category || payload.amount !== undefined)) {
+    const newType = (payload.entry_type || currentEntry.entry_type) as string
+    const newCategory = (payload.category || currentEntry.category) as string
+    const newAmount = (payload.amount !== undefined ? payload.amount : currentEntry.amount) as number
+
+    await updateRunningBalance(
+      supabase,
+      user.id,
+      newType,
+      newCategory,
+      newAmount,
+      'update',
+      {
+        entry_type: currentEntry.entry_type,
+        category: currentEntry.category,
+        amount: currentEntry.amount,
+      }
+    )
   }
 
   // Invalidate Donna's cached insights
@@ -668,6 +686,16 @@ export async function deleteEntry(id: string) {
     })
     return { success: false, error: error.message }
   }
+
+  // Reverse the deleted entry's effect on the running balance
+  await updateRunningBalance(
+    supabase,
+    user.id,
+    entry.entry_type,
+    entry.category,
+    entry.amount,
+    'delete'
+  )
 
   // Invalidate Donna's cached insights
   try {

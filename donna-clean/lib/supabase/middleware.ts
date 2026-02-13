@@ -46,7 +46,11 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/dashboard") ||
     request.nextUrl.pathname.startsWith("/admin") ||
     request.nextUrl.pathname.startsWith("/profile") ||
-    request.nextUrl.pathname.startsWith("/settlements");
+    request.nextUrl.pathname.startsWith("/settlements") ||
+    request.nextUrl.pathname.startsWith("/alerts") ||
+    request.nextUrl.pathname.startsWith("/settings") ||
+    request.nextUrl.pathname.startsWith("/notifications") ||
+    request.nextUrl.pathname.startsWith("/protected");
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
