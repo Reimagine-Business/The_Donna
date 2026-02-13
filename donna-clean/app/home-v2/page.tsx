@@ -83,20 +83,20 @@ export default async function HomeV2Page() {
                 </p>
               </div>
 
-              {/* Avatar - smaller, top right */}
-              <div className="flex-shrink-0 relative z-20 translate-y-16">
+              {/* Avatar - smaller, top right, overlaps purple card */}
+              <div className="flex-shrink-0 relative z-20 translate-y-4">
                 <DonnaAvatarLarge />
               </div>
             </div>
 
-            {/* Donna says card - speech bubble feel */}
-            <div className="rounded-2xl rounded-tr-sm bg-gradient-to-br from-purple-900/80 to-purple-950/90 border border-purple-500/30 shadow-lg shadow-purple-900/30 p-4 relative z-10">
-              <p className="text-white font-bold text-base mb-3">
+            {/* Donna says card - speech bubble feel, pulled up so avatar overlaps top edge */}
+            <div className="-mt-16 rounded-2xl rounded-tr-sm bg-gradient-to-br from-purple-900/80 to-purple-950/90 border border-purple-500/30 shadow-lg shadow-purple-900/30 p-4 relative z-10">
+              <p className="text-white font-bold text-base mb-1">
                 Donna says:
               </p>
 
-              {/* Bullets with avatar clearance */}
-              <div className="pr-0 pt-20">
+              {/* Bullets - tighter spacing to heading */}
+              <div className="pr-0 pt-2">
                 <div className="space-y-3 text-white">
                   <DonnaMessageBullets
                     entries={entries}
