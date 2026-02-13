@@ -7,7 +7,7 @@ export function DonnaAvatarLarge() {
   const [imageError, setImageError] = useState(false);
 
   return (
-    <div className="relative w-24 h-24">
+    <div className="relative w-36 h-36">
       {/* Glowing ring background - orange to pink */}
       <div
         className="absolute inset-0 rounded-full opacity-60 blur-sm"
