@@ -69,7 +69,7 @@ export default async function HomeV2Page() {
         <section className="flex-1 px-4 py-3 md:px-8 overflow-auto">
           <div className="mx-auto w-full max-w-2xl space-y-4">
             {/* Header: Greeting left, Avatar right */}
-            <div className="flex items-start justify-between pt-2 pb-1">
+            <div className="flex items-start justify-between pt-2 pb-1 relative z-10">
               {/* Greeting text */}
               <div className="flex-1 pr-4">
                 <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
@@ -84,22 +84,25 @@ export default async function HomeV2Page() {
               </div>
 
               {/* Avatar - smaller, top right */}
-              <div className="flex-shrink-0">
+              <div className="flex-shrink-0 relative z-20 translate-y-6">
                 <DonnaAvatarLarge />
               </div>
             </div>
 
             {/* Donna says card - speech bubble feel */}
-            <div className="rounded-2xl rounded-tr-sm bg-gradient-to-br from-purple-900/80 to-purple-950/90 border border-purple-500/30 shadow-lg shadow-purple-900/30 p-4">
+            <div className="rounded-2xl rounded-tr-sm bg-gradient-to-br from-purple-900/80 to-purple-950/90 border border-purple-500/30 shadow-lg shadow-purple-900/30 p-4 relative z-10">
               <p className="text-white font-bold text-base mb-3">
                 Donna says:
               </p>
 
-              <div className="space-y-3 text-white">
-                <DonnaMessageBullets
-                  entries={entries}
-                  reminders={reminders || []}
-                />
+              {/* Bullets with avatar clearance */}
+              <div className="pr-0 pt-8">
+                <div className="space-y-3 text-white">
+                  <DonnaMessageBullets
+                    entries={entries}
+                    reminders={reminders || []}
+                  />
+                </div>
               </div>
             </div>
 
