@@ -73,7 +73,11 @@ export async function markReminderDone(reminderId: string) {
     .from("reminders")
     .select("*")
     .eq("id", reminderId)
-    .single();
+    .maybeSingle();
+
+  if (!reminder) {
+    return { error: "Reminder not found" };
+  }
 
   // Mark as completed
   const { error } = await supabase

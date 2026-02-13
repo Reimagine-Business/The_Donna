@@ -41,7 +41,7 @@ export async function completeSignup(data: SignupData) {
       .from('profiles')
       .select('username')
       .eq('username', data.username)
-      .single();
+      .maybeSingle();
 
     if (existingProfile) {
       return {
@@ -128,7 +128,7 @@ export async function checkUsernameAvailability(username: string) {
       .from('profiles')
       .select('username')
       .eq('username', username)
-      .single();
+      .maybeSingle();
 
     if (error && error.code === 'PGRST116') {
       // No rows returned - username is available
