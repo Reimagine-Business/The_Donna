@@ -16,13 +16,14 @@ interface Reminder {
 
 interface AlertsPageClientProps {
   initialReminders: Reminder[];
+  onDataChange?: () => void;
 }
 
-export function AlertsPageClient({ initialReminders }: AlertsPageClientProps) {
+export function AlertsPageClient({ initialReminders, onDataChange }: AlertsPageClientProps) {
   const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
 
   const handleAddSuccess = () => {
-    // The page will be revalidated by the server action
+    onDataChange?.();
   };
 
   return (
@@ -33,6 +34,7 @@ export function AlertsPageClient({ initialReminders }: AlertsPageClientProps) {
           <AlertsShell
             initialReminders={initialReminders}
             onAddClick={() => setIsAddDialogOpen(true)}
+            onDataChange={onDataChange}
           />
         </div>
       </section>
