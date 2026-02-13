@@ -1,5 +1,5 @@
 import { Suspense } from 'react'
-import { getAllEntries } from '@/app/entries/actions'
+import { getEntriesByDateRange } from '@/app/entries/actions'
 import { getSettlementHistory } from '@/app/settlements/settlement-history-actions'
 import { CashPulseAnalytics } from '@/components/analytics/cash-pulse-analytics'
 import { EntryListSkeleton } from '@/components/skeletons/entry-skeleton'
@@ -11,7 +11,11 @@ export const dynamic = 'force-dynamic'
 export const revalidate = 0
 
 export default async function CashPulseAnalyticsPage() {
-  const { entries } = await getAllEntries()
+  // Load 2 years of data (covers This Month, Last Month, This Year, Last Year presets)
+  const now = new Date()
+  const startDate = `${now.getFullYear() - 1}-01-01`
+  const endDate = now.toISOString().split('T')[0]
+  const { entries } = await getEntriesByDateRange(startDate, endDate)
   const { settlementHistory } = await getSettlementHistory()
 
   return (
