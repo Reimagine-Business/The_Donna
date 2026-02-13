@@ -162,18 +162,32 @@ export async function POST(req: NextRequest) {
       content: message,
     });
 
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 400,
-      temperature: 0.7,
-      system: fullPrompt,
-      messages: conversationMessages,
-    });
+    let reply = "";
+    let claudeResponse: Anthropic.Message | null = null;
 
-    const textBlock = response.content.find((b) => b.type === "text");
-    let reply = textBlock
-      ? textBlock.text.trim()
-      : "Sorry, I couldn't generate a response. Please try again.";
+    try {
+      claudeResponse = await client.messages.create({
+        model: "claude-sonnet-4-5-20250929",
+        max_tokens: 400,
+        temperature: 0.7,
+        system: fullPrompt,
+        messages: conversationMessages,
+      });
+
+      const textBlock = claudeResponse.content.find(
+        (b) => b.type === "text"
+      );
+      reply = textBlock ? textBlock.text.trim() : "";
+    } catch (claudeError) {
+      console.error("[Donna Chat] Claude API error:", claudeError);
+    }
+
+    // Fallback if Claude failed or returned empty
+    if (!reply || reply.length < 5) {
+      reply = !claudeResponse
+        ? "Hmm, I'm having a little trouble connecting right now. 😌 Give it a moment and try again — I'll be back shortly."
+        : "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!";
+    }
 
     // Clean with shared safety net
     reply = cleanDonnaResponse(reply)
@@ -182,13 +196,8 @@ export async function POST(req: NextRequest) {
       .replace(/^#{1,6}\s+/gm, "")
       .trim();
 
-    if (!reply || reply.length < 10) {
-      reply =
-        "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!";
-    }
-
     // ─────────────────────────────────────────────
-    // UPDATE USAGE COUNT
+    // UPDATE USAGE COUNT (always runs)
     // ─────────────────────────────────────────────
     if (todayUsage) {
       await supabase
@@ -209,29 +218,32 @@ export async function POST(req: NextRequest) {
     }
 
     // ─────────────────────────────────────────────
-    // LOG USAGE FOR ADMIN
+    // LOG USAGE FOR ADMIN (only if Claude succeeded)
     // ─────────────────────────────────────────────
-    try {
-      const adminClient = createClient(
-        process.env.NEXT_PUBLIC_SUPABASE_URL!,
-        process.env.SUPABASE_SERVICE_ROLE_KEY!,
-        { auth: { autoRefreshToken: false, persistSession: false } }
-      );
-      const inputTokens = response.usage?.input_tokens || 0;
-      const outputTokens = response.usage?.output_tokens || 0;
-      await adminClient.from("ai_usage_logs").insert({
-        user_id: user.id,
-        feature: "chat",
-        input_tokens: inputTokens,
-        output_tokens: outputTokens,
-        total_tokens: inputTokens + outputTokens,
-        cost_usd:
-          (inputTokens / 1_000_000) * 3 + (outputTokens / 1_000_000) * 15,
-        model: "claude-sonnet-4-5-20250929",
-        created_at: new Date().toISOString(),
-      });
-    } catch (logErr) {
-      console.error("[Donna Chat] Usage log error:", logErr);
+    if (claudeResponse) {
+      try {
+        const adminClient = createClient(
+          process.env.NEXT_PUBLIC_SUPABASE_URL!,
+          process.env.SUPABASE_SERVICE_ROLE_KEY!,
+          { auth: { autoRefreshToken: false, persistSession: false } }
+        );
+        const inputTokens = claudeResponse.usage?.input_tokens || 0;
+        const outputTokens = claudeResponse.usage?.output_tokens || 0;
+        await adminClient.from("ai_usage_logs").insert({
+          user_id: user.id,
+          feature: "chat",
+          input_tokens: inputTokens,
+          output_tokens: outputTokens,
+          total_tokens: inputTokens + outputTokens,
+          cost_usd:
+            (inputTokens / 1_000_000) * 3 +
+            (outputTokens / 1_000_000) * 15,
+          model: "claude-sonnet-4-5-20250929",
+          created_at: new Date().toISOString(),
+        });
+      } catch (logErr) {
+        console.error("[Donna Chat] Usage log error:", logErr);
+      }
     }
 
     return NextResponse.json({
