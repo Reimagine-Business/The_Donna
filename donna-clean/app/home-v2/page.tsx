@@ -61,8 +61,16 @@ export default async function HomeV2Page() {
   });
 
   return (
-    <main className="min-h-screen bg-[#0a0e1a] pb-24 md:pb-8">
-      <div className="flex flex-col min-h-screen">
+    <main className="min-h-screen bg-[#0f0f23] pb-24 md:pb-8 relative">
+      {/* Grid pattern */}
+      <div className="absolute inset-0 pointer-events-none" style={{
+        backgroundImage: `
+          linear-gradient(rgba(168,85,247,0.04) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(168,85,247,0.04) 1px, transparent 1px)`,
+        backgroundSize: '28px 28px'
+      }} />
+
+      <div className="flex flex-col min-h-screen relative">
         <SiteHeader />
         <TopNavV2 />
 
@@ -72,13 +80,13 @@ export default async function HomeV2Page() {
             <div className="flex items-start justify-between pt-2 pb-1 relative z-10">
               {/* Greeting text */}
               <div className="flex-1 pr-4">
-                <h1 className="text-2xl sm:text-3xl font-bold text-white leading-tight">
+                <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
                   {greeting},<br />
-                  <span className="text-purple-300">
+                  <span className="text-[#c084fc] font-extrabold">
                     {profile?.username || "there"}!
                   </span>
                 </h1>
-                <p className="text-white/40 text-xs mt-1">
+                <p className="text-[#94a3b8] text-xs font-normal mt-1">
                   {currentDate}
                 </p>
               </div>
@@ -89,20 +97,35 @@ export default async function HomeV2Page() {
               </div>
             </div>
 
-            {/* Donna says card - speech bubble feel, pulled up so avatar overlaps top edge */}
-            <div className="-mt-16 rounded-2xl rounded-tr-sm bg-gradient-to-br from-purple-900/80 to-purple-950/90 border border-purple-500/30 shadow-lg shadow-purple-900/30 p-4 relative z-10">
-              <p className="text-white font-bold text-base mb-1">
+            {/* Donna says card - glassmorphism */}
+            <div
+              className="rounded-2xl rounded-tr-sm p-4 relative overflow-hidden"
+              style={{
+                background: 'linear-gradient(145deg, rgba(59,7,100,0.6) 0%, rgba(88,28,135,0.4) 50%, rgba(59,7,100,0.5) 100%)',
+                backdropFilter: 'blur(20px)',
+                WebkitBackdropFilter: 'blur(20px)',
+                border: '1px solid rgba(192,132,252,0.22)',
+                boxShadow: `
+                  0 8px 32px rgba(59,7,100,0.4),
+                  0 2px 8px rgba(168,85,247,0.15),
+                  inset 0 1px 0 rgba(192,132,252,0.2)
+                `
+              }}
+            >
+              {/* Top shimmer */}
+              <div className="absolute top-0 left-[20%] right-[20%] h-px pointer-events-none" style={{
+                background: 'linear-gradient(90deg, transparent, rgba(201,132,252,0.6), transparent)'
+              }} />
+
+              <p className="text-[#e9d5ff] font-bold text-base mb-3">
                 Donna says:
               </p>
 
-              {/* Bullets - tighter spacing to heading */}
-              <div className="pr-0 pt-2">
-                <div className="space-y-3 text-white">
-                  <DonnaMessageBullets
-                    entries={entries}
-                    reminders={reminders || []}
-                  />
-                </div>
+              <div className="space-y-3 text-[#e9d5ff]">
+                <DonnaMessageBullets
+                  entries={entries}
+                  reminders={reminders || []}
+                />
               </div>
             </div>
 
