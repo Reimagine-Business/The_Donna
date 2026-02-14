@@ -98,31 +98,31 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
   const getEntryTypeColor = (type: string) => {
     switch (type) {
       case "Cash IN":
-        return "text-white border-green-500/30";
+        return "text-[#10b981] bg-[rgba(16,185,129,0.15)] border-transparent";
       case "Cash OUT":
-        return "text-white border-red-500/30";
+        return "text-[#ef4444] bg-[rgba(239,68,68,0.15)] border-transparent";
       case "Credit":
-        return "text-white border-blue-500/30";
+        return "text-[#60a5fa] bg-[rgba(96,165,250,0.15)] border-transparent";
       case "Advance":
-        return "text-white border-purple-500/30";
+        return "text-[#a78bfa] bg-[rgba(167,139,250,0.15)] border-transparent";
       case "Credit Settlement (Collections)":
-        return "text-white border-emerald-500/30";
+        return "text-[#34d399] bg-[rgba(52,211,153,0.15)] border-transparent";
       case "Credit Settlement (Bills)":
-        return "text-white border-orange-500/30";
+        return "text-[#fb923c] bg-[rgba(251,146,60,0.15)] border-transparent";
       case "Advance Settlement (Received)":
-        return "text-white border-teal-500/30";
+        return "text-[#2dd4bf] bg-[rgba(45,212,191,0.15)] border-transparent";
       case "Advance Settlement (Paid)":
-        return "text-white border-amber-500/30";
+        return "text-[#fbbf24] bg-[rgba(251,191,36,0.15)] border-transparent";
       default:
-        return "text-white border-gray-500/30";
+        return "text-white/70 bg-white/[0.08] border-transparent";
     }
   };
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-lg border border-purple-500/30 bg-purple-900/5 p-8">
+      <div className="rounded-2xl p-8 backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="text-center py-8">
-          <p className="text-purple-300">No entries found for selected period</p>
+          <p className="text-white/50">No entries found for selected period</p>
         </div>
       </div>
     );
@@ -131,11 +131,11 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
   return (
     <>
       {/* Compact Table Layout - Mobile Only with Horizontal Scroll */}
-      <div className="md:hidden bg-purple-900/10 border border-purple-500/30 rounded-lg overflow-hidden">
+      <div className="md:hidden rounded-2xl overflow-hidden backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
         <div className="overflow-x-auto -mx-0">
           <div className="min-w-[700px]">
             {/* Table Header */}
-            <div className="bg-purple-900/20 px-1.5 py-1.5 grid grid-cols-[45px_115px_75px_80px_75px_50px_35px] gap-1 text-[10px] font-semibold text-purple-300 border-b border-purple-500/30">
+            <div className="px-1.5 py-1.5 grid grid-cols-[45px_115px_75px_80px_75px_50px_35px] gap-1 text-[10px] font-semibold text-white/70 uppercase" style={{ background: 'rgba(139,92,246,0.15)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
               <div className="whitespace-nowrap">DATE</div>
               <div className="whitespace-nowrap">TYPE</div>
               <div className="text-left whitespace-nowrap">PARTY</div>
@@ -146,7 +146,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-purple-500/20">
+            <div className="divide-y divide-white/[0.06]">
               {entries.map((entry) => {
                 const isIncome =
                   entry.entry_type === "Cash IN" ||
@@ -157,14 +157,14 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 return (
                   <div
                     key={entry.id}
-                    className="px-1.5 py-1.5 grid grid-cols-[45px_115px_75px_80px_75px_50px_35px] gap-1 items-center hover:bg-purple-900/20 transition-colors"
+                    className="px-1.5 py-1.5 grid grid-cols-[45px_115px_75px_80px_75px_50px_35px] gap-1 items-center hover:bg-white/[0.03] transition-colors"
                   >
                 {/* Date */}
-                <div className="text-[10px] text-purple-300 whitespace-nowrap">
-                  <div className="font-semibold text-white text-xs">
+                <div className="text-[10px] whitespace-nowrap">
+                  <div className="font-bold text-white text-xs">
                     {format(new Date(entry.entry_date), "dd")}
                   </div>
-                  <div className="text-[9px]">
+                  <div className="text-[9px] text-white/50">
                     {format(new Date(entry.entry_date), "MMM")}
                   </div>
                 </div>
@@ -172,7 +172,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 {/* Entry Type */}
                 <div className="overflow-hidden flex items-center gap-1">
                   <span
-                    className={`inline-block px-1 py-0.5 rounded text-[9px] font-medium border truncate max-w-full ${getEntryTypeColor(
+                    className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-medium border truncate max-w-full ${getEntryTypeColor(
                       entry.entry_type
                     )}`}
                     title={entry.entry_type}
@@ -180,19 +180,19 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                     {entry.entry_type}
                   </span>
                   {entry.is_settlement && (
-                    <span className="text-[8px] text-purple-400" title="Settlement Entry">
+                    <span className="text-[8px] text-white/50" title="Settlement Entry">
                       ⚡
                     </span>
                   )}
                 </div>
 
                 {/* Party */}
-                <div className="text-[9px] text-purple-300 text-left truncate">
+                <div className="text-[9px] text-white/50 text-left truncate">
                   {entry.party?.name || "-"}
                 </div>
 
                 {/* Category */}
-                <div className="text-[10px] text-purple-200 text-left truncate">
+                <div className="text-[10px] text-white/70 text-left truncate">
                   {entry.category}
                 </div>
 
@@ -206,7 +206,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 </div>
 
                 {/* Payment Method */}
-                <div className="text-[9px] text-purple-300 text-center whitespace-nowrap">
+                <div className="text-[9px] text-white/50 text-center whitespace-nowrap">
                   {entry.payment_method || "None"}
                 </div>
 
@@ -217,7 +217,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                     onClick={() =>
                       isMenuOpen ? handleCloseMenu() : handleOpenMenu(entry.id)
                     }
-                    className="p-1 hover:bg-purple-600/30 text-purple-300 rounded transition-colors"
+                    className="p-1 hover:bg-white/[0.08] text-white/50 rounded transition-colors"
                     title="Actions"
                   >
                     <MoreVertical className="w-3 h-3" />
@@ -232,9 +232,9 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
       </div>
 
       {/* Desktop Table Layout - Hidden on Mobile */}
-      <div className="hidden md:block rounded-lg border border-purple-500/30 bg-purple-900/5 overflow-hidden">
+      <div className="hidden md:block rounded-2xl overflow-hidden backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
         {/* Table Header - Fixed Width Columns */}
-        <div className="grid grid-cols-[80px_120px_140px_110px_1fr_100px_50px] gap-4 px-4 py-3 bg-purple-900/20 border-b border-purple-500/30 font-medium text-sm uppercase tracking-wide text-purple-200">
+        <div className="grid grid-cols-[80px_120px_140px_110px_1fr_100px_50px] gap-4 px-4 py-3 font-medium text-sm uppercase tracking-wide text-white/70" style={{ background: 'rgba(139,92,246,0.15)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="text-left">DATE</div>
           <div className="text-left">ENTRY TYPE</div>
           <div className="text-left">PARTY</div>
@@ -245,7 +245,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
         </div>
 
         {/* Table Body - Matching Column Widths */}
-        <div className="divide-y divide-purple-500/20">
+        <div className="divide-y divide-white/[0.06]">
           {entries.map((entry) => {
             const isIncome =
               entry.entry_type === "Cash IN" ||
@@ -256,14 +256,14 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
             return (
               <div
                 key={entry.id}
-                className="grid grid-cols-[80px_120px_140px_110px_1fr_100px_50px] gap-4 px-4 py-4 hover:bg-purple-900/20 transition-colors items-center"
+                className="grid grid-cols-[80px_120px_140px_110px_1fr_100px_50px] gap-4 px-4 py-4 hover:bg-white/[0.03] transition-colors items-center"
               >
                 {/* Date - Fixed 80px */}
                 <div className="flex flex-col text-sm">
                   <span className="font-medium text-white text-base">
                     {format(new Date(entry.entry_date), "dd")}
                   </span>
-                  <span className="text-purple-400 text-xs">
+                  <span className="text-white/50 text-xs">
                     {format(new Date(entry.entry_date), "MMM")}
                   </span>
                 </div>
@@ -271,21 +271,21 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 {/* Entry Type - Fixed 120px */}
                 <div className="flex items-center gap-2">
                   <span
-                    className={`inline-flex items-center px-3 py-1 rounded text-xs font-medium border whitespace-nowrap ${getEntryTypeColor(
+                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${getEntryTypeColor(
                       entry.entry_type
                     )}`}
                   >
                     {entry.entry_type}
                   </span>
                   {entry.is_settlement && (
-                    <span className="text-xs text-purple-400" title="Settlement Entry">
+                    <span className="text-xs text-white/50" title="Settlement Entry">
                       ⚡
                     </span>
                   )}
                 </div>
 
                 {/* Party - Fixed 140px */}
-                <div className="text-sm text-purple-300 truncate">
+                <div className="text-sm text-white/50 truncate">
                   {entry.party?.name || "-"}
                 </div>
 
@@ -305,7 +305,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 {/* Payment Method - Fixed 110px */}
                 <div className="text-sm">
                   {entry.payment_method && (
-                    <span className="inline-flex items-center px-3 py-1 rounded bg-purple-900/30 text-purple-300 text-xs border border-purple-500/30 whitespace-nowrap">
+                    <span className="inline-flex items-center px-3 py-1 rounded-lg bg-white/[0.08] text-white/70 text-xs border border-white/[0.15] whitespace-nowrap">
                       {entry.payment_method}
                     </span>
                   )}
@@ -318,7 +318,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                     onClick={() =>
                       isMenuOpen ? handleCloseMenu() : handleOpenMenu(entry.id)
                     }
-                    className="p-2 hover:bg-purple-900/50 rounded-md transition-colors text-purple-300"
+                    className="p-2 hover:bg-white/[0.08] rounded-md transition-colors text-white/50"
                   >
                     <MoreVertical className="h-4 w-4" />
                   </button>
@@ -340,10 +340,14 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
 
           {/* Menu - Fixed position, won't be clipped by overflow containers */}
           <div
-            className="fixed z-50 w-48 bg-secondary border border-purple-500/30 rounded-lg shadow-xl overflow-hidden"
+            className="fixed z-50 w-48 rounded-xl shadow-xl overflow-hidden backdrop-blur-[10px]"
             style={{
-              top: `${menuPosition.top}px`,
-              left: `${menuPosition.left}px`,
+              ...{
+                top: `${menuPosition.top}px`,
+                left: `${menuPosition.left}px`,
+              },
+              background: 'rgba(255,255,255,0.05)',
+              border: '1px solid rgba(255,255,255,0.1)',
             }}
           >
             <button
@@ -351,7 +355,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 const entry = entries.find(e => e.id === openMenuId);
                 if (entry) handleView(entry);
               }}
-              className="w-full px-4 py-3 text-left text-sm text-white hover:bg-purple-900/30 transition-colors flex items-center gap-3"
+              className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/[0.05] transition-colors flex items-center gap-3"
             >
               <Eye className="w-4 h-4" />
               View Details
@@ -361,7 +365,8 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 const entry = entries.find(e => e.id === openMenuId);
                 if (entry) handleEdit(entry);
               }}
-              className="w-full px-4 py-3 text-left text-sm text-white hover:bg-purple-900/30 transition-colors flex items-center gap-3 border-t border-purple-500/20"
+              className="w-full px-4 py-3 text-left text-sm text-white hover:bg-white/[0.05] transition-colors flex items-center gap-3"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
             >
               <Edit2 className="w-4 h-4" />
               Edit Entry
@@ -371,7 +376,8 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 const entry = entries.find(e => e.id === openMenuId);
                 if (entry) handleDelete(entry);
               }}
-              className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-red-900/20 transition-colors flex items-center gap-3 border-t border-purple-500/20"
+              className="w-full px-4 py-3 text-left text-sm text-red-400 hover:bg-red-900/20 transition-colors flex items-center gap-3"
+              style={{ borderTop: '1px solid rgba(255,255,255,0.06)' }}
             >
               <Trash2 className="w-4 h-4" />
               Delete Entry

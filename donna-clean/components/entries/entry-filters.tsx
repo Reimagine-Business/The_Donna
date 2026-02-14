@@ -36,10 +36,10 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
   }
 
   return (
-    <div className="bg-purple-900/10 border border-purple-500/20 rounded-lg p-4 space-y-4">
+    <div className="p-4 space-y-4 rounded-2xl backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
       {/* Type Toggle */}
       <div>
-        <label className="block text-sm font-medium text-purple-300 mb-2">
+        <label className="block text-sm font-medium text-white/70 mb-2">
           Type
         </label>
         <div className="flex gap-2">
@@ -47,8 +47,8 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
             onClick={() => onFiltersChange({ ...filters, type: 'all' })}
             className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filters.type === 'all'
-                ? 'bg-purple-600 text-white'
-                : 'bg-purple-900/30 text-purple-300 hover:bg-purple-900/50'
+                ? 'bg-[#8b5cf6] text-white'
+                : 'bg-white/[0.08] text-white/70 hover:bg-white/[0.12]'
             }`}
           >
             All
@@ -58,7 +58,7 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
             className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filters.type === 'in'
                 ? 'bg-green-600 text-white'
-                : 'bg-purple-900/30 text-purple-300 hover:bg-purple-900/50'
+                : 'bg-white/[0.08] text-white/70 hover:bg-white/[0.12]'
             }`}
           >
             Cash In
@@ -68,7 +68,7 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
             className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
               filters.type === 'out'
                 ? 'bg-red-600 text-white'
-                : 'bg-purple-900/30 text-purple-300 hover:bg-purple-900/50'
+                : 'bg-white/[0.08] text-white/70 hover:bg-white/[0.12]'
             }`}
           >
             Cash Out
@@ -78,14 +78,14 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
 
       {/* Category Dropdown */}
       <div>
-        <label htmlFor="category-filter" className="block text-sm font-medium text-purple-300 mb-2">
+        <label htmlFor="category-filter" className="block text-sm font-medium text-white/70 mb-2">
           Category
         </label>
         <select
           id="category-filter"
           value={filters.category}
           onChange={(e) => onFiltersChange({ ...filters, category: e.target.value })}
-          className="w-full px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white placeholder-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-4 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#8b5cf6] focus:ring-1 focus:ring-[#8b5cf6]/30"
         >
           <option value="">All Categories</option>
           {categories
@@ -106,7 +106,7 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
       {/* Date Range */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          <label htmlFor="date-from" className="block text-sm font-medium text-purple-300 mb-2">
+          <label htmlFor="date-from" className="block text-sm font-medium text-white/70 mb-2">
             From
           </label>
           <input
@@ -114,11 +114,11 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
             id="date-from"
             value={filters.dateFrom}
             onChange={(e) => onFiltersChange({ ...filters, dateFrom: e.target.value })}
-            className="w-full px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white placeholder-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#8b5cf6] focus:ring-1 focus:ring-[#8b5cf6]/30"
           />
         </div>
         <div>
-          <label htmlFor="date-to" className="block text-sm font-medium text-purple-300 mb-2">
+          <label htmlFor="date-to" className="block text-sm font-medium text-white/70 mb-2">
             To
           </label>
           <input
@@ -126,14 +126,14 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
             id="date-to"
             value={filters.dateTo}
             onChange={(e) => onFiltersChange({ ...filters, dateTo: e.target.value })}
-            className="w-full px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white placeholder-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+            className="w-full px-4 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#8b5cf6] focus:ring-1 focus:ring-[#8b5cf6]/30"
           />
         </div>
       </div>
 
       {/* Search */}
       <div>
-        <label htmlFor="search" className="block text-sm font-medium text-purple-300 mb-2">
+        <label htmlFor="search" className="block text-sm font-medium text-white/70 mb-2">
           Search
         </label>
         <input
@@ -142,7 +142,7 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
           value={filters.search}
           onChange={(e) => onFiltersChange({ ...filters, search: e.target.value })}
           placeholder="Search description or notes..."
-          className="w-full px-4 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white placeholder-purple-400 focus:outline-none focus:ring-2 focus:ring-purple-500"
+          className="w-full px-4 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white placeholder-white/30 focus:outline-none focus:border-[#8b5cf6] focus:ring-1 focus:ring-[#8b5cf6]/30"
         />
       </div>
 
