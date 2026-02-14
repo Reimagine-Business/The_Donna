@@ -9,6 +9,7 @@ import {
   cleanDonnaResponse,
 } from "@/lib/donna-personality";
 import { buildChatFinancialContext } from "@/lib/financial-summary";
+import * as Sentry from "@sentry/nextjs";
 
 export const dynamic = "force-dynamic";
 
@@ -180,6 +181,9 @@ export async function POST(req: NextRequest) {
       reply = textBlock ? textBlock.text.trim() : "";
     } catch (claudeError) {
       console.error("[Donna Chat] Claude API error:", claudeError);
+      Sentry.captureException(claudeError, {
+        tags: { endpoint: "donna-chat", userId: user.id },
+      });
     }
 
     // Fallback if Claude failed or returned empty
@@ -197,29 +201,29 @@ export async function POST(req: NextRequest) {
       .trim();
 
     // ─────────────────────────────────────────────
-    // UPDATE USAGE COUNT (always runs)
+    // UPDATE USAGE + LOG (only if Claude succeeded)
     // ─────────────────────────────────────────────
-    if (todayUsage) {
-      await supabase
-        .from("chat_usage")
-        .update({
-          daily_count: dailyCount + 1,
-          updated_at: new Date().toISOString(),
-        })
-        .eq("user_id", user.id)
-        .eq("date", today);
-    } else {
-      await supabase.from("chat_usage").insert({
-        user_id: user.id,
-        date: today,
-        month_year: monthYear,
-        daily_count: 1,
-      });
+    if (claudeResponse) {
+      if (todayUsage) {
+        await supabase
+          .from("chat_usage")
+          .update({
+            daily_count: dailyCount + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id)
+          .eq("date", today);
+      } else {
+        await supabase.from("chat_usage").insert({
+          user_id: user.id,
+          date: today,
+          month_year: monthYear,
+          daily_count: 1,
+        });
+      }
     }
 
-    // ─────────────────────────────────────────────
-    // LOG USAGE FOR ADMIN (only if Claude succeeded)
-    // ─────────────────────────────────────────────
+    // Log token usage for admin cost tracking
     if (claudeResponse) {
       try {
         const adminClient = createClient(
@@ -246,15 +250,18 @@ export async function POST(req: NextRequest) {
       }
     }
 
+    const newDailyCount = claudeResponse ? dailyCount + 1 : dailyCount;
+    const newMonthlyCount = claudeResponse ? monthlyCount + 1 : monthlyCount;
+
     return NextResponse.json({
       reply,
       usage: {
-        dailyCount: dailyCount + 1,
-        monthlyCount: monthlyCount + 1,
+        dailyCount: newDailyCount,
+        monthlyCount: newMonthlyCount,
         dailyLimit: DAILY_LIMIT,
         monthlyLimit: MONTHLY_LIMIT,
-        dailyRemaining: DAILY_LIMIT - (dailyCount + 1),
-        monthlyRemaining: MONTHLY_LIMIT - (monthlyCount + 1),
+        dailyRemaining: DAILY_LIMIT - newDailyCount,
+        monthlyRemaining: MONTHLY_LIMIT - newMonthlyCount,
       },
     });
   } catch (error) {
