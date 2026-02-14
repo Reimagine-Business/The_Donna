@@ -120,7 +120,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
 
   if (entries.length === 0) {
     return (
-      <div className="rounded-2xl p-8 backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div className="rounded-2xl p-8 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
         <div className="text-center py-8">
           <p className="text-white/50">No entries found for selected period</p>
         </div>
@@ -131,7 +131,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
   return (
     <>
       {/* Compact Table Layout - Mobile Only with Horizontal Scroll */}
-      <div className="md:hidden rounded-2xl overflow-hidden backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div className="md:hidden rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
         <div className="overflow-x-auto -mx-0">
           <div className="min-w-[700px]">
             {/* Table Header */}
@@ -232,7 +232,7 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
       </div>
 
       {/* Desktop Table Layout - Hidden on Mobile */}
-      <div className="hidden md:block rounded-2xl overflow-hidden backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div className="hidden md:block rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
         {/* Table Header - Fixed Width Columns */}
         <div className="grid grid-cols-[80px_120px_140px_110px_1fr_100px_50px] gap-4 px-4 py-3 font-medium text-sm uppercase tracking-wide text-white/70" style={{ background: 'rgba(139,92,246,0.15)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div className="text-left">DATE</div>

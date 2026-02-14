@@ -51,7 +51,7 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
-      <div className="w-full max-w-md rounded-2xl p-6 backdrop-blur-[10px]" style={{ background: 'rgba(15,15,35,0.95)', border: '1px solid rgba(255,255,255,0.1)' }}>
+      <div className="w-full max-w-md rounded-2xl p-6 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
           <h2 className="text-xl font-bold text-white">Add Reminder</h2>

@@ -225,8 +225,8 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
-        <div className="sticky top-0 p-4 flex justify-between items-center backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
+        <div className="sticky top-0 p-4 flex justify-between items-center" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.6), rgba(15,15,35,0.9))', borderBottom: '1px solid rgba(192,132,252,0.15)' }}>
           <div>
             <h2 className="text-xl font-semibold text-white">Edit Entry</h2>
             <div className="flex items-center gap-2 mt-1 text-xs text-white/50">

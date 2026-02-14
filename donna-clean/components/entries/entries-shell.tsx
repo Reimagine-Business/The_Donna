@@ -357,7 +357,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
         {/* ========== ALWAYS SHOW FORM AT TOP ========== */}
         <div className="space-y-6">
             {/* Create Form Card */}
-            <div className="p-6 rounded-2xl backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+            <div className="p-6 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
               <form onSubmit={handleFormSubmit} className="space-y-4">
                 {/* Entry Type and Category Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -423,7 +423,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                       placeholder="0.00"
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white placeholder:text-white/30 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      className="w-full rounded-lg bg-white/[0.08] border border-white/[0.15] px-3 py-2 text-white placeholder:text-white/30 focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
                       disabled={submitting}
                       required
                     />
@@ -490,7 +490,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                     rows={3}
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white placeholder:text-white/30 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 resize-none"
+                    className="w-full rounded-lg bg-white/[0.08] border border-white/[0.15] px-3 py-2 text-white placeholder:text-white/30 focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 resize-none"
                     disabled={submitting}
                   />
                 </div>

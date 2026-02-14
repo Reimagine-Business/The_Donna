@@ -36,7 +36,7 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
   }
 
   return (
-    <div className="p-4 space-y-4 rounded-2xl backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+    <div className="p-4 space-y-4 rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
       {/* Type Toggle */}
       <div>
         <label className="block text-sm font-medium text-white/70 mb-2">

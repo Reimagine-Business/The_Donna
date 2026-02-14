@@ -458,7 +458,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
       </div>
 
       {/* Balances */}
-      <div className="bg-green-900/10 border border-green-500/20 rounded-lg p-3">
+      <div className="rounded-2xl p-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
         <h3 className="text-sm font-semibold text-white mb-2">Balances</h3>
 
         {/* Cash */}
@@ -496,7 +496,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
 
       <div className="space-y-4 mt-4">
         {/* PENDING COLLECTIONS */}
-        <div className="rounded-2xl p-5 backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="rounded-2xl p-5 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-3 mb-3">
@@ -537,7 +537,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
 
         {/* PENDING BILLS */}
-        <div className="rounded-2xl p-5 backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="rounded-2xl p-5 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-3 mb-3">
@@ -575,7 +575,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
 
         {/* ADVANCE */}
-        <div className="rounded-2xl p-5 backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="rounded-2xl p-5 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-2 mb-3">
