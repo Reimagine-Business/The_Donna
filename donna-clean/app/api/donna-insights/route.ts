@@ -9,6 +9,7 @@ import {
   cleanDonnaResponse,
 } from "@/lib/donna-personality";
 import { buildFinancialSummary } from "@/lib/financial-summary";
+import * as Sentry from "@sentry/nextjs";
 
 export const dynamic = "force-dynamic";
 
@@ -85,12 +86,46 @@ export async function GET() {
     }
 
     const client = new Anthropic({ apiKey });
-    const response = await client.messages.create({
-      model: "claude-sonnet-4-5-20250929",
-      max_tokens: 150,
-      temperature: 0.7,
-      messages: [{ role: "user", content: fullPrompt }],
-    });
+    let response: Anthropic.Message;
+
+    try {
+      response = await client.messages.create({
+        model: "claude-sonnet-4-5-20250929",
+        max_tokens: 150,
+        temperature: 0.7,
+        messages: [{ role: "user", content: fullPrompt }],
+      });
+    } catch (aiError) {
+      console.error("[Donna Insights] Claude API error:", aiError);
+      Sentry.captureException(aiError, {
+        tags: { endpoint: "donna-insights", userId: user.id },
+      });
+
+      // Fall back to cached insights from profile
+      if (profile?.cached_insights) {
+        try {
+          const cachedBullets = JSON.parse(profile.cached_insights);
+          if (Array.isArray(cachedBullets) && cachedBullets.length > 0) {
+            return NextResponse.json({
+              bullets: cachedBullets,
+              additionalCount: 0,
+              cached: true,
+            });
+          }
+        } catch {
+          // Invalid cached data — use fallback below
+        }
+      }
+
+      // No cache available — return friendly fallback (never 500)
+      return NextResponse.json({
+        bullets: [
+          "I'm taking a short break right now. Your recent entries are recorded safely — I'll have fresh insights for you soon.",
+        ],
+        additionalCount: 0,
+        cached: true,
+      });
+    }
 
     // Log AI usage for cost tracking
     try {
@@ -171,8 +206,11 @@ export async function GET() {
           insights_cached_at: new Date().toISOString(),
         })
         .eq("user_id", user.id);
-    } catch {
-      // Cache save failure is non-critical
+    } catch (cacheErr) {
+      console.warn("[Donna Insights] Cache save failed:", cacheErr);
+      Sentry.captureException(cacheErr, {
+        tags: { endpoint: "donna-insights", action: "cache-save" },
+      });
     }
 
     // Get reminder counts for additionalCount
@@ -197,7 +235,16 @@ export async function GET() {
     });
   } catch (error) {
     console.error("[Donna AI] Error:", error);
-    return NextResponse.json({ error: "Failed to generate insights" }, { status: 500 });
+    Sentry.captureException(error, {
+      tags: { endpoint: "donna-insights" },
+    });
+    return NextResponse.json({
+      bullets: [
+        "I'm taking a short break right now. Your recent entries are recorded safely — I'll have fresh insights for you soon.",
+      ],
+      additionalCount: 0,
+      cached: true,
+    });
   }
 }
 
