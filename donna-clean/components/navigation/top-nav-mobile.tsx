@@ -48,11 +48,11 @@ export function TopNavMobile() {
           {/* Left: Donna Logo */}
           <div className="flex-shrink-0">
             <Image
-              src="/donna-logo.png"
-              alt="Donna"
-              width={40}
-              height={40}
-              className="rounded-lg"
+              src="/images/donna/donna-logo.png"
+              alt="The Donna"
+              width={32}
+              height={32}
+              className="h-8 w-auto object-contain"
             />
           </div>
 
