@@ -19,15 +19,12 @@ export function BottomNav() {
     <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0f172a] border-t border-white/10 h-24 md:hidden">
       <div className="h-full flex items-center justify-evenly px-4">
         {navItems.map((item) => {
-          // Treat home-v2 as active for Home tab
-          const isActive =
-            pathname === item.href ||
-            (item.href === "/home" && pathname === "/home-v2");
+          const isActive = pathname === item.href;
           const Icon = item.icon;
           return (
             <Link
               key={item.href}
-              href={item.href === "/home" ? "/home-v2" : item.href}
+              href={item.href}
               prefetch={true}
               className="flex flex-col items-center gap-1 transition-all"
             >

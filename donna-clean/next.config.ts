@@ -5,6 +5,17 @@ import { withSentryConfig } from "@sentry/nextjs";
 const nextConfig = {
   turbopack: {},   // this disables Turbopack and forces stable Webpack
 
+  // Redirect old /home-v2 bookmarks/cache to canonical /home
+  async redirects() {
+    return [
+      {
+        source: '/home-v2',
+        destination: '/home',
+        permanent: true,
+      },
+    ];
+  },
+
   // Security headers for production hardening
   async headers() {
     return [
