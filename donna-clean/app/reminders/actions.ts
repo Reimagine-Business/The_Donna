@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
+import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
 
 export async function createReminder(formData: FormData) {
   const supabase = await createSupabaseServerClient();
@@ -9,6 +10,16 @@ export async function createReminder(formData: FormData) {
 
   if (!user) {
     return { error: "Unauthorized" };
+  }
+
+  // Rate limiting: 10 creates per minute per user
+  try {
+    await checkRateLimit(user.id, 'reminder-create');
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { error: "Too many requests. Please try again shortly." };
+    }
+    console.warn('Rate limit check failed:', error);
   }
 
   const title = formData.get("title") as string;
@@ -135,6 +146,16 @@ export async function updateReminder(reminderId: string, formData: FormData) {
     return { error: "Unauthorized" };
   }
 
+  // Rate limiting: 15 updates per minute per user
+  try {
+    await checkRateLimit(user.id, 'reminder-update');
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { error: "Too many requests. Please try again shortly." };
+    }
+    console.warn('Rate limit check failed:', error);
+  }
+
   const { error } = await supabase
     .from("reminders")
     .update({
@@ -163,6 +184,16 @@ export async function deleteReminder(reminderId: string) {
 
   if (!user) {
     return { error: "Unauthorized" };
+  }
+
+  // Rate limiting: 10 deletes per minute per user
+  try {
+    await checkRateLimit(user.id, 'reminder-delete');
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { error: "Too many requests. Please try again shortly." };
+    }
+    console.warn('Rate limit check failed:', error);
   }
 
   const { error } = await supabase

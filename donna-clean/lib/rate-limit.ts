@@ -19,6 +19,14 @@ const RATE_LIMITS: Record<string, RateLimitConfig> = {
   'update-party': { limit: 100, window: 3600 },       // 100 per hour
   'login': { limit: 10, window: 900 },                // 10 per 15 min
   'signup': { limit: 5, window: 3600 },               // 5 per hour
+  'entry-delete': { limit: 20, window: 60 },          // 20 per minute
+  'settlement-delete': { limit: 10, window: 60 },     // 10 per minute
+  'reminder-create': { limit: 10, window: 60 },       // 10 per minute
+  'reminder-update': { limit: 15, window: 60 },       // 15 per minute
+  'reminder-delete': { limit: 10, window: 60 },       // 10 per minute
+  'health-check': { limit: 10, window: 60 },          // 10 per minute
+  'business-profile': { limit: 20, window: 60 },      // 20 per minute
+  'revalidate': { limit: 10, window: 60 },            // 10 per minute
   'default': { limit: 100, window: 3600 },            // Default: 100 per hour
 }
 

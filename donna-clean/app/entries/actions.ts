@@ -714,6 +714,16 @@ export async function deleteEntry(id: string) {
     return { success: false, error: "Not authenticated" }
   }
 
+  // Rate limiting: 20 deletions per minute per user
+  try {
+    await checkRateLimit(user.id, 'entry-delete')
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { success: false, error: "Too many requests. Please try again shortly." }
+    }
+    console.warn('Rate limit check failed:', error)
+  }
+
   // First, get the entry to check if it's settled and its type
   const { data: entry, error: fetchError } = await supabase
     .from('entries')

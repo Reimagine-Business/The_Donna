@@ -1,31 +1,23 @@
-import { NextResponse } from "next/server";
-import { createSupabaseServerClient } from "@/utils/supabase/server";
+import { NextRequest, NextResponse } from "next/server";
+import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Rate limiting: 10 requests per minute (by IP, no auth required)
+  const ip = request.headers.get("x-forwarded-for")?.split(",")[0]?.trim() || "anonymous";
   try {
-    // Check database connection
-    const supabase = await createSupabaseServerClient();
-    const { error } = await supabase.from("entries").select("count").limit(1);
-
-    if (error) {
+    await checkRateLimit(ip, 'health-check');
+  } catch (error) {
+    if (error instanceof RateLimitError) {
       return NextResponse.json(
-        { status: "unhealthy", error: "Database connection failed" },
-        { status: 503 }
+        { error: "Too many requests. Please try again shortly." },
+        { status: 429 }
       );
     }
-
-    return NextResponse.json({
-      status: "healthy",
-      timestamp: new Date().toISOString(),
-      services: {
-        database: "ok",
-        api: "ok",
-      },
-    });
-  } catch (error) {
-    return NextResponse.json(
-      { status: "unhealthy", error: "System error" },
-      { status: 503 }
-    );
+    console.warn('Rate limit check failed:', error);
   }
+
+  return NextResponse.json({
+    status: "ok",
+    timestamp: Date.now(),
+  });
 }
