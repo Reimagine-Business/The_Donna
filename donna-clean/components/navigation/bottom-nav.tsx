@@ -16,7 +16,15 @@ export function BottomNav() {
   const pathname = usePathname();
 
   return (
-    <nav className="fixed bottom-0 left-0 right-0 z-50 bg-[#0f172a] border-t border-white/10 h-24 md:hidden">
+    <nav
+      className="fixed bottom-0 left-0 right-0 z-50 h-24 md:hidden"
+      style={{
+        background: 'rgba(10,10,28,0.96)',
+        backdropFilter: 'blur(24px)',
+        WebkitBackdropFilter: 'blur(24px)',
+        borderTop: '1px solid rgba(192,132,252,0.1)',
+      }}
+    >
       <div className="h-full flex items-center justify-evenly px-4">
         {navItems.map((item) => {
           const isActive = pathname === item.href;
@@ -29,38 +37,27 @@ export function BottomNav() {
               className="flex flex-col items-center gap-1 transition-all"
             >
               <div className="relative flex items-center justify-center">
-                {/* Cyan glow behind active icon */}
-                {isActive && (
-                  <div
-                    className="absolute w-16 h-16 rounded-full"
-                    style={{
-                      background:
-                        "radial-gradient(circle, rgba(34,211,238,0.3) 0%, transparent 70%)",
-                      filter: "blur(8px)",
-                    }}
-                  />
-                )}
-
-                {/* Icon circle */}
+                {/* Icon container */}
                 <div
-                  className={`relative flex h-14 w-14 items-center justify-center rounded-full transition-all ${
+                  className={`relative flex h-14 w-14 items-center justify-center rounded-xl transition-all ${
                     isActive
-                      ? "bg-gradient-to-br from-[#7c3aed] via-[#a855f7] to-[#c084fc] shadow-lg shadow-purple-500/30"
-                      : "bg-white/5 border border-white/10"
+                      ? "bg-[rgba(168,85,247,0.15)] border border-[rgba(168,85,247,0.3)]"
+                      : ""
                   }`}
+                  style={isActive ? { boxShadow: '0 0 12px rgba(168,85,247,0.2)' } : undefined}
                 >
                   <Icon
                     size={22}
                     strokeWidth={2}
                     className={
-                      isActive ? "text-white" : "text-white/50"
+                      isActive ? "text-[#a855f7]" : "text-[#94a3b8]"
                     }
                   />
                 </div>
               </div>
               <span
                 className={`text-[10px] font-medium transition-colors ${
-                  isActive ? "text-white" : "text-white/50"
+                  isActive ? "text-[#a855f7]" : "text-[#94a3b8]"
                 }`}
               >
                 {item.label}
