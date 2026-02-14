@@ -129,7 +129,7 @@ export function PartySelector({
 
   return (
     <div className="space-y-2">
-      <label className="block text-sm font-medium text-purple-200">
+      <label className="block text-sm font-medium text-white/70">
         {partyLabel} {required && <span className="text-red-400">*</span>}
         {!required && <span className="text-gray-400 ml-2">(Optional)</span>}
       </label>
@@ -146,7 +146,7 @@ export function PartySelector({
                 onChange(e.target.value || undefined);
               }
             }}
-            className="w-full px-4 py-2.5 rounded-lg bg-purple-900/20 border border-purple-500/30 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 transition-colors"
+            className="w-full px-4 py-2.5 rounded-lg bg-white/[0.08] border border-white/[0.15] text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 transition-colors"
             required={required}
             disabled={loading}
           >
@@ -167,22 +167,22 @@ export function PartySelector({
               </option>
             ))}
 
-            <option value="__new__" className="font-semibold text-purple-300">
+            <option value="__new__" className="font-semibold text-white/50">
               + Add new {partyLabel.toLowerCase()}...
             </option>
           </select>
         </div>
       ) : (
         /* ========== NEW PARTY CREATION FORM ========== */
-        <div className="space-y-3 p-4 bg-purple-900/10 border border-purple-500/30 rounded-lg">
+        <div className="space-y-3 p-4 bg-white/[0.05] border border-white/10 rounded-lg">
           <div className="flex items-center justify-between mb-2">
-            <h4 className="text-sm font-semibold text-purple-200">
+            <h4 className="text-sm font-semibold text-white/70">
               Create New {partyLabel}
             </h4>
             <button
               type="button"
               onClick={handleCancel}
-              className="p-1 text-purple-300 hover:text-white transition-colors"
+              className="p-1 text-white/50 hover:text-white transition-colors"
               title="Cancel"
             >
               <X className="w-4 h-4" />
@@ -191,7 +191,7 @@ export function PartySelector({
 
           {/* Party Name Input */}
           <div>
-            <label className="block text-xs font-medium text-purple-300 mb-1">
+            <label className="block text-xs font-medium text-white/50 mb-1">
               Name <span className="text-red-400">*</span>
             </label>
             <input
@@ -199,7 +199,7 @@ export function PartySelector({
               value={newPartyName}
               onChange={(e) => setNewPartyName(e.target.value)}
               placeholder={`Enter ${partyLabel.toLowerCase()} name...`}
-              className="w-full px-3 py-2 rounded-lg bg-purple-900/20 border border-purple-500/30 text-white placeholder:text-purple-400/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+              className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.15] text-white placeholder:text-white/30 focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               autoFocus
               disabled={creating}
             />
@@ -207,7 +207,7 @@ export function PartySelector({
 
           {/* Party Mobile Input (Optional) */}
           <div>
-            <label className="block text-xs font-medium text-purple-300 mb-1">
+            <label className="block text-xs font-medium text-white/50 mb-1">
               Mobile (optional)
             </label>
             <input
@@ -215,7 +215,7 @@ export function PartySelector({
               value={newPartyMobile}
               onChange={(e) => setNewPartyMobile(e.target.value)}
               placeholder="Enter mobile number..."
-              className="w-full px-3 py-2 rounded-lg bg-purple-900/20 border border-purple-500/30 text-white placeholder:text-purple-400/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+              className="w-full px-3 py-2 rounded-lg bg-white/[0.08] border border-white/[0.15] text-white placeholder:text-white/30 focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               disabled={creating}
             />
           </div>
@@ -226,7 +226,7 @@ export function PartySelector({
               type="button"
               onClick={handleCreateParty}
               disabled={creating || !newPartyName.trim()}
-              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
+              className="flex-1 flex items-center justify-center gap-2 px-4 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] disabled:bg-[#8b5cf6]/50 text-white rounded-lg font-medium transition-colors disabled:cursor-not-allowed"
             >
               {creating ? (
                 <>
@@ -245,7 +245,7 @@ export function PartySelector({
               type="button"
               onClick={handleCancel}
               disabled={creating}
-              className="px-4 py-2 bg-gray-600 hover:bg-gray-700 disabled:bg-gray-600/50 text-white rounded-lg font-medium transition-colors"
+              className="px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] border border-white/[0.15] disabled:bg-white/[0.05] text-white rounded-lg font-medium transition-colors"
             >
               Cancel
             </button>
@@ -254,7 +254,7 @@ export function PartySelector({
       )}
 
       {/* Helper Text */}
-      <p className="text-xs text-purple-400/70">
+      <p className="text-xs text-[#8b5cf6]">
         {required ? (
           partyType === 'Customer'
             ? "Select or create a customer for this sale/collection"

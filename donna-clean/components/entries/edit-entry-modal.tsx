@@ -225,35 +225,35 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-secondary rounded-lg w-full max-w-md max-h-[90vh] overflow-y-auto">
-        <div className="sticky top-0 bg-secondary border-b border-gray-700 p-4 flex justify-between items-center">
+      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
+        <div className="sticky top-0 p-4 flex justify-between items-center backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
           <div>
             <h2 className="text-xl font-semibold text-white">Edit Entry</h2>
-            <div className="flex items-center gap-2 mt-1 text-xs text-gray-400">
+            <div className="flex items-center gap-2 mt-1 text-xs text-white/50">
               <Clock className="w-3 h-3" />
               <span>Created {formatDistanceToNow(new Date(entry.created_at), { addSuffix: true })}</span>
             </div>
           </div>
           <button
             onClick={onClose}
-            className="p-1 hover:bg-gray-700 rounded-full transition-colors"
+            className="p-1 hover:bg-white/[0.08] rounded-full transition-colors"
             disabled={loading}
           >
-            <X className="w-5 h-5 text-gray-400" />
+            <X className="w-5 h-5 text-white/50" />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           {/* Entry Type */}
           <div>
-            <label htmlFor="entry-type" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="entry-type" className="block text-sm font-medium text-white/70 mb-2">
               Entry Type <span className="text-red-500">*</span>
             </label>
             <select
               id="entry-type"
               value={entryType}
               onChange={(e) => handleEntryTypeChange(e.target.value as EntryType)}
-              className="w-full px-3 py-2 bg-[#0f1729] border border-gray-700 rounded-md text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               disabled={loading}
             >
               {ENTRY_TYPES.map((type) => (
@@ -269,14 +269,14 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
           {/* Category */}
           <div>
-            <label htmlFor="category" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="category" className="block text-sm font-medium text-white/70 mb-2">
               Category <span className="text-red-500">*</span>
             </label>
             <select
               id="category"
               value={category}
               onChange={(e) => handleCategoryChange(e.target.value as CategoryType)}
-              className="w-full px-3 py-2 bg-[#0f1729] border border-gray-700 rounded-md text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               disabled={loading}
             >
               {CATEGORIES.map((cat) => (
@@ -292,7 +292,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
           {/* Amount */}
           <div>
-            <label htmlFor="amount" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="amount" className="block text-sm font-medium text-white/70 mb-2">
               Amount (₹) <span className="text-red-500">*</span>
             </label>
             <input
@@ -303,7 +303,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
               value={amount}
               onChange={(e) => handleAmountChange(e.target.value)}
               placeholder="0.00"
-              className="w-full px-3 py-2 bg-[#0f1729] border border-gray-700 rounded-md text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               disabled={loading}
             />
             {errors.amount && (
@@ -313,7 +313,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
           {/* Date */}
           <div>
-            <label htmlFor="entry-date" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="entry-date" className="block text-sm font-medium text-white/70 mb-2">
               Date <span className="text-red-500">*</span>
             </label>
             <input
@@ -322,7 +322,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
               value={entryDate}
               onChange={(e) => handleDateChange(e.target.value)}
               max={format(new Date(), 'yyyy-MM-dd')}
-              className="w-full px-3 py-2 bg-[#0f1729] border border-gray-700 rounded-md text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent"
+              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               disabled={loading}
             />
             {errors.entryDate && (
@@ -332,14 +332,14 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
           {/* Payment Method */}
           <div>
-            <label htmlFor="payment-method" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="payment-method" className="block text-sm font-medium text-white/70 mb-2">
               Payment Method
             </label>
             <select
               id="payment-method"
               value={paymentMethod}
               onChange={(e) => handlePaymentMethodChange(e.target.value as PaymentMethodType)}
-              className="w-full px-3 py-2 bg-[#0f1729] border border-gray-700 rounded-md text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || entryType === 'Credit'}
             >
               {getPaymentMethodOptions().map((method) => (
@@ -354,14 +354,14 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
             {/* Helper text for Credit entries */}
             {entryType === 'Credit' && (
-              <p className="mt-1 text-xs text-blue-400">
+              <p className="mt-1 text-xs text-[#8b5cf6]">
                 💡 Credit transactions don't require payment method - money not exchanged yet
               </p>
             )}
 
             {/* Helper text for Advance entries */}
             {entryType === 'Advance' && (
-              <p className="mt-1 text-xs text-blue-400">
+              <p className="mt-1 text-xs text-[#8b5cf6]">
                 💡 Advance requires actual payment (Cash or Bank Transfer)
               </p>
             )}
@@ -370,12 +370,12 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
           {/* Settled checkbox (for Credit and Advance) */}
           {(entryType === 'Credit' || entryType === 'Advance') && (
             <div>
-              <label className="flex items-center space-x-2 text-sm text-gray-300">
+              <label className="flex items-center space-x-2 text-sm text-white/70">
                 <input
                   type="checkbox"
                   checked={settled}
                   onChange={(e) => setSettled(e.target.checked)}
-                  className="w-4 h-4 bg-[#0f1729] border border-gray-700 rounded focus:ring-2 focus:ring-violet-500"
+                  className="w-4 h-4 bg-white/[0.08] border border-white/[0.15] rounded focus:ring-2 focus:ring-[#8b5cf6]"
                   disabled={loading}
                 />
                 <span>Mark as settled</span>
@@ -385,7 +385,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
           {/* Notes */}
           <div>
-            <label htmlFor="notes" className="block text-sm font-medium text-gray-300 mb-2">
+            <label htmlFor="notes" className="block text-sm font-medium text-white/70 mb-2">
               Notes
             </label>
             <textarea
@@ -394,7 +394,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
               onChange={(e) => handleNotesChange(e.target.value)}
               rows={3}
               placeholder="Additional notes (optional)"
-              className="w-full px-3 py-2 bg-[#0f1729] border border-gray-700 rounded-md text-white focus:ring-2 focus:ring-violet-500 focus:border-transparent resize-none"
+              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 resize-none"
               disabled={loading}
             />
             {errors.notes && (
@@ -407,7 +407,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 px-4 py-2 bg-gray-700 hover:bg-gray-600 text-white rounded-md transition-colors"
+              className="flex-1 px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] border border-white/[0.15] text-white rounded-lg transition-colors"
               disabled={loading}
             >
               Cancel
@@ -415,7 +415,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
             <button
               type="submit"
               disabled={!isFormValid() || loading}
-              className="flex-1 px-4 py-2 bg-violet-600 hover:bg-violet-700 disabled:bg-gray-600 disabled:cursor-not-allowed text-white rounded-md transition-colors"
+              className="flex-1 px-4 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] disabled:bg-white/[0.08] disabled:cursor-not-allowed text-white rounded-lg transition-colors"
             >
               {loading ? 'Updating...' : 'Update Entry'}
             </button>

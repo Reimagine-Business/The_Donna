@@ -357,18 +357,18 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
         {/* ========== ALWAYS SHOW FORM AT TOP ========== */}
         <div className="space-y-6">
             {/* Create Form Card */}
-            <div className="rounded-lg border border-purple-500/30 bg-purple-900/10 p-6">
+            <div className="p-6 rounded-2xl backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
               <form onSubmit={handleFormSubmit} className="space-y-4">
                 {/* Entry Type and Category Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-purple-200 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Entry Type <span className="text-red-400">*</span>
                     </label>
                     <select
                       value={formData.entryType}
                       onChange={(e) => setFormData({ ...formData, entryType: e.target.value as EntryType })}
-                      className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      className="w-full px-3 py-2 text-white rounded-lg bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
                       disabled={submitting}
                     >
                       <option value="Cash IN">Cash IN</option>
@@ -379,13 +379,13 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-purple-200 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Category <span className="text-red-400">*</span>
                     </label>
                     <select
                       value={formData.category}
                       onChange={(e) => setFormData({ ...formData, category: e.target.value as CategoryType })}
-                      className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      className="w-full px-3 py-2 text-white rounded-lg bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
                       disabled={availableCategories.length === 0 || submitting}
                     >
                       {availableCategories.length === 0 && (
@@ -398,12 +398,12 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                       ))}
                     </select>
                     {formData.entryType === 'Cash IN' && (
-                      <p className="text-xs text-purple-400/70 mt-1">
+                      <p className="text-xs text-[#8b5cf6] mt-1">
                         Cash IN entries must use Sales category
                       </p>
                     )}
                     {formData.entryType === 'Cash OUT' && (
-                      <p className="text-xs text-purple-400/70 mt-1">
+                      <p className="text-xs text-[#8b5cf6] mt-1">
                         Cash OUT entries cannot use Sales category
                       </p>
                     )}
@@ -413,7 +413,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                 {/* Amount and Payment Method Row */}
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-sm font-medium text-purple-200 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Amount (₹) <span className="text-red-400">*</span>
                     </label>
                     <input
@@ -423,20 +423,20 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                       placeholder="0.00"
                       value={formData.amount}
                       onChange={(e) => setFormData({ ...formData, amount: e.target.value })}
-                      className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white placeholder:text-purple-400/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white placeholder:text-white/30 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
                       disabled={submitting}
                       required
                     />
                   </div>
 
                   <div>
-                    <label className="block text-sm font-medium text-purple-200 mb-2">
+                    <label className="block text-sm font-medium text-white/70 mb-2">
                       Payment Method
                     </label>
                     <select
                       value={formData.paymentMethod}
                       onChange={(e) => setFormData({ ...formData, paymentMethod: e.target.value as PaymentMethodType })}
-                      className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      className="w-full px-3 py-2 text-white rounded-lg bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
                       disabled={submitting || formData.entryType === 'Credit'}
                     >
                       <option value="Cash">Cash</option>
@@ -449,7 +449,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                       </option>
                     </select>
                     {formData.entryType === 'Credit' && (
-                      <p className="text-xs text-purple-400/70 mt-1">
+                      <p className="text-xs text-[#8b5cf6] mt-1">
                         Credit entries use "None" payment method
                       </p>
                     )}
@@ -467,7 +467,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
 
                 {/* Date */}
                 <div>
-                  <label className="block text-sm font-medium text-purple-200 mb-2">
+                  <label className="block text-sm font-medium text-white/70 mb-2">
                     Date
                   </label>
                   <input
@@ -475,14 +475,14 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                     value={formData.date}
                     onChange={(e) => setFormData({ ...formData, date: e.target.value })}
                     max={format(new Date(), 'yyyy-MM-dd')}
-                    className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                    className="w-full px-3 py-2 text-white rounded-lg bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
                     disabled={submitting}
                   />
                 </div>
 
                 {/* Notes */}
                 <div>
-                  <label className="block text-sm font-medium text-purple-200 mb-2">
+                  <label className="block text-sm font-medium text-white/70 mb-2">
                     Notes
                   </label>
                   <textarea
@@ -490,7 +490,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                     rows={3}
                     value={formData.notes}
                     onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
-                    className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white placeholder:text-purple-400/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 resize-none"
+                    className="w-full rounded-md border border-purple-500/30 bg-purple-900/20 px-3 py-2 text-white placeholder:text-white/30 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20 resize-none"
                     disabled={submitting}
                   />
                 </div>
@@ -499,7 +499,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                 <button
                   type="submit"
                   disabled={submitting || !formData.amount}
-                  className="w-full md:w-auto px-6 py-2 bg-purple-600 hover:bg-purple-700 disabled:bg-purple-600/50 disabled:cursor-not-allowed text-white rounded-md font-medium transition-colors"
+                  className="w-full md:w-auto px-6 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] disabled:bg-[#8b5cf6]/50 disabled:cursor-not-allowed text-white rounded-lg font-medium transition-colors"
                 >
                   {submitting ? 'Recording...' : 'Record Daily Entry'}
                 </button>
@@ -512,7 +512,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
               <div className="flex items-center justify-between mb-4">
                 <div>
                   <h2 className="text-base md:text-xl font-semibold text-white">Transaction History</h2>
-                  <p className="text-xs text-purple-400 mt-0.5">
+                  <p className="text-xs text-white/50 mt-0.5">
                     Showing {entries.length} of {totalCount} entries
                   </p>
                 </div>
@@ -520,11 +520,11 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                 <div className="flex items-center gap-2 flex-wrap">
                   {/* Entry Type Filter */}
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-purple-400">Type:</span>
+                    <span className="text-xs text-white/50">Type:</span>
                     <select
                       value={entryTypeFilter}
                       onChange={(e) => handleEntryTypeFilterChange(e.target.value)}
-                      className="px-2 py-1 rounded-md border border-purple-500/30 bg-purple-900/20 text-white text-xs focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      className="px-2 py-1 rounded-lg text-white text-xs bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
                     >
                       <option value="all">All Types</option>
                       <option value="Cash IN">Cash IN</option>
@@ -540,11 +540,11 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
 
                   {/* Date Filter */}
                   <div className="flex items-center gap-1.5">
-                    <span className="text-xs text-purple-400">Date:</span>
+                    <span className="text-xs text-white/50">Date:</span>
                     <select
                       value={dateFilter}
                       onChange={(e) => handleDateFilterChange(e.target.value)}
-                      className="px-2 py-1 rounded-md border border-purple-500/30 bg-purple-900/20 text-white text-xs focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20"
+                      className="px-2 py-1 rounded-lg text-white text-xs bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
                     >
                       <option value="this-month">This Month</option>
                       <option value="last-month">Last Month</option>
@@ -559,7 +559,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                     <>
                       <Popover>
                         <PopoverTrigger asChild>
-                          <button className="px-2 py-1 rounded-md border border-purple-500/30 bg-purple-900/20 text-white text-xs hover:bg-purple-900/40 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20">
+                          <button className="px-2 py-1 rounded-lg text-white text-xs bg-white/[0.08] border border-white/[0.15] hover:bg-white/[0.12] focus:border-[#8b5cf6] focus:outline-none">
                             {customFromDate ? format(customFromDate, "MMM dd, yyyy") : "From"}
                           </button>
                         </PopoverTrigger>
@@ -573,11 +573,11 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                         </PopoverContent>
                       </Popover>
 
-                      <span className="text-xs text-purple-400">to</span>
+                      <span className="text-xs text-white/50">to</span>
 
                       <Popover>
                         <PopoverTrigger asChild>
-                          <button className="px-2 py-1 rounded-md border border-purple-500/30 bg-purple-900/20 text-white text-xs hover:bg-purple-900/40 focus:border-purple-500 focus:ring-2 focus:ring-purple-500/20">
+                          <button className="px-2 py-1 rounded-lg text-white text-xs bg-white/[0.08] border border-white/[0.15] hover:bg-white/[0.12] focus:border-[#8b5cf6] focus:outline-none">
                             {customToDate ? format(customToDate, "MMM dd, yyyy") : "To"}
                           </button>
                         </PopoverTrigger>
@@ -596,7 +596,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
                   {/* Export Button */}
                   <button
                     onClick={handleExportToExcel}
-                    className="px-2.5 py-1 rounded-md bg-purple-600 text-white text-xs font-medium hover:bg-purple-700 transition-colors flex items-center gap-1.5"
+                    className="px-2.5 py-1 rounded-lg bg-[#8b5cf6] text-white text-xs font-medium hover:bg-[#7c3aed] transition-colors flex items-center gap-1.5"
                   >
                     <Download className="w-3.5 h-3.5" />
                     <span>Export</span>
@@ -607,8 +607,8 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
               {/* Loading indicator */}
               {loading && (
                 <div className="flex items-center justify-center py-4">
-                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-purple-500 border-t-transparent" />
-                  <span className="ml-2 text-sm text-purple-300">Loading entries...</span>
+                  <div className="h-5 w-5 animate-spin rounded-full border-2 border-[#8b5cf6] border-t-transparent" />
+                  <span className="ml-2 text-sm text-white/70">Loading entries...</span>
                 </div>
               )}
 
@@ -625,17 +625,17 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
             <button
               onClick={() => handlePageChange(currentPage - 1)}
               disabled={currentPage === 1 || loading}
-              className="px-4 py-2 bg-purple-900/30 hover:bg-purple-900/50 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Previous
             </button>
-            <span className="px-4 py-2 text-purple-300">
+            <span className="px-4 py-2 text-white/50">
               Page {currentPage} of {totalPages}
             </span>
             <button
               onClick={() => handlePageChange(currentPage + 1)}
               disabled={currentPage === totalPages || loading}
-              className="px-4 py-2 bg-purple-900/30 hover:bg-purple-900/50 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              className="px-4 py-2 bg-white/[0.05] hover:bg-white/[0.08] border border-white/10 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               Next
             </button>
