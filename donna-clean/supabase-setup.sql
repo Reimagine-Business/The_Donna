@@ -33,13 +33,38 @@ CREATE POLICY "Users can insert own profile"
   WITH CHECK (auth.uid() = user_id);
 
 -- Auto-create profile on signup
+-- Username is derived from metadata or email prefix, but only if it
+-- passes the UNIQUE + format constraints (3-20 chars, [a-zA-Z0-9_-]).
+-- If it doesn't pass, username is set to NULL — the app handles this
+-- gracefully by falling back to the email prefix for display.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
+DECLARE
+  _username TEXT;
 BEGIN
+  -- Try metadata first, then email prefix
+  _username := COALESCE(
+    NEW.raw_user_meta_data->>'username',
+    split_part(NEW.email, '@', 1)
+  );
+
+  -- Validate against the CHECK constraint (3-20 chars, alphanumeric/hyphens/underscores)
+  IF _username IS NOT NULL AND _username !~ '^[a-zA-Z0-9_-]{3,20}$' THEN
+    _username := NULL;
+  END IF;
+
+  -- Check UNIQUE constraint — if username already taken, set NULL
+  IF _username IS NOT NULL THEN
+    PERFORM 1 FROM public.profiles WHERE username = _username;
+    IF FOUND THEN
+      _username := NULL;
+    END IF;
+  END IF;
+
   INSERT INTO public.profiles (user_id, username, business_name)
   VALUES (
     NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
+    _username,
     COALESCE(NEW.raw_user_meta_data->>'business_name', 'My Business')
   );
   RETURN NEW;
