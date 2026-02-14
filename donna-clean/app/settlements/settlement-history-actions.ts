@@ -37,14 +37,14 @@ export async function getSettlementHistory(): Promise<{
       return { settlementHistory: [], error: "Unauthorized" };
     }
 
-    // Fetch settlement entries from entries table
+    // Fetch settlement entries from entries table (capped at 200)
     const { data, error } = await supabase
       .from("entries")
       .select("id, user_id, original_entry_id, settlement_type, entry_type, category, amount, entry_date, notes, created_at")
       .eq("user_id", user.id)
       .eq("is_settlement", true)
-      .order("entry_date", { ascending: false })
-      .order("created_at", { ascending: false });
+      .order("created_at", { ascending: false })
+      .limit(200);
 
     if (error) {
       console.error("Failed to fetch settlement history:", error);

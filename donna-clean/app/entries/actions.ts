@@ -242,18 +242,64 @@ export async function getEntries(options: {
 }
 
 /**
- * Fetch ALL entries for a user (no limit).
- * Used by home dashboards and analytics that need complete data for calculations.
+ * Paginated fetch of all entries for a user.
+ * Returns entries with total count for pagination UI.
  */
-export async function getAllEntries() {
+export async function getAllEntries(options: { page?: number; limit?: number } = {}) {
   try {
     const supabase = await createSupabaseServerClient()
     const { user } = await getOrRefreshUser(supabase)
 
     if (!user) {
       console.error('[GET_ALL_ENTRIES] Not authenticated')
+      return { entries: [], totalCount: 0, page: 1, limit: 50, error: "Not authenticated" }
+    }
+
+    const { page = 1, limit = 50 } = options
+    const from = (page - 1) * limit
+    const to = from + limit - 1
+
+    const { data, error, count } = await supabase
+      .from('entries')
+      .select(`
+        *,
+        party:parties(name)
+      `, { count: 'exact' })
+      .eq('user_id', user.id)
+      .order('entry_date', { ascending: false })
+      .order('created_at', { ascending: false })
+      .range(from, to)
+
+    if (error) {
+      console.error('[GET_ALL_ENTRIES] Query error:', error.message)
+      return { entries: [], totalCount: 0, page, limit, error: error.message }
+    }
+
+    return { entries: data as Entry[], totalCount: count || 0, page, limit, error: null }
+  } catch (error) {
+    console.error('[GET_ALL_ENTRIES] Unexpected error:', error)
+    return { entries: [], totalCount: 0, page: 1, limit: 50, error: error instanceof Error ? error.message : 'Unknown error occurred' }
+  }
+}
+
+/**
+ * Fetch recent entries for the home page dashboard.
+ * Returns last 30 days of entries, capped at 100 rows.
+ * Sufficient for Donna's insights and business card summaries.
+ */
+export async function getRecentEntries() {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { user } = await getOrRefreshUser(supabase)
+
+    if (!user) {
+      console.error('[GET_RECENT_ENTRIES] Not authenticated')
       return { entries: [], error: "Not authenticated" }
     }
+
+    const thirtyDaysAgo = new Date()
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30)
+    const startDate = thirtyDaysAgo.toISOString().split('T')[0]
 
     const { data, error } = await supabase
       .from('entries')
@@ -262,25 +308,27 @@ export async function getAllEntries() {
         party:parties(name)
       `)
       .eq('user_id', user.id)
+      .gte('entry_date', startDate)
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false })
+      .limit(100)
 
     if (error) {
-      console.error('[GET_ALL_ENTRIES] Query error:', error.message)
+      console.error('[GET_RECENT_ENTRIES] Query error:', error.message)
       return { entries: [], error: error.message }
     }
 
     return { entries: data as Entry[], error: null }
   } catch (error) {
-    console.error('[GET_ALL_ENTRIES] Unexpected error:', error)
+    console.error('[GET_RECENT_ENTRIES] Unexpected error:', error)
     return { entries: [], error: error instanceof Error ? error.message : 'Unknown error occurred' }
   }
 }
 
 /**
- * Fetch entries within a specific date range (no limit).
- * Used by CashPulse and ProfitLens analytics that need
- * complete data for a specific period.
+ * Fetch entries within a specific date range.
+ * Used by CashPulse and ProfitLens analytics.
+ * Safety cap at 5000 rows — consider a monthly_summaries table for scale.
  */
 export async function getEntriesByDateRange(startDate: string, endDate: string) {
   try {
@@ -302,6 +350,7 @@ export async function getEntriesByDateRange(startDate: string, endDate: string) 
       .gte('entry_date', startDate)
       .lte('entry_date', endDate)
       .order('entry_date', { ascending: false })
+      .limit(5000) // Safety cap — consider monthly_summaries table for scale
 
     if (error) {
       console.error('[GET_ENTRIES_BY_DATE_RANGE] Query error:', error.message)

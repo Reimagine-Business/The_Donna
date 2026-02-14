@@ -8,7 +8,7 @@ import { DonnaMessageBullets } from "@/components/home-v2/donna-message-bullets"
 import { BusinessCards } from "@/components/home-v2/business-cards";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
-import { getAllEntries } from "@/app/entries/actions";
+import { getRecentEntries } from "@/app/entries/actions";
 import { EntryListSkeleton } from "@/components/skeletons/entry-skeleton";
 import { DonnaChatWidget } from "@/components/home-v2/donna-chat-widget";
 
@@ -29,8 +29,8 @@ export default async function HomeV2Page() {
     redirect("/auth/login");
   }
 
-  // Fetch all entries for dashboard (needs complete data for calculations)
-  const { entries } = await getAllEntries();
+  // Fetch recent entries for dashboard (last 30 days, max 100)
+  const { entries } = await getRecentEntries();
 
   // Fetch user profile for business name (REUSE existing query)
   const { data: profile } = await supabase
