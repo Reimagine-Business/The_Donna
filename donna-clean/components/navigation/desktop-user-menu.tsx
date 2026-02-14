@@ -51,11 +51,8 @@ export function DesktopUserMenu({ userName, isAdmin }: DesktopUserMenuProps) {
         onClick={() => setIsOpen(!isOpen)}
         className="flex items-center gap-2 px-4 py-2 bg-purple-900/30 hover:bg-purple-900/50 rounded-lg transition-colors"
       >
-        <div className="flex items-center justify-center w-8 h-8 bg-purple-500/20 rounded-full">
-          <User className="w-4 h-4 text-purple-300" />
-        </div>
         {userName && (
-          <span className="text-purple-200 text-sm max-w-[150px] truncate hidden lg:block">
+          <span className="text-purple-200 text-sm max-w-[150px] truncate">
             {userName}
           </span>
         )}

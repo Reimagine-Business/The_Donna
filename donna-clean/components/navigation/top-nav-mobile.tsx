@@ -48,34 +48,16 @@ export function TopNavMobile() {
           {/* Left: Donna Logo */}
           <div className="flex-shrink-0">
             <Image
-              src="/donna-logo.png"
-              alt="Donna"
-              width={40}
-              height={40}
-              className="rounded-lg"
+              src="/images/donna/donna-logo.png"
+              alt="The Donna"
+              width={32}
+              height={32}
+              className="h-8 w-auto object-contain"
             />
           </div>
 
-          {/* Center: User Info */}
-          <div className="flex items-center gap-2 flex-1 justify-center">
-            {profile?.logo_url ? (
-              <img
-                src={profile.logo_url}
-                alt="Business"
-                className="w-8 h-8 rounded-full object-cover border-2 border-[#c084fc]"
-                style={{ boxShadow: '0 0 16px rgba(192,132,252,0.35)' }}
-              />
-            ) : (
-              <div
-                className="w-8 h-8 rounded-full bg-[#7c3aed] border-2 border-[#c084fc] flex items-center justify-center"
-                style={{ boxShadow: '0 0 16px rgba(192,132,252,0.35)' }}
-              >
-                <span className="text-[#c084fc] text-xs font-semibold">
-                  {displayName.substring(0, 2).toUpperCase()}
-                </span>
-              </div>
-            )}
-
+          {/* Center: Username */}
+          <div className="flex items-center flex-1 justify-center">
             <span className="text-[#e9d5ff] text-sm font-semibold truncate max-w-[140px]">
               {displayName}
             </span>
