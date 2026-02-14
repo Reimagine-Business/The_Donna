@@ -89,26 +89,15 @@ export default async function HomeV2Page() {
               </div>
             </div>
 
-            {/* Donna says card - glassmorphism */}
+            {/* Donna says card */}
             <div
-              className="rounded-2xl rounded-tr-sm p-4 relative overflow-hidden"
+              className="rounded-2xl p-4 relative overflow-hidden"
               style={{
-                background: 'linear-gradient(145deg, rgba(59,7,100,0.6) 0%, rgba(88,28,135,0.4) 50%, rgba(59,7,100,0.5) 100%)',
-                backdropFilter: 'blur(20px)',
-                WebkitBackdropFilter: 'blur(20px)',
-                border: '1px solid rgba(192,132,252,0.22)',
-                boxShadow: `
-                  0 8px 32px rgba(59,7,100,0.4),
-                  0 2px 8px rgba(168,85,247,0.15),
-                  inset 0 1px 0 rgba(192,132,252,0.2)
-                `
+                background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))',
+                border: '1px solid rgba(192,132,252,0.15)',
+                borderRadius: '16px',
               }}
             >
-              {/* Top shimmer */}
-              <div className="absolute top-0 left-[20%] right-[20%] h-px pointer-events-none" style={{
-                background: 'linear-gradient(90deg, transparent, rgba(201,132,252,0.6), transparent)'
-              }} />
-
               <p className="text-[#e9d5ff] font-bold text-base mb-3">
                 Donna says:
               </p>
