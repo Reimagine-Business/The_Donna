@@ -84,18 +84,19 @@ export default async function HomeV2Page() {
               </div>
 
               {/* Avatar - smaller, top right, overlaps purple card */}
-              <div className="flex-shrink-0 relative z-20 translate-y-4">
+              <div className="flex-shrink-0 relative z-20 translate-y-[-20px]">
                 <DonnaAvatarLarge />
               </div>
             </div>
 
             {/* Donna says card */}
             <div
-              className="rounded-2xl p-4 relative overflow-hidden"
+              className="rounded-2xl pt-6 px-4 pb-4 relative overflow-hidden"
               style={{
                 background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))',
                 border: '1px solid rgba(192,132,252,0.15)',
                 borderRadius: '16px',
+                marginTop: '-30px',
               }}
             >
               <p className="text-[#e9d5ff] font-bold text-base mb-3">
