@@ -130,105 +130,74 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
 
   return (
     <>
-      {/* Compact Table Layout - Mobile Only with Horizontal Scroll */}
-      <div className="md:hidden rounded-2xl overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
-        <div className="overflow-x-auto -mx-0">
-          <div className="min-w-[700px]">
-            {/* Table Header */}
-            <div className="px-1.5 py-1.5 grid grid-cols-[45px_115px_75px_80px_75px_50px_35px] gap-1 text-[10px] font-semibold text-white/70 uppercase" style={{ background: 'rgba(139,92,246,0.15)', borderBottom: '1px solid rgba(255,255,255,0.06)' }}>
-              <div className="whitespace-nowrap">DATE</div>
-              <div className="whitespace-nowrap">TYPE</div>
-              <div className="text-left whitespace-nowrap">PARTY</div>
-              <div className="text-left whitespace-nowrap">CATEGORY</div>
-              <div className="text-right whitespace-nowrap">AMOUNT</div>
-              <div className="text-center whitespace-nowrap">PAYMENT</div>
-              <div></div>
-            </div>
+      {/* Mobile Card Layout */}
+      <div className="md:hidden flex flex-col gap-2">
+        {entries.map((entry) => {
+          const isIncome =
+            entry.entry_type === "Cash IN" ||
+            (entry.entry_type === "Credit" && entry.category === "Sales") ||
+            (entry.entry_type === "Advance" && entry.category === "Sales");
+          const isMenuOpen = openMenuId === entry.id;
+          const formattedAmount = entry.amount.toLocaleString("en-IN");
 
-            {/* Table Body */}
-            <div className="divide-y divide-white/[0.06]">
-              {entries.map((entry) => {
-                const isIncome =
-                  entry.entry_type === "Cash IN" ||
-                  (entry.entry_type === "Credit" && entry.category === "Sales") ||
-                  (entry.entry_type === "Advance" && entry.category === "Sales");
-                const isMenuOpen = openMenuId === entry.id;
+          return (
+            <div
+              key={entry.id}
+              className="rounded-2xl px-4 py-3"
+              style={{
+                background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))',
+                border: '1px solid rgba(192,132,252,0.15)',
+                borderRadius: '16px',
+              }}
+            >
+              {/* Top row: Date | Type badge | Amount */}
+              <div className="flex items-center justify-between gap-2">
+                <span className="text-[14px] font-semibold text-white whitespace-nowrap">
+                  {format(new Date(entry.entry_date), "dd MMM")}
+                </span>
 
-                return (
-                  <div
-                    key={entry.id}
-                    className="px-1.5 py-1.5 grid grid-cols-[45px_115px_75px_80px_75px_50px_35px] gap-1 items-center hover:bg-white/[0.03] transition-colors"
-                  >
-                {/* Date */}
-                <div className="text-[10px] whitespace-nowrap">
-                  <div className="font-bold text-white text-xs">
-                    {format(new Date(entry.entry_date), "dd")}
-                  </div>
-                  <div className="text-[9px] text-white/50">
-                    {format(new Date(entry.entry_date), "MMM")}
-                  </div>
-                </div>
-
-                {/* Entry Type */}
-                <div className="overflow-hidden flex items-center gap-1">
-                  <span
-                    className={`inline-block px-2.5 py-0.5 rounded-full text-[9px] font-medium border truncate max-w-full ${getEntryTypeColor(
-                      entry.entry_type
-                    )}`}
-                    title={entry.entry_type}
-                  >
-                    {entry.entry_type}
-                  </span>
+                <span
+                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium border shrink-0 ${getEntryTypeColor(
+                    entry.entry_type
+                  )}`}
+                >
+                  {entry.entry_type}
                   {entry.is_settlement && (
-                    <span className="text-[8px] text-white/50" title="Settlement Entry">
-                      ⚡
-                    </span>
+                    <span className="ml-1 text-[11px] text-white/50" title="Settlement">⚡</span>
                   )}
-                </div>
+                </span>
 
-                {/* Party */}
-                <div className="text-[9px] text-white/50 text-left truncate">
-                  {entry.party?.name || "-"}
-                </div>
-
-                {/* Category */}
-                <div className="text-[10px] text-white/70 text-left truncate">
-                  {entry.category}
-                </div>
-
-                {/* Amount */}
-                <div
-                  className={`text-right text-[10px] font-semibold whitespace-nowrap ${
+                <span
+                  className={`text-[16px] font-bold whitespace-nowrap ${
                     isIncome ? "text-green-400" : "text-red-400"
                   }`}
                 >
-                  ₹{entry.amount.toLocaleString("en-IN")}
-                </div>
-
-                {/* Payment Method */}
-                <div className="text-[9px] text-white/50 text-center whitespace-nowrap">
-                  {entry.payment_method || "None"}
-                </div>
-
-                {/* Actions */}
-                <div className="flex justify-center items-center">
-                  <button
-                    ref={(el) => { buttonRefs.current[entry.id] = el; }}
-                    onClick={() =>
-                      isMenuOpen ? handleCloseMenu() : handleOpenMenu(entry.id)
-                    }
-                    className="p-1 hover:bg-white/[0.08] text-white/50 rounded transition-colors"
-                    title="Actions"
-                  >
-                    <MoreVertical className="w-3 h-3" />
-                  </button>
-                </div>
+                  {isIncome ? "₹" : "-₹"}{formattedAmount}
+                </span>
               </div>
-            );
-          })}
-        </div>
-          </div>
-        </div>
+
+              {/* Bottom row: Category • Payment • Party | Action button */}
+              <div className="flex items-center justify-between mt-1.5">
+                <span className="text-[12px] text-white/60 truncate">
+                  {entry.category}
+                  {entry.payment_method ? ` · ${entry.payment_method}` : ""}
+                  {entry.party?.name ? ` · ${entry.party.name}` : ""}
+                </span>
+
+                <button
+                  ref={(el) => { buttonRefs.current[entry.id] = el; }}
+                  onClick={() =>
+                    isMenuOpen ? handleCloseMenu() : handleOpenMenu(entry.id)
+                  }
+                  className="p-3 -mr-2 hover:bg-white/[0.08] text-white/50 rounded-lg transition-colors shrink-0"
+                  title="Actions"
+                >
+                  <MoreVertical className="w-5 h-5" />
+                </button>
+              </div>
+            </div>
+          );
+        })}
       </div>
 
       {/* Desktop Table Layout - Hidden on Mobile */}
@@ -318,9 +287,9 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                     onClick={() =>
                       isMenuOpen ? handleCloseMenu() : handleOpenMenu(entry.id)
                     }
-                    className="p-2 hover:bg-white/[0.08] rounded-md transition-colors text-white/50"
+                    className="p-3 hover:bg-white/[0.08] rounded-md transition-colors text-white/50"
                   >
-                    <MoreVertical className="h-4 w-4" />
+                    <MoreVertical className="h-5 w-5" />
                   </button>
                 </div>
               </div>
