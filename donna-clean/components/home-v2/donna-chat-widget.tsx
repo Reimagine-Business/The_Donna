@@ -396,11 +396,11 @@ export function DonnaChatWidget() {
       {!isOpen && (
         <button
           onClick={() => setIsOpen(true)}
-          className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300 shadow-lg"
+          className="fixed bottom-24 right-4 md:bottom-8 md:right-8 z-50 w-14 h-14 rounded-full flex items-center justify-center transition-all duration-300"
           style={{
-            background: "linear-gradient(135deg, #a855f7, #7c3aed, #6d28d9)",
-            boxShadow:
-              "0 4px 25px rgba(168,85,247,0.5), 0 0 40px rgba(168,85,247,0.2)",
+            background: 'linear-gradient(135deg, #a855f7, #7c3aed)',
+            boxShadow: '0 4px 20px rgba(168,85,247,0.5), 0 0 0 1px rgba(192,132,252,0.3)',
+            border: 'none',
           }}
           aria-label="Open chat with Donna"
         >

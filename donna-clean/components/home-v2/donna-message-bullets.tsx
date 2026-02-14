@@ -130,18 +130,18 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
   if (bullets.length === 0) {
     return (
       <div>
-        <p className="text-white/90 text-sm">
+        <p className="text-[#e9d5ff] text-sm">
           Everything is looking good! I&apos;ll let you know if anything needs your attention.
         </p>
 
         {/* Ask Donna prompt — even when no bullets */}
-        <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
-          <p className="text-white/30 text-xs italic">
+        <div className="mt-3 pt-3 border-t flex items-center justify-between" style={{ borderColor: 'rgba(192,132,252,0.1)' }}>
+          <p className="text-[#94a3b8] opacity-50 text-xs italic">
             Ask Donna anything about your business...
           </p>
           <button
             onClick={handleOpenChat}
-            className="text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors flex items-center gap-1"
+            className="text-[#c084fc] hover:text-[#e9d5ff] text-xs font-semibold transition-colors flex items-center gap-1"
           >
             Chat
             <span className="text-xs">→</span>
@@ -156,8 +156,8 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
       {/* Insight bullets */}
       {bullets.map((bullet, i) => (
         <div key={i} className="flex items-start gap-2">
-          <span className="text-white mt-0.5 text-lg leading-none">&bull;</span>
-          <p className="text-white text-sm leading-relaxed">
+          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#a855f7] flex-shrink-0" style={{ boxShadow: '0 0 8px #a855f7' }} />
+          <p className="text-[#e9d5ff] text-sm leading-relaxed">
             {bullet}
           </p>
         </div>
@@ -165,16 +165,16 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
 
       {/* Reminders pill - always visible when reminders exist */}
       {pendingReminders.length > 0 && (
-        <div className="mt-3 pt-3 border-t border-white/10">
+        <div className="mt-3 pt-3 border-t" style={{ borderColor: 'rgba(192,132,252,0.1)' }}>
           <button
             onClick={() => setShowReminders(!showReminders)}
-            className="flex items-center gap-2 text-purple-300 hover:text-purple-200 transition-colors"
+            className="flex items-center gap-2 text-[#c084fc] hover:text-[#e9d5ff] transition-colors"
           >
             <span className="text-sm">📅</span>
             <span className="text-xs font-medium">
               {pendingReminders.length} reminder{pendingReminders.length > 1 ? "s" : ""} this week
             </span>
-            <span className="text-xs text-white/40 ml-1">
+            <span className="text-xs text-[#94a3b8] ml-1">
               {showReminders ? "↑ hide" : "→ see"}
             </span>
           </button>
@@ -183,7 +183,7 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
           {showReminders && (
             <div className="mt-2 space-y-1">
               {pendingReminders.map((reminder) => (
-                <p key={reminder.id} className="text-white/60 text-xs pl-5">
+                <p key={reminder.id} className="text-[#e9d5ff]/60 text-xs pl-5">
                   • {reminder.title}
                 </p>
               ))}
@@ -193,13 +193,13 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
       )}
 
       {/* Ask Donna prompt */}
-      <div className="mt-3 pt-3 border-t border-white/10 flex items-center justify-between">
-        <p className="text-white/30 text-xs italic">
+      <div className="mt-3 pt-3 border-t flex items-center justify-between" style={{ borderColor: 'rgba(192,132,252,0.1)' }}>
+        <p className="text-[#94a3b8] opacity-50 text-xs italic">
           Ask Donna anything about your business...
         </p>
         <button
           onClick={handleOpenChat}
-          className="text-purple-400 hover:text-purple-300 text-xs font-medium transition-colors flex items-center gap-1"
+          className="text-[#c084fc] hover:text-[#e9d5ff] text-xs font-semibold transition-colors flex items-center gap-1"
         >
           Chat
           <span className="text-xs">→</span>
