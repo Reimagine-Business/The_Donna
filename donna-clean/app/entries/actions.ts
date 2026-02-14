@@ -364,6 +364,48 @@ export async function getEntriesByDateRange(startDate: string, endDate: string) 
   }
 }
 
+/**
+ * Fetch entries for analytics pages (CashPulse, ProfitLens).
+ * Defaults to last 90 days with a hard 5000-row safety cap.
+ * Same return shape as getEntriesByDateRange().
+ */
+export async function getEntriesForAnalytics() {
+  try {
+    const supabase = await createSupabaseServerClient()
+    const { user } = await getOrRefreshUser(supabase)
+
+    if (!user) {
+      console.error('[GET_ENTRIES_FOR_ANALYTICS] Not authenticated')
+      return { entries: [], error: "Not authenticated" }
+    }
+
+    const ninetyDaysAgo = new Date()
+    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
+    const startDate = ninetyDaysAgo.toISOString().split('T')[0]
+
+    const { data, error } = await supabase
+      .from('entries')
+      .select(`
+        *,
+        party:parties(name)
+      `)
+      .eq('user_id', user.id)
+      .gte('entry_date', startDate)
+      .order('entry_date', { ascending: false })
+      .limit(5000)
+
+    if (error) {
+      console.error('[GET_ENTRIES_FOR_ANALYTICS] Query error:', error.message)
+      return { entries: [], error: error.message }
+    }
+
+    return { entries: data as Entry[], error: null }
+  } catch (error) {
+    console.error('[GET_ENTRIES_FOR_ANALYTICS] Unexpected error:', error)
+    return { entries: [], error: error instanceof Error ? error.message : 'Unknown error occurred' }
+  }
+}
+
 export async function getCategories() {
   const supabase = await createSupabaseServerClient()
   const { user } = await getOrRefreshUser(supabase)
