@@ -1,8 +1,8 @@
 import { redirect } from "next/navigation";
 import { Suspense } from "react";
 import { SiteHeader } from "@/components/site-header";
-import { BottomNavV2 } from "@/components/home-v2/bottom-nav-v2";
-import { TopNavV2 } from "@/components/home-v2/top-nav-v2";
+import { BottomNav } from "@/components/navigation/bottom-nav";
+import { TopNavMobile } from "@/components/navigation/top-nav-mobile";
 import { DonnaAvatarLarge } from "@/components/home-v2/donna-avatar-large";
 import { DonnaMessageBullets } from "@/components/home-v2/donna-message-bullets";
 import { BusinessCards } from "@/components/home-v2/business-cards";
@@ -64,7 +64,7 @@ export default async function HomeV2Page() {
     <main className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] text-white pb-24 md:pb-8">
       <div className="flex flex-col min-h-screen">
         <SiteHeader />
-        <TopNavV2 />
+        <TopNavMobile />
 
         <section className="flex-1 px-4 py-3 md:px-8 overflow-auto">
           <div className="mx-auto w-full max-w-2xl space-y-4">
@@ -118,7 +118,7 @@ export default async function HomeV2Page() {
         </section>
       </div>
 
-      <BottomNavV2 />
+      <BottomNav />
       <DonnaChatWidget />
     </main>
   );
