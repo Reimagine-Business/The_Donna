@@ -61,7 +61,7 @@ export default async function HomeV2Page() {
   });
 
   return (
-    <main className="min-h-screen bg-[#0a0e1a] pb-24 md:pb-8">
+    <main className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] text-white pb-24 md:pb-8">
       <div className="flex flex-col min-h-screen">
         <SiteHeader />
         <TopNavV2 />

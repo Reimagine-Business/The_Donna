@@ -168,7 +168,7 @@ export function ProfilePageClient() {
 
   if (loading) {
     return (
-      <div className="min-h-screen bg-background pb-24 md:pb-8">
+      <div className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] text-white pb-24 md:pb-8">
         <SiteHeader />
         <TopNavMobile />
         <div className="container mx-auto px-4 pt-2 pb-24 md:p-6 max-w-3xl">
@@ -180,7 +180,7 @@ export function ProfilePageClient() {
   }
 
   return (
-    <div className="min-h-screen bg-background pb-24 md:pb-8">
+    <div className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] text-white pb-24 md:pb-8">
       <SiteHeader />
       <TopNavMobile />
 
