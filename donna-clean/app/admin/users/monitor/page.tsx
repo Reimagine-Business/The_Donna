@@ -28,24 +28,44 @@ export default async function UserMonitoringPage() {
     (profiles || []).map((p) => [p.id, p])
   );
 
-  // Get entry counts per user — use admin client to bypass RLS
-  const { data: entries } = await supabaseAdmin
-    .from("entries")
-    .select("user_id, created_at");
-
-  // Count entries per user
+  // Get entry counts per user — server-side aggregation via RPC, fallback to capped fetch
+  // SQL to create:
+  //   CREATE OR REPLACE FUNCTION get_user_entry_stats()
+  //   RETURNS TABLE(user_id uuid, entry_count bigint, last_entry_at timestamptz) AS $$
+  //     SELECT user_id, COUNT(*) as entry_count, MAX(created_at) as last_entry_at
+  //     FROM entries GROUP BY user_id;
+  //   $$ LANGUAGE sql SECURITY DEFINER;
   const entryCounts: Record<string, number> = {};
   const lastEntryDates: Record<string, string> = {};
 
-  entries?.forEach((entry) => {
-    entryCounts[entry.user_id] = (entryCounts[entry.user_id] || 0) + 1;
-    if (
-      !lastEntryDates[entry.user_id] ||
-      entry.created_at > lastEntryDates[entry.user_id]
-    ) {
-      lastEntryDates[entry.user_id] = entry.created_at;
+  try {
+    const { data: rpcData } = await supabaseAdmin.rpc("get_user_entry_stats");
+    if (rpcData && Array.isArray(rpcData) && rpcData.length > 0) {
+      rpcData.forEach((row: { user_id: string; entry_count: number; last_entry_at: string }) => {
+        entryCounts[row.user_id] = Number(row.entry_count);
+        if (row.last_entry_at) lastEntryDates[row.user_id] = row.last_entry_at;
+      });
+    } else {
+      throw new Error("RPC not available");
     }
-  });
+  } catch {
+    // Fallback: capped fetch + client-side grouping (approximate for >10K entries)
+    const { data: entries } = await supabaseAdmin
+      .from("entries")
+      .select("user_id, created_at")
+      .order("created_at", { ascending: false })
+      .limit(10000);
+
+    entries?.forEach((entry) => {
+      entryCounts[entry.user_id] = (entryCounts[entry.user_id] || 0) + 1;
+      if (
+        !lastEntryDates[entry.user_id] ||
+        entry.created_at > lastEntryDates[entry.user_id]
+      ) {
+        lastEntryDates[entry.user_id] = entry.created_at;
+      }
+    });
+  }
 
   // Combine data
   const usersWithStats =

@@ -34,11 +34,23 @@ export default async function AdminDashboardPage() {
       .eq("feature", "chat");
     aiChatCount = count || 0;
 
-    const { data: costData } = await supabaseAdmin
-      .from("ai_usage_logs")
-      .select("cost_usd");
-    const totalCostUSD =
-      costData?.reduce((sum, row) => sum + (row.cost_usd || 0), 0) || 0;
+    // Try server-side SUM via RPC (see SQL below), fallback to capped fetch
+    // SQL to create: CREATE OR REPLACE FUNCTION get_ai_total_cost()
+    //   RETURNS numeric AS $$ SELECT COALESCE(SUM(cost_usd), 0) FROM ai_usage_logs; $$ LANGUAGE sql SECURITY DEFINER;
+    let totalCostUSD = 0;
+    try {
+      const { data: rpcData } = await supabaseAdmin.rpc("get_ai_total_cost");
+      if (typeof rpcData === "number") totalCostUSD = rpcData;
+      else throw new Error("RPC not available");
+    } catch {
+      // Fallback: capped fetch + client-side sum
+      const { data: costData } = await supabaseAdmin
+        .from("ai_usage_logs")
+        .select("cost_usd")
+        .limit(10000);
+      totalCostUSD =
+        costData?.reduce((sum, row) => sum + (row.cost_usd || 0), 0) || 0;
+    }
     totalCostINR = totalCostUSD * 83;
   } catch {
     // table may not exist yet
