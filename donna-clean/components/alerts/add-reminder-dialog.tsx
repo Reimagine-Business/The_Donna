@@ -50,14 +50,14 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
   if (!isOpen) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-      <div className="w-full max-w-md rounded-lg bg-card p-6">
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4" style={{ background: 'rgba(0,0,0,0.6)', backdropFilter: 'blur(4px)' }}>
+      <div className="w-full max-w-md rounded-2xl p-6 backdrop-blur-[10px]" style={{ background: 'rgba(15,15,35,0.95)', border: '1px solid rgba(255,255,255,0.1)' }}>
         {/* Header */}
         <div className="mb-4 flex items-center justify-between">
-          <h2 className="text-xl font-semibold text-white">Add Reminder</h2>
+          <h2 className="text-xl font-bold text-white">Add Reminder</h2>
           <button
             onClick={onClose}
-            className="text-muted-foreground hover:text-white transition-colors"
+            className="text-white/50 hover:text-white transition-colors"
             type="button"
           >
             <svg className="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -77,7 +77,7 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
         <form onSubmit={handleSubmit} className="space-y-4">
           {/* Title */}
           <div>
-            <label htmlFor="title" className="mb-1 block text-sm font-medium text-foreground/70">
+            <label htmlFor="title" className="mb-1 block text-sm font-medium text-white/70">
               Title *
             </label>
             <input
@@ -86,7 +86,7 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
               name="title"
               value={formData.title}
               onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-              className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-white placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              className="w-full rounded-lg px-3 py-2 text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6]"
               placeholder="e.g., Electricity Bill"
               required
             />
@@ -94,7 +94,7 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
 
           {/* Category */}
           <div>
-            <label htmlFor="category" className="mb-1 block text-sm font-medium text-foreground/70">
+            <label htmlFor="category" className="mb-1 block text-sm font-medium text-white/70">
               Category *
             </label>
             <select
@@ -102,7 +102,7 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
               name="category"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              className="w-full rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6]"
             >
               <option value="bills">Bills</option>
               <option value="task">Task</option>
@@ -113,7 +113,7 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
 
           {/* Due Date */}
           <div>
-            <label htmlFor="due_date" className="mb-1 block text-sm font-medium text-foreground/70">
+            <label htmlFor="due_date" className="mb-1 block text-sm font-medium text-white/70">
               Due Date *
             </label>
             <input
@@ -122,14 +122,14 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
               name="due_date"
               value={formData.due_date}
               onChange={(e) => setFormData({ ...formData, due_date: e.target.value })}
-              className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              className="w-full rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6]"
               required
             />
           </div>
 
           {/* Frequency */}
           <div>
-            <label htmlFor="frequency" className="mb-1 block text-sm font-medium text-foreground/70">
+            <label htmlFor="frequency" className="mb-1 block text-sm font-medium text-white/70">
               Frequency *
             </label>
             <select
@@ -137,7 +137,7 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
               name="frequency"
               value={formData.frequency}
               onChange={(e) => setFormData({ ...formData, frequency: e.target.value })}
-              className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-white focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              className="w-full rounded-lg px-3 py-2 text-white focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6]"
             >
               <option value="one_time">One Time</option>
               <option value="weekly">Weekly</option>
@@ -149,7 +149,7 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
 
           {/* Description */}
           <div>
-            <label htmlFor="description" className="mb-1 block text-sm font-medium text-foreground/70">
+            <label htmlFor="description" className="mb-1 block text-sm font-medium text-white/70">
               Description (optional)
             </label>
             <textarea
@@ -157,7 +157,7 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
               name="description"
               value={formData.description}
               onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              className="w-full rounded-lg border border-border bg-secondary px-3 py-2 text-white placeholder-slate-400 focus:border-purple-500 focus:outline-none focus:ring-1 focus:ring-purple-500"
+              className="w-full rounded-lg px-3 py-2 text-white placeholder-white/30 focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 bg-white/[0.08] border border-white/[0.15] focus:border-[#8b5cf6]"
               rows={3}
               placeholder="Add notes..."
             />
@@ -168,14 +168,14 @@ export function AddReminderDialog({ isOpen, onClose, onSuccess }: AddReminderDia
             <button
               type="button"
               onClick={onClose}
-              className="flex-1 rounded-lg border border-border px-4 py-2 text-foreground/70 transition-colors hover:bg-secondary"
+              className="flex-1 rounded-lg bg-white/[0.08] border border-white/[0.15] px-4 py-2 text-white transition-colors hover:bg-white/[0.12]"
               disabled={isPending}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="flex-1 rounded-lg bg-primary px-4 py-2 text-white transition-colors hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="flex-1 rounded-lg bg-[#8b5cf6] px-4 py-2 text-white transition-colors hover:bg-[#7c3aed] disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={isPending}
             >
               {isPending ? "Adding..." : "Add Reminder"}

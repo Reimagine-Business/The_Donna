@@ -494,29 +494,31 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
       {/* SETTLEMENT SECTIONS (Below main view - scroll to see) */}
       {/* ═══════════════════════════════════════════════════════════ */}
 
-      <div className="space-y-3 mt-4">
+      <div className="space-y-4 mt-4">
         {/* PENDING COLLECTIONS */}
-        <div className="bg-card rounded-lg p-4 border-l-4 border-orange-500">
+        <div className="rounded-2xl p-5 backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-3 mb-3">
-                <DonnaIcon icon={DonnaIcons.pendingCollection} size="sm" variant="warning" />
-                <h3 className="text-sm font-semibold text-white">PENDING COLLECTIONS</h3>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full" style={{ background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.3)' }}>
+                  <DonnaIcon icon={DonnaIcons.pendingCollection} size="sm" variant="warning" />
+                </div>
+                <h3 className="text-sm font-bold text-white">PENDING COLLECTIONS</h3>
               </div>
 
               {pendingCollections.count > 0 ? (
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">No of Pending:</span>
-                    <span className="text-sm font-medium text-white">{pendingCollections.count}</span>
+                    <span className="text-xs text-white/70">No of Pending:</span>
+                    <span className="text-sm font-semibold text-white">{pendingCollections.count}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">Amount to Collect:</span>
-                    <span className="text-sm font-bold text-orange-500">{formatCurrency(pendingCollections.amount)}</span>
+                    <span className="text-xs text-white/70">Amount to Collect:</span>
+                    <span className="text-sm font-semibold text-white">{formatCurrency(pendingCollections.amount)}</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-white">No pending collections</p>
+                <p className="text-sm text-white/70">No pending collections</p>
               )}
             </div>
           </div>
@@ -527,7 +529,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
                 setDashboardOpen(true)
                 setSettlementModalType('credit-sales')
               }}
-              className="w-full mt-3 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md text-sm font-medium transition-colors"
+              className="w-full mt-3 px-4 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg text-sm font-medium transition-colors"
             >
               Settle Collections →
             </button>
@@ -535,27 +537,29 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
 
         {/* PENDING BILLS */}
-        <div className="bg-card rounded-lg p-4 border-l-4 border-red-500">
+        <div className="rounded-2xl p-5 backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-3 mb-3">
-                <DonnaIcon icon={DonnaIcons.billsDue} size="sm" variant="danger" />
-                <h3 className="text-sm font-semibold text-white">PENDING BILLS</h3>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full" style={{ background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.3)' }}>
+                  <DonnaIcon icon={DonnaIcons.billsDue} size="sm" variant="danger" />
+                </div>
+                <h3 className="text-sm font-bold text-white">PENDING BILLS</h3>
               </div>
 
               {pendingBills.count > 0 ? (
                 <div className="space-y-1">
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">No of Pending:</span>
-                    <span className="text-sm font-medium text-white">{pendingBills.count}</span>
+                    <span className="text-xs text-white/70">No of Pending:</span>
+                    <span className="text-sm font-semibold text-white">{pendingBills.count}</span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-xs text-white">Amount to Pay:</span>
-                    <span className="text-sm font-bold text-red-500">{formatCurrency(pendingBills.amount)}</span>
+                    <span className="text-xs text-white/70">Amount to Pay:</span>
+                    <span className="text-sm font-semibold text-white">{formatCurrency(pendingBills.amount)}</span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-white">No pending bills</p>
+                <p className="text-sm text-white/70">No pending bills</p>
               )}
             </div>
           </div>
@@ -563,7 +567,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
           {pendingBills.count > 0 && (
             <button
               onClick={() => setBillsDashboardOpen(true)}
-              className="w-full mt-3 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md text-sm font-medium transition-colors"
+              className="w-full mt-3 px-4 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg text-sm font-medium transition-colors"
             >
               Settle Bills →
             </button>
@@ -571,33 +575,35 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
 
         {/* ADVANCE */}
-        <div className="bg-card rounded-lg p-4 border-l-4 border-purple-500">
+        <div className="rounded-2xl p-5 backdrop-blur-[10px]" style={{ background: 'rgba(255,255,255,0.05)', border: '1px solid rgba(255,255,255,0.1)' }}>
           <div className="flex items-start justify-between">
             <div className="w-full">
               <div className="flex items-center gap-2 mb-3">
-                <DonnaIcon icon={DonnaIcons.clock} size="sm" variant="default" />
-                <h3 className="text-sm font-semibold text-white">ADVANCE</h3>
+                <div className="flex items-center justify-center w-8 h-8 rounded-full" style={{ background: 'rgba(139,92,246,0.2)', border: '1px solid rgba(139,92,246,0.3)' }}>
+                  <DonnaIcon icon={DonnaIcons.clock} size="sm" variant="default" />
+                </div>
+                <h3 className="text-sm font-bold text-white">ADVANCE</h3>
               </div>
 
               {(advance.received.count > 0 || advance.paid.count > 0) ? (
                 <div className="space-y-2">
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-white">Received (Sales):</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-xs text-white/70">Received (Sales):</span>
+                    <span className="text-sm font-semibold text-white">
                       {formatCurrency(advance.received.amount)}
-                      <span className="text-xs text-white ml-1">({advance.received.count} pending)</span>
+                      <span className="text-xs text-[#8b5cf6] ml-1">({advance.received.count} pending)</span>
                     </span>
                   </div>
                   <div className="flex justify-between items-center">
-                    <span className="text-xs text-white">Paid (Expenses):</span>
-                    <span className="text-sm font-medium text-white">
+                    <span className="text-xs text-white/70">Paid (Expenses):</span>
+                    <span className="text-sm font-semibold text-white">
                       {formatCurrency(advance.paid.amount)}
-                      <span className="text-xs text-white ml-1">({advance.paid.count} pending)</span>
+                      <span className="text-xs text-[#8b5cf6] ml-1">({advance.paid.count} pending)</span>
                     </span>
                   </div>
                 </div>
               ) : (
-                <p className="text-sm text-white">No pending advance payments</p>
+                <p className="text-sm text-white/70">No pending advance payments</p>
               )}
             </div>
           </div>
@@ -605,7 +611,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
           {(advance.received.count > 0 || advance.paid.count > 0) && (
             <button
               onClick={() => setAdvancesDashboardOpen(true)}
-              className="w-full mt-3 px-4 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-md text-sm font-medium transition-colors"
+              className="w-full mt-3 px-4 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg text-sm font-medium transition-colors"
             >
               Settle Advances →
             </button>
