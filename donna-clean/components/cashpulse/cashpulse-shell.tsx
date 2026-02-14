@@ -3,8 +3,6 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { format, subDays } from "date-fns";
 import { ArrowDownRight, ArrowUpRight, Activity } from "lucide-react";
-import type { RealtimeChannel } from "@supabase/supabase-js";
-
 import { createClient } from "@/lib/supabase/client";
 import {
   Entry,
@@ -48,9 +46,7 @@ const CASH_METHOD_LOOKUP = new Set<string>(PAYMENT_METHODS);
 const isCashPaymentMethod = (method: PaymentMethod): method is CashPaymentMethod =>
   CASH_METHOD_LOOKUP.has(method);
 
-const MAX_REALTIME_RECONNECT_ATTEMPTS = 5;
-const BASE_REALTIME_DELAY_MS = 5000;
-const MAX_REALTIME_DELAY_MS = 30000;
+const POLL_INTERVAL_MS = 30000;
 
 export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) {
   const supabase = useMemo(() => createClient(), []);
@@ -114,161 +110,39 @@ export function CashpulseShell({ initialEntries, userId }: CashpulseShellProps) 
     }
   }, [supabase, userId]);
 
+  // Smart polling: fetch every 30s when tab is visible, pause when hidden
   useEffect(() => {
-    let channel: RealtimeChannel | null = null;
-    let retryTimer: ReturnType<typeof setTimeout> | null = null;
-    let heartbeatTimer: ReturnType<typeof setInterval> | null = null;
-    let retryAttempt = 0;
-    let hasAlertedRealtimeFailure = false;
-    let isMounted = true;
-
-    const alertRealtimeFailure = () => {
-      if (hasAlertedRealtimeFailure) return;
-      hasAlertedRealtimeFailure = true;
-      if (typeof window !== "undefined" && typeof window.alert === "function") {
-        window.alert("Realtime failed – refresh");
+    const fetchAndRecalc = async () => {
+      const latestEntries = await refetchEntries();
+      if (latestEntries) {
+        recalcKpis(latestEntries);
       }
     };
 
-    const logCloseReason = (
-      event?: { code?: number; reason?: string },
-      payload?: unknown,
-    ) => {
-      const code = event?.code ?? "unknown";
-      const reason = (event?.reason ?? "none").trim() || "none";
-      let payloadSummary: string;
-      try {
-        payloadSummary =
-          payload === undefined
-            ? "none"
-            : JSON.stringify(payload, (_key, value) =>
-                typeof value === "bigint" ? Number(value) : value,
-              );
-      } catch {
-        payloadSummary = "unserializable";
+    const pollTimer = setInterval(() => {
+      if (document.visibilityState === "visible") {
+        fetchAndRecalc();
       }
-      // Removed: console.warn for realtime close reason
-    };
+    }, POLL_INTERVAL_MS);
 
-    const teardownChannel = () => {
-      if (heartbeatTimer) {
-        clearInterval(heartbeatTimer);
-        heartbeatTimer = null;
-      }
-      if (channel) {
-        supabase.removeChannel(channel);
-        channel = null;
-      }
-    };
-
-    const startHeartbeat = () => {
-      if (heartbeatTimer || !channel) return;
-      heartbeatTimer = setInterval(() => {
-        channel?.send({
-          type: "broadcast",
-          event: "heartbeat",
-          payload: {},
-          topic: "heartbeat",
-        } as any);
-      }, 30000);
-    };
-
-    const subscribe = () => {
-      teardownChannel();
-
-      channel = supabase
-        .channel(`public:entries:${userId}`)
-        .on("system", { event: "*" }, (systemPayload) => {
-          // System event received
-        })
-        .on(
-          "postgres_changes",
-          {
-            event: "*",
-            schema: "public",
-            table: "entries",
-            filter: `user_id=eq.${userId}`,
-          },
-          async (payload) => {
-            const latestEntries = await refetchEntries();
-            if (!latestEntries) {
-              return;
-            }
-            const updatedStats = recalcKpis(latestEntries);
-            const realtimeSales = updatedStats.cashBreakdown
-              .filter(
-                (channelBreakdown) =>
-                  channelBreakdown.method === "Cash" || channelBreakdown.method === "Bank",
-              )
-              .reduce((sum, channelBreakdown) => sum + channelBreakdown.value, 0);
-          },
-        )
-        .subscribe(async (status) => {
-          if (status === "SUBSCRIBED") {
-            retryAttempt = 0;
-            hasAlertedRealtimeFailure = false;
-            startHeartbeat();
-          } else if (status === "CHANNEL_ERROR" || status === "TIMED_OUT" || status === "CLOSED") {
-            logCloseReason(undefined, { status });
-            teardownChannel();
-            // Note: DO NOT call refreshSession() here - it causes 429 rate limiting
-            // Middleware handles session refresh automatically
-            scheduleRetry();
-          }
-        });
-
-      const socket = (channel as unknown as { socket?: { onClose?: (cb: (event?: CloseEvent) => void) => void } })
-        ?.socket;
-      socket?.onClose?.((event?: CloseEvent) => logCloseReason(event, { source: "socket" }));
-    };
-
-    const scheduleRetry = () => {
-      if (!isMounted || retryTimer) {
-        return;
-      }
-      if (retryAttempt >= MAX_REALTIME_RECONNECT_ATTEMPTS) {
-        alertRealtimeFailure();
-        return;
-      }
-      const attemptIndex = retryAttempt + 1;
-      const exponentialDelay = BASE_REALTIME_DELAY_MS * 2 ** retryAttempt;
-      const delay = Math.min(exponentialDelay, MAX_REALTIME_DELAY_MS);
-      retryTimer = setTimeout(() => {
-        retryTimer = null;
-        retryAttempt = attemptIndex;
-        subscribe();
-      }, delay);
-    };
-
+    // Fetch immediately when tab becomes visible after being hidden
     const handleVisibilityChange = () => {
       if (document.visibilityState === "visible") {
-        // Note: DO NOT call refreshSession() here - middleware handles it
-        // Just reconnect the Realtime channel if needed
-        if (!channel || channel.state !== "joined") {
-          retryAttempt = 0;
-          hasAlertedRealtimeFailure = false;
-          subscribe();
-        }
+        fetchAndRecalc();
       }
     };
-
-    subscribe();
 
     if (typeof document !== "undefined") {
       document.addEventListener("visibilitychange", handleVisibilityChange);
     }
 
     return () => {
-      isMounted = false;
-      if (retryTimer) {
-        clearTimeout(retryTimer);
-      }
+      clearInterval(pollTimer);
       if (typeof document !== "undefined") {
         document.removeEventListener("visibilitychange", handleVisibilityChange);
       }
-      teardownChannel();
     };
-  }, [recalcKpis, refetchEntries, supabase, userId]);
+  }, [recalcKpis, refetchEntries]);
 
   useEffect(() => {
     if (skipNextRecalc.current) {
