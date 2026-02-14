@@ -61,16 +61,8 @@ export default async function HomeV2Page() {
   });
 
   return (
-    <main className="min-h-screen bg-[#0f0f23] pb-24 md:pb-8 relative">
-      {/* Grid pattern */}
-      <div className="absolute inset-0 pointer-events-none" style={{
-        backgroundImage: `
-          linear-gradient(rgba(168,85,247,0.04) 1px, transparent 1px),
-          linear-gradient(90deg, rgba(168,85,247,0.04) 1px, transparent 1px)`,
-        backgroundSize: '28px 28px'
-      }} />
-
-      <div className="flex flex-col min-h-screen relative">
+    <main className="min-h-screen bg-gradient-to-b from-[#0f0f23] to-[#1a1a2e] text-white pb-24 md:pb-8">
+      <div className="flex flex-col min-h-screen">
         <SiteHeader />
         <TopNavV2 />
 
