@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
+import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
 
 type SettleEntryResult =
   | {
@@ -134,6 +135,16 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
         initialError ?? undefined,
       );
       return { success: false, error: "You must be signed in to delete settlements." };
+    }
+
+    // Rate limiting: 10 deletions per minute per user
+    try {
+      await checkRateLimit(user.id, 'settlement-delete');
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return { success: false, error: "Too many requests. Please try again shortly." };
+      }
+      console.warn('Rate limit check failed:', error);
     }
 
     // Get the entry to verify ownership and get original amount

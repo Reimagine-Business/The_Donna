@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
+import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
 
 export const dynamic = "force-dynamic";
 
@@ -10,6 +11,19 @@ export async function GET() {
     const { user } = await getOrRefreshUser(supabase);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limiting: 20 requests per minute per user
+    try {
+      await checkRateLimit(user.id, 'business-profile');
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return NextResponse.json(
+          { error: "Too many requests. Please try again shortly." },
+          { status: 429 }
+        );
+      }
+      console.warn('Rate limit check failed:', error);
     }
 
     const { data, error } = await supabase
@@ -51,6 +65,19 @@ export async function POST(req: NextRequest) {
     const { user } = await getOrRefreshUser(supabase);
     if (!user) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    // Rate limiting: 20 requests per minute per user
+    try {
+      await checkRateLimit(user.id, 'business-profile');
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return NextResponse.json(
+          { error: "Too many requests. Please try again shortly." },
+          { status: 429 }
+        );
+      }
+      console.warn('Rate limit check failed:', error);
     }
 
     const formData = await req.json();

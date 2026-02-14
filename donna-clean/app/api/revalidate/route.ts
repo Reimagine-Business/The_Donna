@@ -3,6 +3,7 @@ import { revalidatePath } from "next/cache";
 
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
+import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
 
 type RevalidatePayload = {
   paths?: string[];
@@ -22,6 +23,19 @@ export async function POST(request: Request) {
         );
         return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
       }
+
+    // Rate limiting: 10 requests per minute per user
+    try {
+      await checkRateLimit(user.id, 'revalidate');
+    } catch (error) {
+      if (error instanceof RateLimitError) {
+        return NextResponse.json(
+          { error: "Too many requests. Please try again shortly." },
+          { status: 429 }
+        );
+      }
+      console.warn('Rate limit check failed:', error);
+    }
 
     const body = (await request.json().catch(() => ({}))) as RevalidatePayload;
     const pathList = Array.isArray(body.paths) ? body.paths : [];
