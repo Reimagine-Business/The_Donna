@@ -2,7 +2,7 @@
 
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import { Download } from 'lucide-react'
-import { type Entry, type Category, getEntries, getAllEntries, getCategories, createEntry, type EntryType, type CategoryType, type PaymentMethodType } from '@/app/entries/actions'
+import { type Entry, type Category, getEntries, getCategories, createEntry, type EntryType, type CategoryType, type PaymentMethodType } from '@/app/entries/actions'
 import { EntryList } from './entry-list'
 import { ErrorState } from '@/components/ui/error-state'
 import { showSuccess, showError, showLoading, dismissToast } from '@/lib/toast'
