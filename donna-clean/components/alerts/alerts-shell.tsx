@@ -53,6 +53,20 @@ const formatDate = (dateString: string): string => {
   });
 };
 
+const getDueDateColor = (dateString: string): string => {
+  const date = new Date(dateString);
+  const now = new Date();
+  now.setHours(0, 0, 0, 0);
+  date.setHours(0, 0, 0, 0);
+
+  const diffTime = date.getTime() - now.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return "#f87171";      // overdue = red
+  if (diffDays <= 1) return "#fbbf24";      // due today/tomorrow = amber
+  return "#94a3b8";                          // future = slate
+};
+
 const getCategoryIcon = (category: string) => {
   switch (category) {
     case "bills":
@@ -171,7 +185,16 @@ export function AlertsShell({ initialReminders, onAddClick, onDataChange }: Aler
           {/* Add Button */}
           <button
             onClick={onAddClick}
-            className="flex items-center gap-2 rounded-lg bg-primary px-3 md:px-4 py-2 text-sm font-medium text-white transition-colors hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+            className="flex items-center gap-2 text-white font-semibold transition-colors hover:brightness-110 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:ring-offset-2 focus:ring-offset-slate-950"
+            style={{
+              background: 'linear-gradient(135deg, #a855f7, #7c3aed)',
+              border: 'none',
+              borderRadius: '10px',
+              padding: '8px 16px',
+              fontSize: '13px',
+              fontWeight: 600,
+              boxShadow: '0 4px 12px rgba(168,85,247,0.3)',
+            }}
           >
             <span className="text-xl leading-none">+</span>
             <span className="hidden sm:inline">Add Reminder</span>
@@ -183,50 +206,30 @@ export function AlertsShell({ initialReminders, onAddClick, onDataChange }: Aler
         <div className="flex flex-col md:flex-row items-start md:items-center justify-between gap-2 md:gap-0">
           {/* Filter Tabs */}
           <div className="flex flex-wrap gap-1.5 md:gap-2">
-            <button
-              onClick={() => setActiveFilter("all")}
-              className={cn(
-                "px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium text-[10px] md:text-sm transition-colors",
-                activeFilter === "all"
-                  ? "bg-primary text-white"
-                  : "bg-secondary text-foreground/70 hover:bg-primary/80"
-              )}
-            >
-              All
-            </button>
-            <button
-              onClick={() => setActiveFilter("due_soon")}
-              className={cn(
-                "px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium text-[10px] md:text-sm transition-colors",
-                activeFilter === "due_soon"
-                  ? "bg-primary text-white"
-                  : "bg-secondary text-foreground/70 hover:bg-primary/80"
-              )}
-            >
-              Due Soon
-            </button>
-            <button
-              onClick={() => setActiveFilter("overdue")}
-              className={cn(
-                "px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium text-[10px] md:text-sm transition-colors",
-                activeFilter === "overdue"
-                  ? "bg-primary text-white"
-                  : "bg-secondary text-foreground/70 hover:bg-primary/80"
-              )}
-            >
-              Overdue
-            </button>
-            <button
-              onClick={() => setActiveFilter("completed")}
-              className={cn(
-                "px-2 md:px-4 py-1 md:py-2 rounded-lg font-medium text-[10px] md:text-sm transition-colors",
-                activeFilter === "completed"
-                  ? "bg-primary text-white"
-                  : "bg-secondary text-foreground/70 hover:bg-primary/80"
-              )}
-            >
-              Completed
-            </button>
+            {(["all", "due_soon", "overdue", "completed"] as FilterOption[]).map((filter) => (
+              <button
+                key={filter}
+                onClick={() => setActiveFilter(filter)}
+                className="px-2 md:px-4 py-1 md:py-2 font-medium text-[10px] md:text-sm transition-colors"
+                style={
+                  activeFilter === filter
+                    ? {
+                        background: 'rgba(168,85,247,0.15)',
+                        border: '1px solid rgba(168,85,247,0.3)',
+                        color: '#a855f7',
+                        borderRadius: '8px',
+                      }
+                    : {
+                        background: 'rgba(148,163,184,0.05)',
+                        border: '1px solid rgba(148,163,184,0.15)',
+                        color: '#94a3b8',
+                        borderRadius: '8px',
+                      }
+                }
+              >
+                {filter === "all" ? "All" : filter === "due_soon" ? "Due Soon" : filter === "overdue" ? "Overdue" : "Completed"}
+              </button>
+            ))}
           </div>
 
           {/* Date Range Selector */}
@@ -299,69 +302,85 @@ export function AlertsShell({ initialReminders, onAddClick, onDataChange }: Aler
             filteredReminders.map((reminder) => (
               <div
                 key={reminder.id}
-                className={cn(
-                  "rounded-lg border bg-card/50 p-2 md:p-4 transition-colors hover:bg-card",
-                  reminder.status === "completed"
-                    ? "border-slate-800 opacity-60"
-                    : "border-border"
-                )}
+                style={{
+                  background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))',
+                  border: '1px solid rgba(192,132,252,0.15)',
+                  borderRadius: '16px',
+                  opacity: reminder.status === "completed" ? 0.6 : 1,
+                }}
               >
-                <div className="flex items-start gap-2 md:gap-3">
-                  <span className="text-base md:text-2xl" aria-hidden="true">
-                    {getCategoryIcon(reminder.category)}
-                  </span>
-                  <div className="flex-1">
-                    <div>
-                      <h3
+                <div className="flex items-center justify-between gap-3 px-4 py-3">
+                  {/* LEFT: dot + name + due date */}
+                  <div className="flex items-center gap-3 flex-1 min-w-0">
+                    {/* Purple dot */}
+                    <div
+                      className="w-2 h-2 rounded-full flex-shrink-0"
+                      style={{
+                        background: '#a855f7',
+                        boxShadow: '0 0 6px #a855f7',
+                      }}
+                    />
+
+                    {/* Name + due date stacked */}
+                    <div className="flex flex-col min-w-0">
+                      <span
                         className={cn(
-                          "font-semibold text-sm md:text-base",
+                          "font-semibold text-sm truncate leading-tight",
                           reminder.status === "completed"
                             ? "text-muted-foreground line-through"
-                            : "text-white"
+                            : "text-[#e9d5ff]"
                         )}
                       >
                         {reminder.title}
-                      </h3>
-                      {reminder.description && (
-                        <p className="mt-0.5 md:mt-1 text-[10px] md:text-sm text-muted-foreground">
-                          {reminder.description}
-                        </p>
-                      )}
-                      <p className="mt-1 md:mt-2 text-[10px] md:text-sm font-medium text-foreground/70">
-                        Due: {formatDate(reminder.due_date)}
-                      </p>
+                      </span>
+                      <span
+                        className="text-xs mt-0.5"
+                        style={{ color: getDueDateColor(reminder.due_date) }}
+                      >
+                        {formatDate(reminder.due_date)}
+                      </span>
                     </div>
-
-                    {/* Action Buttons */}
-                    {reminder.status !== "completed" && (
-                      <div className="mt-2 md:mt-4 flex flex-wrap gap-1.5 md:gap-2">
-                        <button
-                          onClick={() => handleMarkDone(reminder.id)}
-                          disabled={isPending}
-                          className="rounded-md bg-green-500/10 px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-green-400 transition-colors hover:bg-green-500/20 disabled:opacity-50 disabled:cursor-not-allowed"
-                        >
-                          {isPending ? "Marking..." : "Mark Done"}
-                        </button>
-                        <button
-                          onClick={() => handleEdit(reminder)}
-                          disabled={isPending || editingId === reminder.id}
-                          className="rounded-md bg-blue-500/10 px-2 md:px-3 py-1 md:py-1.5 text-[10px] md:text-xs font-medium text-blue-400 transition-colors hover:bg-blue-500/20 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
-                        >
-                          {editingId === reminder.id ? (
-                            <>
-                              <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
-                                <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                                <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                              </svg>
-                              <span className="hidden md:inline">Opening...</span>
-                            </>
-                          ) : (
-                            "Edit"
-                          )}
-                        </button>
-                      </div>
-                    )}
                   </div>
+
+                  {/* RIGHT: action buttons */}
+                  {reminder.status !== "completed" && (
+                    <div className="flex items-center gap-2 flex-shrink-0">
+                      {/* Mark Done button */}
+                      <button
+                        onClick={() => handleMarkDone(reminder.id)}
+                        disabled={isPending}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg text-[#4ade80] transition-colors hover:brightness-125 disabled:opacity-50 disabled:cursor-not-allowed"
+                        style={{
+                          background: 'rgba(74,222,128,0.1)',
+                          border: '1px solid rgba(74,222,128,0.3)',
+                        }}
+                      >
+                        Done
+                      </button>
+
+                      {/* Edit button */}
+                      <button
+                        onClick={() => handleEdit(reminder)}
+                        disabled={isPending || editingId === reminder.id}
+                        className="text-xs font-medium px-3 py-1.5 rounded-lg text-[#94a3b8] transition-colors hover:brightness-125 disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-1"
+                        style={{
+                          background: 'rgba(148,163,184,0.1)',
+                          border: '1px solid rgba(148,163,184,0.2)',
+                        }}
+                      >
+                        {editingId === reminder.id ? (
+                          <>
+                            <svg className="w-3 h-3 animate-spin" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                          </>
+                        ) : (
+                          "Edit"
+                        )}
+                      </button>
+                    </div>
+                  )}
                 </div>
               </div>
             ))
