@@ -125,9 +125,6 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     const origin = await getOrigin();
     const redirectUrl = `${origin}/auth/update-password`;
 
-    console.log("[Forgot Password] Sending reset email to:", sanitizedEmail);
-    console.log("[Forgot Password] Redirect URL:", redirectUrl);
-
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
       redirectTo: redirectUrl,
     });
