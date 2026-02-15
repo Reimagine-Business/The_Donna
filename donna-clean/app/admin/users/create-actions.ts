@@ -88,7 +88,7 @@ export async function createUserDirect(userData: CreateUserData) {
 
       return {
         success: false,
-        error: createError.message || 'Failed to create user',
+        error: 'Something went wrong. Please try again.',
       };
     }
 
@@ -131,10 +131,10 @@ export async function createUserDirect(userData: CreateUserData) {
       },
     };
   } catch (error) {
-    console.error('Unexpected error creating user:', error);
+    console.error('[createUserDirect] Unexpected error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to create user',
+      error: 'Something went wrong. Please try again.',
     };
   }
 }

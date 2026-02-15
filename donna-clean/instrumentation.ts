@@ -8,7 +8,7 @@ export async function register() {
     try {
       await import('./sentry.server.config');
     } catch (err) {
-      // Sentry server config failed to load
+      console.error('Sentry server initialization failed:', err);
     }
   }
 
@@ -16,7 +16,7 @@ export async function register() {
     try {
       await import('./sentry.edge.config');
     } catch (err) {
-      // Sentry edge config failed to load
+      console.error('Sentry edge initialization failed:', err);
     }
   }
 }

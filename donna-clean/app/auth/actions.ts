@@ -100,7 +100,8 @@ export async function signUpAction(_: AuthState, formData: FormData): Promise<Au
     });
 
     if (error) {
-      return { error: error.message };
+      console.error("[signUpAction] Signup error:", error);
+      return { error: "Something went wrong. Please try again." };
     }
 
     redirect("/auth/sign-up-success");
@@ -130,8 +131,8 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     });
 
     if (error) {
-      console.error("[Forgot Password] Supabase error:", error.message, error);
-      return { error: error.message };
+      console.error("[forgotPasswordAction] Supabase error:", error);
+      return { error: "Something went wrong. Please try again." };
     }
 
     return { success: true };
@@ -152,7 +153,8 @@ export async function updatePasswordAction(_: AuthState, formData: FormData): Pr
   const { error } = await supabase.auth.updateUser({ password });
 
   if (error) {
-    return { error: error.message };
+    console.error("[updatePasswordAction] Update error:", error);
+    return { error: "Something went wrong. Please try again." };
   }
 
   redirect("/auth/login");
