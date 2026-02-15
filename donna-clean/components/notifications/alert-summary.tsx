@@ -92,7 +92,7 @@ export function AlertSummary({ total, unread, info, warning, critical, onUpdate 
           <div className="text-xs text-purple-400">Total Alerts</div>
         </div>
         <div className="bg-blue-900/20 rounded-lg p-3 border border-blue-500/30">
-          <div className="text-2xl font-bold text-blue-400">{info}</div>
+          <div className="text-2xl font-bold text-[#8b5cf6]">{info}</div>
           <div className="text-xs text-blue-300">Info</div>
         </div>
         <div className="bg-yellow-900/20 rounded-lg p-3 border border-yellow-500/30">
@@ -110,7 +110,7 @@ export function AlertSummary({ total, unread, info, warning, critical, onUpdate 
         <button
           onClick={handleMarkAllAsRead}
           disabled={processing || unread === 0}
-          className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 text-sm"
+          className="px-4 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg transition-colors disabled:opacity-50 flex items-center gap-2 text-sm"
         >
           <CheckCheck className="w-4 h-4" />
           <span>Mark All as Read</span>

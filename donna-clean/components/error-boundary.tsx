@@ -42,7 +42,7 @@ export class ErrorBoundary extends Component<Props, State> {
           <div className="text-center max-w-md">
             <div className="text-6xl mb-4">😔</div>
             <h2 className="text-2xl font-bold mb-2 text-white">Something went wrong</h2>
-            <p className="text-gray-400 mb-6">
+            <p className="text-white/60 mb-6">
               We've been notified and are looking into it. Please try refreshing the page.
             </p>
             <button
@@ -50,7 +50,7 @@ export class ErrorBoundary extends Component<Props, State> {
                 this.setState({ hasError: false })
                 window.location.reload()
               }}
-              className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium transition-colors text-white"
+              className="px-6 py-3 bg-[#8b5cf6] hover:bg-[#7c3aed] rounded-lg font-medium transition-colors text-white"
             >
               Refresh Page
             </button>

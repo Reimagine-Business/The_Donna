@@ -111,7 +111,7 @@ export function ProfileSetupModal({ isOpen, onClose }: ProfileSetupModalProps) {
 
         {/* Header */}
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 rounded-full bg-purple-600/20 flex items-center justify-center">
+          <div className="w-12 h-12 rounded-full bg-[#8b5cf6]/20 flex items-center justify-center">
             <Sparkles className="w-6 h-6 text-purple-400" />
           </div>
           <div>

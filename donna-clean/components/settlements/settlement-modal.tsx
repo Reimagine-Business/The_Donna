@@ -239,7 +239,7 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
                         <h3 className="text-base sm:text-lg font-semibold text-white truncate">
                           {group.partyName}
                         </h3>
-                        <p className="text-xs sm:text-sm text-gray-400 mt-1">
+                        <p className="text-xs sm:text-sm text-white/60 mt-1">
                           {group.items.length} pending {group.items.length === 1 ? 'item' : 'items'}
                         </p>
                       </div>
@@ -279,7 +279,7 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
                             key={item.id}
                             className={`flex items-start gap-3 p-3 rounded-lg transition-all cursor-pointer ${
                               isSelected
-                                ? 'bg-purple-600/30 border-2 border-purple-500'
+                                ? 'bg-[#8b5cf6]/30 border-2 border-purple-500'
                                 : 'bg-purple-900/20 border-2 border-transparent hover:bg-purple-900/30'
                             }`}
                           >
@@ -293,11 +293,11 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
                             <div className="flex-1 min-w-0">
                               <div className="flex items-start justify-between gap-3">
                                 <div className="flex-1 min-w-0">
-                                  <span className="text-xs sm:text-sm text-gray-300 block">
+                                  <span className="text-xs sm:text-sm text-white/70 block">
                                     {format(new Date(item.entry_date), 'dd MMM yyyy')} • {item.category}
                                   </span>
                                   {item.notes && (
-                                    <p className="text-xs text-gray-500 mt-1 truncate">{item.notes}</p>
+                                    <p className="text-xs text-white/50 mt-1 truncate">{item.notes}</p>
                                   )}
                                   {item.remaining_amount !== item.amount && (
                                     <p className="text-xs sm:text-sm text-purple-400 mt-1.5">
@@ -327,12 +327,12 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
 
             {/* Settlement Amount Input with Quick Buttons */}
             <div className="space-y-2">
-              <label className="block text-sm font-medium text-gray-300">
+              <label className="block text-sm font-medium text-white/70">
                 Settlement Amount
               </label>
               <div className="flex gap-2">
                 <div className="relative flex-1">
-                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">
+                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-white/60">
                     ₹
                   </span>
                   <input
@@ -340,7 +340,7 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
                     value={settlementAmount || ''}
                     onChange={(e) => setSettlementAmount(Number(e.target.value))}
                     placeholder="Enter amount"
-                    className="w-full pl-8 pr-3 py-2.5 bg-purple-900/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder:text-gray-500 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
+                    className="w-full pl-8 pr-3 py-2.5 bg-purple-900/20 border border-purple-500/30 rounded-lg text-sm text-white placeholder:text-white/50 focus:border-purple-500 focus:ring-2 focus:ring-purple-500"
                     min="0"
                     max={selectedAmount}
                     step="0.01"
@@ -352,7 +352,7 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
                   type="button"
                   onClick={setHalfAmount}
                   disabled={!selectedItemId}
-                  className="px-4 py-2.5 bg-purple-700/40 hover:bg-purple-700/60 disabled:bg-gray-700/40 disabled:text-gray-500 text-white rounded-lg font-medium transition-colors text-sm disabled:cursor-not-allowed whitespace-nowrap"
+                  className="px-4 py-2.5 bg-[#7c3aed]/40 hover:bg-[#7c3aed]/60 disabled:bg-white/[0.05] disabled:text-white/50 text-white rounded-lg font-medium transition-colors text-sm disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   Half
                 </button>
@@ -360,13 +360,13 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
                   type="button"
                   onClick={setFullAmount}
                   disabled={!selectedItemId}
-                  className="px-4 py-2.5 bg-purple-700/40 hover:bg-purple-700/60 disabled:bg-gray-700/40 disabled:text-gray-500 text-white rounded-lg font-medium transition-colors text-sm disabled:cursor-not-allowed whitespace-nowrap"
+                  className="px-4 py-2.5 bg-[#7c3aed]/40 hover:bg-[#7c3aed]/60 disabled:bg-white/[0.05] disabled:text-white/50 text-white rounded-lg font-medium transition-colors text-sm disabled:cursor-not-allowed whitespace-nowrap"
                 >
                   Full
                 </button>
               </div>
               {selectedItemId && (
-                <div className="flex justify-between text-xs text-gray-400">
+                <div className="flex justify-between text-xs text-white/60">
                   <span>Selected: ₹{selectedAmount.toLocaleString('en-IN')}</span>
                   {isPartialSettlement && (
                     <span className="text-yellow-400">
@@ -380,7 +380,7 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
             {/* Date and Payment Method */}
             <div className="grid grid-cols-2 gap-3">
               <div className="space-y-1.5">
-                <label className="block text-sm font-medium text-gray-300">
+                <label className="block text-sm font-medium text-white/70">
                   Settlement Date
                 </label>
                 <input
@@ -394,7 +394,7 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
 
               {isCredit && (
                 <div className="space-y-1.5">
-                  <label className="block text-sm font-medium text-gray-300">
+                  <label className="block text-sm font-medium text-white/70">
                     Payment Method
                   </label>
                   <select
@@ -413,7 +413,7 @@ export function SettlementModal({ type, pendingItems, onClose, onSuccess }: Sett
             <button
               onClick={handleSettle}
               disabled={!selectedItemId || !settlementAmount || settlementAmount <= 0 || isSaving}
-              className="w-full py-3 bg-purple-600 hover:bg-purple-700 disabled:bg-gray-700 disabled:text-gray-500 text-white rounded-lg font-semibold transition-colors text-sm disabled:cursor-not-allowed"
+              className="w-full py-3 bg-[#8b5cf6] hover:bg-[#7c3aed] disabled:bg-white/[0.08] disabled:text-white/50 text-white rounded-lg font-semibold transition-colors text-sm disabled:cursor-not-allowed"
             >
               {isSaving
                 ? "Processing..."

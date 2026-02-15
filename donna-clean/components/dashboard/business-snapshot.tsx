@@ -157,44 +157,44 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
       {/* Expandable Details Section */}
       <div className="space-y-3">
         {/* What You Own Details (Collapsible) */}
-        <div className="bg-gray-900/50 border border-gray-700 rounded-xl overflow-hidden">
+        <div className="bg-white/[0.05] border border-white/[0.1] rounded-xl overflow-hidden">
           <button
             onClick={() => setExpandedOwn(!expandedOwn)}
-            className="w-full p-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+            className="w-full p-3 flex items-center justify-between hover:bg-white/[0.03] transition-colors"
           >
             <div className="flex items-center gap-2 text-sm text-white font-medium">
               <DonnaIcon icon={DonnaIcons.whatYouOwn} size="xs" />
               <span>What's Yours?</span>
             </div>
             {expandedOwn ? (
-              <ChevronUp className="w-4 h-4 text-gray-400" />
+              <ChevronUp className="w-4 h-4 text-white/60" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="w-4 h-4 text-white/60" />
             )}
           </button>
 
           {expandedOwn && (
-            <div className="px-3 pb-3 space-y-2 border-t border-gray-700">
+            <div className="px-3 pb-3 space-y-2 border-t border-white/[0.1]">
               <div className="flex justify-between items-center pt-2">
-                <span className="text-xs text-gray-400">Cash in Bank/Hand</span>
+                <span className="text-xs text-white/60">Cash in Bank/Hand</span>
                 <span className="text-sm font-semibold text-white">
                   ₹{snapshotData.cash.toLocaleString('en-IN')}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Money to Collect</span>
+                <span className="text-xs text-white/60">Money to Collect</span>
                 <span className="text-sm font-semibold text-white">
                   ₹{snapshotData.receivables.toLocaleString('en-IN')}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Advances Paid</span>
+                <span className="text-xs text-white/60">Advances Paid</span>
                 <span className="text-sm font-semibold text-white">
                   ₹{snapshotData.prepaid.toLocaleString('en-IN')}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Fixed Assets</span>
+                <span className="text-xs text-white/60">Fixed Assets</span>
                 <span className="text-sm font-semibold text-white">
                   ₹{snapshotData.fixedAssets.toLocaleString('en-IN')}
                 </span>
@@ -204,32 +204,32 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
         </div>
 
         {/* What You Owe Details (Collapsible) */}
-        <div className="bg-gray-900/50 border border-gray-700 rounded-xl overflow-hidden">
+        <div className="bg-white/[0.05] border border-white/[0.1] rounded-xl overflow-hidden">
           <button
             onClick={() => setExpandedOwe(!expandedOwe)}
-            className="w-full p-3 flex items-center justify-between hover:bg-gray-800/50 transition-colors"
+            className="w-full p-3 flex items-center justify-between hover:bg-white/[0.03] transition-colors"
           >
             <div className="flex items-center gap-2 text-sm text-white font-medium">
               <DonnaIcon icon={DonnaIcons.whatYouOwe} size="xs" />
               <span>What's left to pay?</span>
             </div>
             {expandedOwe ? (
-              <ChevronUp className="w-4 h-4 text-gray-400" />
+              <ChevronUp className="w-4 h-4 text-white/60" />
             ) : (
-              <ChevronDown className="w-4 h-4 text-gray-400" />
+              <ChevronDown className="w-4 h-4 text-white/60" />
             )}
           </button>
 
           {expandedOwe && (
-            <div className="px-3 pb-3 space-y-2 border-t border-gray-700">
+            <div className="px-3 pb-3 space-y-2 border-t border-white/[0.1]">
               <div className="flex justify-between items-center pt-2">
-                <span className="text-xs text-gray-400">Bills to Pay</span>
+                <span className="text-xs text-white/60">Bills to Pay</span>
                 <span className="text-sm font-semibold text-white">
                   ₹{snapshotData.creditBills.toLocaleString('en-IN')}
                 </span>
               </div>
               <div className="flex justify-between items-center">
-                <span className="text-xs text-gray-400">Customer Advances</span>
+                <span className="text-xs text-white/60">Customer Advances</span>
                 <span className="text-sm font-semibold text-white">
                   ₹{snapshotData.customerAdvances.toLocaleString('en-IN')}
                 </span>
@@ -243,14 +243,14 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
       <div className="grid grid-cols-2 gap-3">
         <button
           onClick={() => router.push('/analytics/cashpulse')}
-          className="py-3 px-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-sm transition-colors text-white flex items-center justify-center gap-2"
+          className="py-3 px-4 bg-[#8b5cf6] hover:bg-[#7c3aed] rounded-lg font-medium text-sm transition-colors text-white flex items-center justify-center gap-2"
         >
           <DonnaIcon icon={DonnaIcons.whatsLeft} size="xs" variant="success" className="shrink-0" />
           <span>View Cash Pulse</span>
         </button>
         <button
           onClick={() => router.push('/analytics/profitlens')}
-          className="py-3 px-4 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-sm transition-colors text-white flex items-center justify-center gap-2"
+          className="py-3 px-4 bg-[#8b5cf6] hover:bg-[#7c3aed] rounded-lg font-medium text-sm transition-colors text-white flex items-center justify-center gap-2"
         >
           <DonnaIcon icon={DonnaIcons.profitLens} size="xs" variant="success" className="shrink-0" />
           <span>View Profit Lens</span>

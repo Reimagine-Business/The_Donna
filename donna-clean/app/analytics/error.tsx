@@ -45,7 +45,7 @@ export default function Error({
       <div className="text-center max-w-md">
         <div className="text-6xl mb-4">😔</div>
         <h2 className="text-2xl font-bold mb-2 text-white">Analytics Error</h2>
-        <p className="text-gray-400 mb-6">
+        <p className="text-white/60 mb-6">
           Something went wrong loading your analytics.
           {!autoRetried && (
             <span className="block mt-2 text-purple-400">
@@ -60,13 +60,13 @@ export default function Error({
               setCountdown(3)
               reset()
             }}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-white transition-colors"
+            className="px-6 py-3 bg-[#8b5cf6] hover:bg-[#7c3aed] rounded-lg font-medium text-white transition-colors"
           >
             Try Again
           </button>
           <button
             onClick={() => window.location.href = '/home'}
-            className="px-6 py-3 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium text-white transition-colors"
+            className="px-6 py-3 bg-white/[0.08] hover:bg-white/[0.15] rounded-lg font-medium text-white transition-colors"
           >
             Go Home
           </button>

@@ -64,7 +64,7 @@ export function AlertCard({ alert, onUpdate }: AlertCardProps) {
           icon: <Info className="w-5 h-5" />,
           bg: alert.is_read ? 'bg-blue-900/10' : 'bg-blue-900/20',
           border: alert.is_read ? 'border-blue-500/20' : 'border-blue-500/50',
-          iconColor: alert.is_read ? 'text-blue-400/50' : 'text-blue-400',
+          iconColor: alert.is_read ? 'text-[#8b5cf6]/50' : 'text-[#8b5cf6]',
           label: '📘 Info',
         }
       case 'warning':
@@ -126,7 +126,7 @@ export function AlertCard({ alert, onUpdate }: AlertCardProps) {
                 <button
                   onClick={handleMarkAsRead}
                   disabled={processing}
-                  className="text-xs px-3 py-1.5 bg-purple-600 hover:bg-purple-700 text-white rounded transition-colors disabled:opacity-50 flex items-center gap-1"
+                  className="text-xs px-3 py-1.5 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded transition-colors disabled:opacity-50 flex items-center gap-1"
                 >
                   <Check className="w-3 h-3" />
                   <span>Mark as read</span>

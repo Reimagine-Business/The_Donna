@@ -128,7 +128,7 @@ export function InviteUserButton() {
           <button
             type="submit"
             disabled={isLoading}
-            className="px-6 py-2 bg-purple-500 hover:bg-purple-600 text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-6 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             <Mail className="h-4 w-4" />
             {isLoading ? 'Sending...' : 'Send Invitation'}
@@ -174,7 +174,7 @@ export function InviteUserButton() {
             <span className="text-sm font-medium">Generated Signup Link:</span>
             <button
               onClick={handleCopyLink}
-              className="flex items-center gap-2 px-3 py-1 text-xs bg-purple-500 hover:bg-purple-600 text-white rounded transition-colors"
+              className="flex items-center gap-2 px-3 py-1 text-xs bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded transition-colors"
             >
               <Copy className="h-3 w-3" />
               Copy Link

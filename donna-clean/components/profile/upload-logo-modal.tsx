@@ -145,7 +145,7 @@ export function UploadLogoModal({ currentLogoUrl, userId, onSuccess, onClose }: 
           </div>
 
           <label className="block">
-            <div className="w-full px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg text-center cursor-pointer transition-colors">
+            <div className="w-full px-6 py-3 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg text-center cursor-pointer transition-colors">
               {uploading ? 'Uploading...' : 'Choose Logo'}
             </div>
             <input
@@ -169,7 +169,7 @@ export function UploadLogoModal({ currentLogoUrl, userId, onSuccess, onClose }: 
               </div>
               <div className="w-full bg-purple-900/30 rounded-full h-2">
                 <div
-                  className="bg-purple-600 h-2 rounded-full transition-all duration-300"
+                  className="bg-[#8b5cf6] h-2 rounded-full transition-all duration-300"
                   style={{ width: `${uploadProgress}%` }}
                 />
               </div>

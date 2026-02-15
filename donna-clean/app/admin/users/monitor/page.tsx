@@ -129,7 +129,7 @@ export default async function UserMonitoringPage() {
         <div className="p-4 md:p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
           <div className="flex items-center gap-3 md:gap-4">
             <div className="p-2 md:p-3 rounded-lg bg-blue-500/20">
-              <Activity className="h-5 w-5 md:h-6 md:w-6 text-blue-400" />
+              <Activity className="h-5 w-5 md:h-6 md:w-6 text-[#8b5cf6]" />
             </div>
             <div>
               <div className="text-[10px] md:text-sm text-white/60">

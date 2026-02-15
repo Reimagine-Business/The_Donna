@@ -213,7 +213,7 @@ export default function BusinessBioPage() {
                 onClick={() => setBio((p) => ({ ...p, product_source: source }))}
                 className={`flex items-center gap-2 px-4 py-3 rounded-xl border text-sm text-left transition-all ${
                   bio.product_source === source
-                    ? "bg-purple-600/30 border-purple-500/60 text-white"
+                    ? "bg-[#8b5cf6]/30 border-purple-500/60 text-white"
                     : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
                 }`}
               >
@@ -245,7 +245,7 @@ export default function BusinessBioPage() {
                 onClick={() => toggleCustomer(customer)}
                 className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-all ${
                   bio.main_customers.includes(customer)
-                    ? "bg-purple-600/30 border-purple-500/60 text-white"
+                    ? "bg-[#8b5cf6]/30 border-purple-500/60 text-white"
                     : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
                 }`}
               >
@@ -259,7 +259,7 @@ export default function BusinessBioPage() {
               onClick={() => toggleCustomer("Other")}
               className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm transition-all ${
                 bio.main_customers.includes("Other")
-                  ? "bg-purple-600/30 border-purple-500/60 text-white"
+                  ? "bg-[#8b5cf6]/30 border-purple-500/60 text-white"
                   : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
               }`}
             >
@@ -288,7 +288,7 @@ export default function BusinessBioPage() {
                 onClick={() => setBio((p) => ({ ...p, monthly_sales_range: range }))}
                 className={`px-4 py-3 rounded-xl border text-sm transition-all text-left ${
                   bio.monthly_sales_range === range
-                    ? "bg-purple-600/30 border-purple-500/60 text-white font-medium"
+                    ? "bg-[#8b5cf6]/30 border-purple-500/60 text-white font-medium"
                     : "bg-white/5 border-white/10 text-white/60 hover:border-white/20"
                 }`}
               >

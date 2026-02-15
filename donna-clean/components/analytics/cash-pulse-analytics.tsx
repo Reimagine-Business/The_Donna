@@ -470,7 +470,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
               <span className="text-xs text-white">{cashPercentage.toFixed(1)}%</span>
             </div>
           </div>
-          <div className="w-full bg-gray-700/30 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-white/[0.08] rounded-full h-2 overflow-hidden">
             <div className="bg-white h-2 rounded-full transition-all" style={{ width: `${Math.min(cashPercentage, 100)}%` }}></div>
           </div>
         </div>
@@ -484,7 +484,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
               <span className="text-xs text-white">{bankPercentage.toFixed(1)}%</span>
             </div>
           </div>
-          <div className="w-full bg-gray-700/30 rounded-full h-2 overflow-hidden">
+          <div className="w-full bg-white/[0.08] rounded-full h-2 overflow-hidden">
             <div className="bg-white h-2 rounded-full transition-all" style={{ width: `${Math.min(bankPercentage, 100)}%` }}></div>
           </div>
         </div>
