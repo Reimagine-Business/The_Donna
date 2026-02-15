@@ -8,10 +8,18 @@
 CREATE TABLE IF NOT EXISTS profiles (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE UNIQUE NOT NULL,
+  email TEXT,
   username TEXT,
   business_name TEXT,
+  phone TEXT,
   address TEXT,
   logo_url TEXT,
+  role TEXT DEFAULT 'owner',
+  running_cash_balance NUMERIC DEFAULT 0,
+  balance_last_updated TIMESTAMPTZ DEFAULT NOW(),
+  cached_insights TEXT,
+  insights_cached_at TIMESTAMPTZ,
+  insights_cache_date DATE,
   created_at TIMESTAMPTZ DEFAULT NOW(),
   updated_at TIMESTAMPTZ DEFAULT NOW()
 );
@@ -33,22 +41,28 @@ CREATE POLICY "Users can insert own profile"
   WITH CHECK (auth.uid() = user_id);
 
 -- Auto-create profile on signup
--- Username is derived from metadata or email prefix, but only if it
--- passes the UNIQUE + format constraints (3-20 chars, [a-zA-Z0-9_-]).
--- If it doesn't pass, username is set to NULL — the app handles this
--- gracefully by falling back to the email prefix for display.
+-- This trigger handles BOTH profile creation AND default categories.
+-- Uses ON CONFLICT so it's safe even if app code also inserts a profile.
+-- Uses EXCEPTION handler so user creation NEVER fails due to profile issues.
 CREATE OR REPLACE FUNCTION public.handle_new_user()
 RETURNS TRIGGER AS $$
 DECLARE
   _username TEXT;
+  _email    TEXT;
+  _biz_name TEXT;
+  _phone    TEXT;
 BEGIN
-  -- Try metadata first, then email prefix
+  _email    := NEW.email;
+  _biz_name := COALESCE(NEW.raw_user_meta_data->>'business_name', 'My Business');
+  _phone    := NEW.raw_user_meta_data->>'phone';
+
+  -- Try metadata first, then email prefix for username
   _username := COALESCE(
     NEW.raw_user_meta_data->>'username',
     split_part(NEW.email, '@', 1)
   );
 
-  -- Validate against the CHECK constraint (3-20 chars, alphanumeric/hyphens/underscores)
+  -- Validate against CHECK constraint (3-20 chars, alphanumeric/hyphens/underscores)
   IF _username IS NOT NULL AND _username !~ '^[a-zA-Z0-9_-]{3,20}$' THEN
     _username := NULL;
   END IF;
@@ -61,13 +75,25 @@ BEGIN
     END IF;
   END IF;
 
-  INSERT INTO public.profiles (user_id, username, business_name)
-  VALUES (
-    NEW.id,
-    _username,
-    COALESCE(NEW.raw_user_meta_data->>'business_name', 'My Business')
-  );
+  -- Insert profile (ON CONFLICT = safe if already exists)
+  INSERT INTO public.profiles (user_id, email, username, business_name, phone, role)
+  VALUES (NEW.id, _email, _username, _biz_name, _phone, 'owner')
+  ON CONFLICT (user_id) DO UPDATE SET
+    email         = COALESCE(EXCLUDED.email, public.profiles.email),
+    username      = COALESCE(EXCLUDED.username, public.profiles.username),
+    business_name = COALESCE(EXCLUDED.business_name, public.profiles.business_name),
+    phone         = COALESCE(EXCLUDED.phone, public.profiles.phone),
+    updated_at    = NOW();
+
+  -- Create default categories
+  PERFORM public.create_default_categories(NEW.id);
+
   RETURN NEW;
+EXCEPTION
+  WHEN OTHERS THEN
+    RAISE WARNING 'handle_new_user() failed for user %: % (SQLSTATE %)',
+      NEW.id, SQLERRM, SQLSTATE;
+    RETURN NEW;
 END;
 $$ LANGUAGE plpgsql SECURITY DEFINER;
 
