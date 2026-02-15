@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import type { Party, CreatePartyInput, UpdatePartyInput } from "@/lib/parties";
+import * as Sentry from "@sentry/nextjs";
 
 /**
  * Get all parties for the current user
@@ -28,16 +29,18 @@ export async function getParties(): Promise<{
       .order("name");
 
     if (error) {
-      console.error("Error fetching parties:", error);
-      return { success: false, error: error.message };
+      console.error("[getParties] Query error:", error);
+      Sentry.captureException(error, { tags: { action: 'get-parties' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     return { success: true, parties: data as Party[] };
   } catch (error) {
-    console.error("Exception in getParties:", error);
+    console.error("[getParties] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'get-parties' } });
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch parties",
+      error: "Something went wrong. Please try again.",
     };
   }
 }
@@ -66,16 +69,18 @@ export async function getParty(id: string): Promise<{
       .single();
 
     if (error) {
-      console.error("Error fetching party:", error);
-      return { success: false, error: error.message };
+      console.error("[getParty] Query error:", error);
+      Sentry.captureException(error, { tags: { action: 'get-party' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     return { success: true, party: data as Party };
   } catch (error) {
-    console.error("Exception in getParty:", error);
+    console.error("[getParty] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'get-party' } });
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to fetch party",
+      error: "Something went wrong. Please try again.",
     };
   }
 }
@@ -125,7 +130,8 @@ export async function createParty(input: CreatePartyInput): Promise<{
         return { success: false, error: "A party with this name already exists" };
       }
 
-      return { success: false, error: error.message };
+      Sentry.captureException(error, { tags: { action: 'create-party' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     // Revalidate paths that might show parties
@@ -135,10 +141,11 @@ export async function createParty(input: CreatePartyInput): Promise<{
 
     return { success: true, party: data as Party };
   } catch (error) {
-    console.error("Exception in createParty:", error);
+    console.error("[createParty] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'create-party' } });
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to create party",
+      error: "Something went wrong. Please try again.",
     };
   }
 }
@@ -199,7 +206,8 @@ export async function updateParty(
         return { success: false, error: "A party with this name already exists" };
       }
 
-      return { success: false, error: error.message };
+      Sentry.captureException(error, { tags: { action: 'update-party' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     // Revalidate paths
@@ -209,10 +217,11 @@ export async function updateParty(
 
     return { success: true };
   } catch (error) {
-    console.error("Exception in updateParty:", error);
+    console.error("[updateParty] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'update-party' } });
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to update party",
+      error: "Something went wrong. Please try again.",
     };
   }
 }
@@ -240,8 +249,9 @@ export async function deleteParty(id: string): Promise<{
       .eq("user_id", user.id);
 
     if (error) {
-      console.error("Error deleting party:", error);
-      return { success: false, error: error.message };
+      console.error("[deleteParty] Delete error:", error);
+      Sentry.captureException(error, { tags: { action: 'delete-party' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     // Revalidate paths
@@ -251,10 +261,11 @@ export async function deleteParty(id: string): Promise<{
 
     return { success: true };
   } catch (error) {
-    console.error("Exception in deleteParty:", error);
+    console.error("[deleteParty] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'delete-party' } });
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to delete party",
+      error: "Something went wrong. Please try again.",
     };
   }
 }
@@ -280,16 +291,18 @@ export async function getPartyBalance(partyId: string): Promise<{
     });
 
     if (error) {
-      console.error("Error getting party balance:", error);
-      return { success: false, error: error.message };
+      console.error("[getPartyBalance] RPC error:", error);
+      Sentry.captureException(error, { tags: { action: 'get-party-balance' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     return { success: true, balance: data };
   } catch (error) {
-    console.error("Exception in getPartyBalance:", error);
+    console.error("[getPartyBalance] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'get-party-balance' } });
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to get party balance",
+      error: "Something went wrong. Please try again.",
     };
   }
 }

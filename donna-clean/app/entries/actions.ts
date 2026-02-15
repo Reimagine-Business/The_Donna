@@ -220,8 +220,9 @@ export async function getEntries(options: {
     const { data, error, count } = await query
 
     if (error) {
-      console.error('[GET_ENTRIES] Query error:', error.message)
-      return { entries: [], totalCount: 0, page, pageSize, totalPages: 0, hasMore: false, error: error.message }
+      console.error('[GET_ENTRIES] Query error:', error)
+      Sentry.captureException(error, { tags: { action: 'get-entries' } })
+      return { entries: [], totalCount: 0, page, pageSize, totalPages: 0, hasMore: false, error: "Something went wrong. Please try again." }
     }
 
     const totalCount = count || 0
@@ -237,7 +238,8 @@ export async function getEntries(options: {
     }
   } catch (error) {
     console.error('[GET_ENTRIES] Unexpected error:', error)
-    return { entries: [], totalCount: 0, page: 1, pageSize: 50, totalPages: 0, hasMore: false, error: error instanceof Error ? error.message : 'Unknown error occurred' }
+    Sentry.captureException(error, { tags: { action: 'get-entries' } })
+    return { entries: [], totalCount: 0, page: 1, pageSize: 50, totalPages: 0, hasMore: false, error: "Something went wrong. Please try again." }
   }
 }
 
@@ -271,14 +273,16 @@ export async function getAllEntries(options: { page?: number; limit?: number } =
       .range(from, to)
 
     if (error) {
-      console.error('[GET_ALL_ENTRIES] Query error:', error.message)
-      return { entries: [], totalCount: 0, page, limit, error: error.message }
+      console.error('[GET_ALL_ENTRIES] Query error:', error)
+      Sentry.captureException(error, { tags: { action: 'get-all-entries' } })
+      return { entries: [], totalCount: 0, page, limit, error: "Something went wrong. Please try again." }
     }
 
     return { entries: data as Entry[], totalCount: count || 0, page, limit, error: null }
   } catch (error) {
     console.error('[GET_ALL_ENTRIES] Unexpected error:', error)
-    return { entries: [], totalCount: 0, page: 1, limit: 50, error: error instanceof Error ? error.message : 'Unknown error occurred' }
+    Sentry.captureException(error, { tags: { action: 'get-all-entries' } })
+    return { entries: [], totalCount: 0, page: 1, limit: 50, error: "Something went wrong. Please try again." }
   }
 }
 
@@ -314,14 +318,16 @@ export async function getRecentEntries() {
       .limit(100)
 
     if (error) {
-      console.error('[GET_RECENT_ENTRIES] Query error:', error.message)
-      return { entries: [], error: error.message }
+      console.error('[GET_RECENT_ENTRIES] Query error:', error)
+      Sentry.captureException(error, { tags: { action: 'get-recent-entries' } })
+      return { entries: [], error: "Something went wrong. Please try again." }
     }
 
     return { entries: data as Entry[], error: null }
   } catch (error) {
     console.error('[GET_RECENT_ENTRIES] Unexpected error:', error)
-    return { entries: [], error: error instanceof Error ? error.message : 'Unknown error occurred' }
+    Sentry.captureException(error, { tags: { action: 'get-recent-entries' } })
+    return { entries: [], error: "Something went wrong. Please try again." }
   }
 }
 
@@ -353,14 +359,16 @@ export async function getEntriesByDateRange(startDate: string, endDate: string) 
       .limit(5000) // Safety cap — consider monthly_summaries table for scale
 
     if (error) {
-      console.error('[GET_ENTRIES_BY_DATE_RANGE] Query error:', error.message)
-      return { entries: [], error: error.message }
+      console.error('[GET_ENTRIES_BY_DATE_RANGE] Query error:', error)
+      Sentry.captureException(error, { tags: { action: 'get-entries-by-date-range' } })
+      return { entries: [], error: "Something went wrong. Please try again." }
     }
 
     return { entries: data as Entry[], error: null }
   } catch (error) {
     console.error('[GET_ENTRIES_BY_DATE_RANGE] Unexpected error:', error)
-    return { entries: [], error: error instanceof Error ? error.message : 'Unknown error occurred' }
+    Sentry.captureException(error, { tags: { action: 'get-entries-by-date-range' } })
+    return { entries: [], error: "Something went wrong. Please try again." }
   }
 }
 
@@ -395,14 +403,16 @@ export async function getEntriesForAnalytics() {
       .limit(5000)
 
     if (error) {
-      console.error('[GET_ENTRIES_FOR_ANALYTICS] Query error:', error.message)
-      return { entries: [], error: error.message }
+      console.error('[GET_ENTRIES_FOR_ANALYTICS] Query error:', error)
+      Sentry.captureException(error, { tags: { action: 'get-entries-for-analytics' } })
+      return { entries: [], error: "Something went wrong. Please try again." }
     }
 
     return { entries: data as Entry[], error: null }
   } catch (error) {
     console.error('[GET_ENTRIES_FOR_ANALYTICS] Unexpected error:', error)
-    return { entries: [], error: error instanceof Error ? error.message : 'Unknown error occurred' }
+    Sentry.captureException(error, { tags: { action: 'get-entries-for-analytics' } })
+    return { entries: [], error: "Something went wrong. Please try again." }
   }
 }
 
@@ -525,7 +535,7 @@ export async function createEntry(input: CreateEntryInput) {
       extra: { entryData: sanitizedData },
       level: 'error',
     })
-    return { success: false, error: error.message }
+    return { success: false, error: "Something went wrong. Please try again." }
   }
 
   // Update running balance (fast, no table scan)
@@ -647,7 +657,7 @@ export async function updateEntry(id: string, input: UpdateEntryInput) {
       extra: { updateData: payload },
       level: 'error',
     })
-    return { success: false, error: error.message }
+    return { success: false, error: "Something went wrong. Please try again." }
   }
 
   // Update running balance if entry_type, category, or amount changed
@@ -785,7 +795,7 @@ export async function deleteEntry(id: string) {
       extra: { entryType: entry.entry_type, settled: entry.settled },
       level: 'error',
     })
-    return { success: false, error: error.message }
+    return { success: false, error: "Something went wrong. Please try again." }
   }
 
   // Reverse the deleted entry's effect on the running balance

@@ -57,7 +57,7 @@ export async function inviteUser(email: string) {
 
       return {
         success: false,
-        error: error.message || 'Failed to send invitation',
+        error: 'Something went wrong. Please try again.',
       };
     }
 
@@ -71,10 +71,10 @@ export async function inviteUser(email: string) {
       data,
     };
   } catch (error) {
-    console.error('Invitation error:', error);
+    console.error('[inviteUser] Unexpected error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to send invitation',
+      error: 'Something went wrong. Please try again.',
     };
   }
 }
@@ -121,10 +121,10 @@ export async function generateSignupLink(email: string) {
     });
 
     if (error) {
-      console.error('Link generation error:', error);
+      console.error('[generateSignupLink] Generation error:', error);
       return {
         success: false,
-        error: error.message || 'Failed to generate signup link',
+        error: 'Something went wrong. Please try again.',
       };
     }
 
@@ -136,10 +136,10 @@ export async function generateSignupLink(email: string) {
       email: email,
     };
   } catch (error) {
-    console.error('Unexpected error during link generation:', error);
+    console.error('[generateSignupLink] Unexpected error:', error);
     return {
       success: false,
-      error: error instanceof Error ? error.message : 'Failed to generate link',
+      error: 'Something went wrong. Please try again.',
     };
   }
 }

@@ -4,6 +4,7 @@ import { revalidatePath } from "next/cache";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
+import * as Sentry from "@sentry/nextjs";
 
 type SettleEntryResult =
   | {
@@ -72,8 +73,9 @@ export async function createSettlement(
     });
 
     if (error) {
-      console.error("Failed to settle entry via RPC", error);
-      return { success: false, error: error.message };
+      console.error("[createSettlement] RPC error:", error);
+      Sentry.captureException(error, { tags: { action: 'create-settlement' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     // ✅ FIX: Handle both array and direct JSON response
@@ -103,10 +105,11 @@ export async function createSettlement(
 
     return { success: true };
   } catch (error) {
-    console.error("Failed to settle entry", error);
+    console.error("[createSettlement] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'create-settlement' } });
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unable to settle entry.",
+      error: "Something went wrong. Please try again.",
     };
   }
 }
@@ -229,8 +232,9 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
       .eq("id", entryId);
 
     if (updateError) {
-      console.error("Failed to update original entry", updateError);
-      return { success: false, error: updateError.message };
+      console.error("[deleteSettlement] Failed to update original entry:", updateError);
+      Sentry.captureException(updateError, { tags: { action: 'delete-settlement' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     // Revalidate all affected pages
@@ -240,10 +244,11 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
 
     return { success: true };
   } catch (error) {
-    console.error("Failed to delete settlement", error);
+    console.error("[deleteSettlement] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'delete-settlement' } });
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Unable to delete settlement.",
+      error: "Something went wrong. Please try again.",
     };
   }
 }

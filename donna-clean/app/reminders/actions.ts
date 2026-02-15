@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
+import * as Sentry from "@sentry/nextjs";
 
 export async function createReminder(formData: FormData) {
   const supabase = await createSupabaseServerClient();
@@ -54,7 +55,9 @@ export async function createReminder(formData: FormData) {
     .single();
 
   if (error) {
-    return { error: error.message };
+    console.error("[createReminder] Insert error:", error);
+    Sentry.captureException(error, { tags: { action: 'reminder-create' } });
+    return { error: "Something went wrong. Please try again." };
   }
 
   // If recurring, calculate next_due_date
@@ -101,7 +104,9 @@ export async function markReminderDone(reminderId: string) {
     .eq("user_id", user.id);
 
   if (error) {
-    return { error: error.message };
+    console.error("[markReminderDone] Update error:", error);
+    Sentry.captureException(error, { tags: { action: 'reminder-done' } });
+    return { error: "Something went wrong. Please try again." };
   }
 
   // If recurring, create next occurrence
@@ -170,7 +175,9 @@ export async function updateReminder(reminderId: string, formData: FormData) {
     .eq("user_id", user.id);
 
   if (error) {
-    return { error: error.message };
+    console.error("[updateReminder] Update error:", error);
+    Sentry.captureException(error, { tags: { action: 'reminder-update' } });
+    return { error: "Something went wrong. Please try again." };
   }
 
   revalidatePath("/alerts");
@@ -203,7 +210,9 @@ export async function deleteReminder(reminderId: string) {
     .eq("user_id", user.id);
 
   if (error) {
-    return { error: error.message };
+    console.error("[deleteReminder] Delete error:", error);
+    Sentry.captureException(error, { tags: { action: 'reminder-delete' } });
+    return { error: "Something went wrong. Please try again." };
   }
 
   revalidatePath("/alerts");

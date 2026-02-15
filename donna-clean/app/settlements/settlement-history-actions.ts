@@ -2,6 +2,7 @@
 
 import { revalidatePath } from "next/cache";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
+import * as Sentry from "@sentry/nextjs";
 
 export type SettlementHistoryRecord = {
   id: string;
@@ -47,8 +48,9 @@ export async function getSettlementHistory(): Promise<{
       .limit(200);
 
     if (error) {
-      console.error("Failed to fetch settlement history:", error);
-      return { settlementHistory: [], error: error.message };
+      console.error("[getSettlementHistory] Query error:", error);
+      Sentry.captureException(error, { tags: { action: 'get-settlement-history' } });
+      return { settlementHistory: [], error: "Something went wrong. Please try again." };
     }
 
     // Map to SettlementHistoryRecord format
@@ -67,10 +69,11 @@ export async function getSettlementHistory(): Promise<{
 
     return { settlementHistory };
   } catch (error) {
-    console.error("Exception in getSettlementHistory:", error);
+    console.error("[getSettlementHistory] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'get-settlement-history' } });
     return {
       settlementHistory: [],
-      error: error instanceof Error ? error.message : "Failed to fetch settlement history",
+      error: "Something went wrong. Please try again.",
     };
   }
 }
@@ -136,8 +139,9 @@ export async function deleteSettlementHistory(settlementId: string): Promise<{
       .eq("user_id", user.id);
 
     if (deleteEntryError) {
-      console.error("Failed to delete settlement entry:", deleteEntryError);
-      return { success: false, error: deleteEntryError.message };
+      console.error("[deleteSettlementHistory] Failed to delete settlement entry:", deleteEntryError);
+      Sentry.captureException(deleteEntryError, { tags: { action: 'delete-settlement-history' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     // Mark original entry as unsettled and restore remaining_amount (both Credit and Advance)
@@ -152,8 +156,9 @@ export async function deleteSettlementHistory(settlementId: string): Promise<{
       .eq("user_id", user.id);
 
     if (updateError) {
-      console.error("Failed to update original entry:", updateError);
-      return { success: false, error: updateError.message };
+      console.error("[deleteSettlementHistory] Failed to update original entry:", updateError);
+      Sentry.captureException(updateError, { tags: { action: 'delete-settlement-history' } });
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     // Revalidate all affected pages
@@ -163,10 +168,11 @@ export async function deleteSettlementHistory(settlementId: string): Promise<{
 
     return { success: true };
   } catch (error) {
-    console.error("Exception in deleteSettlementHistory:", error);
+    console.error("[deleteSettlementHistory] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'delete-settlement-history' } });
     return {
       success: false,
-      error: error instanceof Error ? error.message : "Failed to delete settlement",
+      error: "Something went wrong. Please try again.",
     };
   }
 }

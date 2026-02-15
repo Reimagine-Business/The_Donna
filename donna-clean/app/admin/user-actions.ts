@@ -23,7 +23,7 @@ export async function deactivateUser(userId: string) {
 
     if (error) {
       console.error("[Admin] Deactivate error:", error);
-      return { success: false, error: error.message };
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     revalidatePath("/admin");
@@ -33,7 +33,7 @@ export async function deactivateUser(userId: string) {
     console.error("[Admin] Deactivate error:", err);
     return {
       success: false,
-      error: err instanceof Error ? err.message : "Failed to deactivate user",
+      error: "Something went wrong. Please try again.",
     };
   }
 }
@@ -49,7 +49,7 @@ export async function reactivateUser(userId: string) {
 
     if (error) {
       console.error("[Admin] Reactivate error:", error);
-      return { success: false, error: error.message };
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     revalidatePath("/admin");
@@ -59,8 +59,7 @@ export async function reactivateUser(userId: string) {
     console.error("[Admin] Reactivate error:", err);
     return {
       success: false,
-      error:
-        err instanceof Error ? err.message : "Failed to reactivate user",
+      error: "Something went wrong. Please try again.",
     };
   }
 }
@@ -83,7 +82,7 @@ export async function resetUserPassword(email: string) {
 
     if (error) {
       console.error("[Admin] Reset password error:", error);
-      return { success: false, error: error.message };
+      return { success: false, error: "Something went wrong. Please try again." };
     }
 
     return { success: true };
@@ -91,8 +90,7 @@ export async function resetUserPassword(email: string) {
     console.error("[Admin] Reset password error:", err);
     return {
       success: false,
-      error:
-        err instanceof Error ? err.message : "Failed to reset password",
+      error: "Something went wrong. Please try again.",
     };
   }
 }

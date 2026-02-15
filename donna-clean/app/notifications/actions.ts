@@ -3,6 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createSupabaseServerClient } from "@/utils/supabase/server"
 import { getOrRefreshUser } from "@/lib/supabase/get-user"
+import * as Sentry from "@sentry/nextjs"
 
 export type AlertType = 'info' | 'warning' | 'critical'
 
@@ -38,8 +39,9 @@ export async function getAlerts() {
     .order('created_at', { ascending: false }) // Newest first
 
   if (error) {
-    console.error('Failed to fetch alerts:', error)
-    return { alerts: [], error: error.message }
+    console.error('[getAlerts] Query error:', error)
+    Sentry.captureException(error, { tags: { action: 'get-alerts' } })
+    return { alerts: [], error: "Something went wrong. Please try again." }
   }
 
   return { alerts: data as Alert[], error: null }
@@ -64,8 +66,9 @@ export async function markAlertAsRead(alertId: string) {
     .eq('user_id', user.id)
 
   if (error) {
-    console.error('Failed to mark alert as read:', error)
-    return { success: false, error: error.message }
+    console.error('[markAlertAsRead] Update error:', error)
+    Sentry.captureException(error, { tags: { action: 'mark-alert-read' } })
+    return { success: false, error: "Something went wrong. Please try again." }
   }
 
   revalidatePath('/notifications')
@@ -92,8 +95,9 @@ export async function markAllAlertsAsRead() {
     .eq('is_read', false)
 
   if (error) {
-    console.error('Failed to mark all alerts as read:', error)
-    return { success: false, error: error.message }
+    console.error('[markAllAlertsAsRead] Update error:', error)
+    Sentry.captureException(error, { tags: { action: 'mark-all-alerts-read' } })
+    return { success: false, error: "Something went wrong. Please try again." }
   }
 
   revalidatePath('/notifications')
@@ -117,8 +121,9 @@ export async function deleteAlert(alertId: string) {
     .eq('user_id', user.id)
 
   if (error) {
-    console.error('Failed to delete alert:', error)
-    return { success: false, error: error.message }
+    console.error('[deleteAlert] Delete error:', error)
+    Sentry.captureException(error, { tags: { action: 'delete-alert' } })
+    return { success: false, error: "Something went wrong. Please try again." }
   }
 
   revalidatePath('/notifications')
@@ -142,8 +147,9 @@ export async function deleteAllReadAlerts() {
     .eq('is_read', true)
 
   if (error) {
-    console.error('Failed to delete read alerts:', error)
-    return { success: false, error: error.message }
+    console.error('[deleteAllReadAlerts] Delete error:', error)
+    Sentry.captureException(error, { tags: { action: 'delete-all-read-alerts' } })
+    return { success: false, error: "Something went wrong. Please try again." }
   }
 
   revalidatePath('/notifications')
