@@ -103,7 +103,7 @@ export function SettleEntryDialog({ entry, onClose }: SettleEntryDialogProps) {
             </span>
           </div>
           {/* Secondary Info */}
-          <p className="text-sm text-gray-400">
+          <p className="text-sm text-white/60">
             {entry.entry_type} {entry.category} • {format(new Date(entry.entry_date), "dd MMM yyyy")}
           </p>
           {entry.remaining_amount !== undefined && entry.remaining_amount !== entry.amount && (

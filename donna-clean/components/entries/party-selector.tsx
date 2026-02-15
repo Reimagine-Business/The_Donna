@@ -131,7 +131,7 @@ export function PartySelector({
     <div className="space-y-2">
       <label className="block text-sm font-medium text-white/70">
         {partyLabel} {required && <span className="text-red-400">*</span>}
-        {!required && <span className="text-gray-400 ml-2">(Optional)</span>}
+        {!required && <span className="text-white/60 ml-2">(Optional)</span>}
       </label>
 
       {!showNewPartyInput ? (

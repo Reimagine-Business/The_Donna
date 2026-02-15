@@ -85,7 +85,7 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
       {/* Header */}
       <div>
         <h1 className="text-2xl sm:text-3xl font-bold text-white">Your Financial Health</h1>
-        <p className="text-sm text-gray-400 mt-1">Quick overview of your business</p>
+        <p className="text-sm text-white/60 mt-1">Quick overview of your business</p>
       </div>
 
       {/* Health Score Card */}
@@ -100,7 +100,7 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
           <div className="text-center">
             <div className="text-5xl sm:text-6xl font-bold text-purple-400">
               {healthScore.totalScore}
-              <span className="text-2xl text-gray-500">/100</span>
+              <span className="text-2xl text-white/50">/100</span>
             </div>
             <p className={`text-lg font-medium mt-2 ${healthScore.statusColor}`}>
               {healthScore.status === 'excellent' && 'Excellent!'}
@@ -111,7 +111,7 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
           </div>
 
           {/* Progress Bar */}
-          <div className="w-full bg-gray-700 rounded-full h-3">
+          <div className="w-full bg-white/[0.08] rounded-full h-3">
             <div
               className={`h-3 rounded-full transition-all ${
                 healthScore.totalScore >= 85 ? 'bg-green-500' :
@@ -128,19 +128,19 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
       {/* Quick Stats */}
       <div className="grid grid-cols-2 gap-4">
         <div className="bg-green-900/20 border border-green-500/30 rounded-xl p-4">
-          <div className="text-xs text-gray-400 mb-1">💰 CASH</div>
+          <div className="text-xs text-white/60 mb-1">💰 CASH</div>
           <div className="text-2xl font-bold text-green-400">
             ₹{dashboardData.cash.toLocaleString('en-IN')}
           </div>
-          <div className="text-xs text-gray-500 mt-1">What you have</div>
+          <div className="text-xs text-white/50 mt-1">What you have</div>
         </div>
 
         <div className="bg-purple-900/20 border border-purple-500/30 rounded-xl p-4">
-          <div className="text-xs text-gray-400 mb-1">📊 PROFIT</div>
+          <div className="text-xs text-white/60 mb-1">📊 PROFIT</div>
           <div className="text-2xl font-bold text-purple-400">
             ₹{dashboardData.profit.toLocaleString('en-IN')}
           </div>
-          <div className="text-xs text-gray-500 mt-1">What you earned</div>
+          <div className="text-xs text-white/50 mt-1">What you earned</div>
         </div>
       </div>
 
@@ -153,7 +153,7 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
       </button>
 
       {/* Top Actions */}
-      <div className="bg-gray-900/50 border border-gray-700 rounded-xl p-4">
+      <div className="bg-white/[0.05] border border-white/[0.1] rounded-xl p-4">
         <h3 className="text-base font-semibold mb-3 text-white">⚡ TOP ACTIONS TODAY</h3>
         <div className="space-y-3">
           {dashboardData.pendingCollections > 0 && (
@@ -163,7 +163,7 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
             >
               <div>
                 <div className="text-sm font-medium text-white">1. 💵 Collect payments</div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-white/60">
                   ₹{dashboardData.pendingCollections.toLocaleString('en-IN')} pending from {dashboardData.collectionCount} customer{dashboardData.collectionCount !== 1 ? 's' : ''}
                 </div>
               </div>
@@ -180,7 +180,7 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
                 <div className="text-sm font-medium text-white">
                   {dashboardData.pendingCollections > 0 ? '2' : '1'}. 📋 Pay bills
                 </div>
-                <div className="text-xs text-gray-400">
+                <div className="text-xs text-white/60">
                   ₹{dashboardData.pendingBills.toLocaleString('en-IN')} due to {dashboardData.billCount} supplier{dashboardData.billCount !== 1 ? 's' : ''}
                 </div>
               </div>
@@ -196,7 +196,7 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
               <div className="text-sm font-medium text-white">
                 {(dashboardData.pendingCollections > 0 ? 1 : 0) + (dashboardData.pendingBills > 0 ? 1 : 0) + 1}. 📊 Review profit trend
               </div>
-              <div className="text-xs text-gray-400">
+              <div className="text-xs text-white/60">
                 See how your business is performing
               </div>
             </div>
@@ -209,19 +209,19 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
       <div className="grid grid-cols-3 gap-3">
         <button
           onClick={() => router.push('/entries')}
-          className="py-3 px-2 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-sm transition-colors text-white"
+          className="py-3 px-2 bg-[#8b5cf6] hover:bg-[#7c3aed] rounded-lg font-medium text-sm transition-colors text-white"
         >
           ➕ New Entry
         </button>
         <button
           onClick={() => router.push('/analytics/cashpulse')}
-          className="py-3 px-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium text-sm transition-colors text-white"
+          className="py-3 px-2 bg-white/[0.08] hover:bg-white/[0.15] rounded-lg font-medium text-sm transition-colors text-white"
         >
           💰 Cash
         </button>
         <button
           onClick={() => router.push('/analytics/profitlens')}
-          className="py-3 px-2 bg-gray-700 hover:bg-gray-600 rounded-lg font-medium text-sm transition-colors text-white"
+          className="py-3 px-2 bg-white/[0.08] hover:bg-white/[0.15] rounded-lg font-medium text-sm transition-colors text-white"
         >
           📊 Profit
         </button>

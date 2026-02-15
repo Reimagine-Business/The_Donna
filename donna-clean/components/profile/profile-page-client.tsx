@@ -290,7 +290,7 @@ export function ProfilePageClient() {
             <Link href="/profile/business-bio">
               <button className="w-full flex items-center justify-between bg-purple-900/30 hover:bg-purple-900/50 border border-purple-500/30 hover:border-purple-500/60 rounded-2xl px-6 py-4 transition-all duration-200 group">
                 <div className="flex items-center gap-3">
-                  <div className="w-10 h-10 bg-purple-600/20 rounded-xl flex items-center justify-center">
+                  <div className="w-10 h-10 bg-[#8b5cf6]/20 rounded-xl flex items-center justify-center">
                     <Sparkles className="w-5 h-5 text-purple-400" />
                   </div>
                   <div className="text-left">
@@ -421,7 +421,7 @@ function ProfileField({
         {onEdit && (
           <button
             onClick={onEdit}
-            className="px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white text-sm rounded-lg transition-colors"
+            className="px-4 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white text-sm rounded-lg transition-colors"
           >
             {buttonText}
           </button>

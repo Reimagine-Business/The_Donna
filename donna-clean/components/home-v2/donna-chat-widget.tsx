@@ -242,7 +242,7 @@ export function DonnaChatWidget() {
                       onError={() => setImageError(true)}
                     />
                   ) : (
-                    <div className="w-full h-full bg-purple-600 flex items-center justify-center">
+                    <div className="w-full h-full bg-[#8b5cf6] flex items-center justify-center">
                       <span className="text-white text-xs font-bold">D</span>
                     </div>
                   )}
@@ -280,7 +280,7 @@ export function DonnaChatWidget() {
                         onError={() => setImageError(true)}
                       />
                     ) : (
-                      <div className="w-full h-full bg-purple-600 flex items-center justify-center">
+                      <div className="w-full h-full bg-[#8b5cf6] flex items-center justify-center">
                         <span className="text-white text-lg font-bold">D</span>
                       </div>
                     )}
@@ -319,7 +319,7 @@ export function DonnaChatWidget() {
                   <div
                     className={`max-w-[85%] rounded-2xl px-3 py-2 text-sm leading-relaxed ${
                       msg.role === "user"
-                        ? "bg-purple-600/40 text-white border border-purple-500/30"
+                        ? "bg-[#8b5cf6]/40 text-white border border-purple-500/30"
                         : "bg-white/5 text-white/90 border border-white/10"
                     }`}
                   >
@@ -369,7 +369,7 @@ export function DonnaChatWidget() {
                 <button
                   onClick={handleSend}
                   disabled={loading || !input.trim()}
-                  className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-purple-600 hover:bg-purple-500 disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
+                  className="flex-shrink-0 w-9 h-9 flex items-center justify-center rounded-xl bg-[#8b5cf6] hover:bg-[#a78bfa] disabled:opacity-40 disabled:cursor-not-allowed transition-colors"
                   aria-label="Send message"
                 >
                   {loading ? (

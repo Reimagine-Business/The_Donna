@@ -168,7 +168,7 @@ export function EntryDetailsModal({ entry, categories, onEdit, onDelete, onClose
               onClose()
               onEdit()
             }}
-            className="px-6 py-3 bg-purple-600 hover:bg-purple-700 text-white rounded-lg transition-colors flex items-center gap-2"
+            className="px-6 py-3 bg-[#8b5cf6] hover:bg-[#7c3aed] text-white rounded-lg transition-colors flex items-center gap-2"
           >
             <Edit2 className="w-4 h-4" />
             Edit

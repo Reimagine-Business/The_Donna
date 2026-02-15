@@ -56,7 +56,7 @@ export function ForgotPasswordForm({
     <div className={className} {...props}>
       <div className="bg-gradient-to-br from-[#1a1a2e] to-[#0d0d1a] rounded-2xl border border-purple-500/30 p-8">
         <div className="flex items-center gap-3 mb-6">
-          <div className="w-12 h-12 bg-purple-600/20 rounded-full flex items-center justify-center">
+          <div className="w-12 h-12 bg-[#8b5cf6]/20 rounded-full flex items-center justify-center">
             <Mail className="w-6 h-6 text-purple-400" />
           </div>
           <div>

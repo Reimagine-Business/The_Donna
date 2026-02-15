@@ -24,12 +24,12 @@ export default function Error({
       <div className="text-center max-w-md">
         <div className="text-6xl mb-4">😔</div>
         <h2 className="text-2xl font-bold mb-2 text-white">Dashboard Error</h2>
-        <p className="text-gray-400 mb-6">
+        <p className="text-white/60 mb-6">
           Something went wrong loading your dashboard. We've been notified and are working on it.
         </p>
         <button
           onClick={reset}
-          className="px-6 py-3 bg-purple-600 hover:bg-purple-700 rounded-lg font-medium text-white transition-colors"
+          className="px-6 py-3 bg-[#8b5cf6] hover:bg-[#7c3aed] rounded-lg font-medium text-white transition-colors"
         >
           Try Again
         </button>

@@ -320,7 +320,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
                 </div>
                 <div className="w-full bg-purple-900/30 rounded-full h-2">
                   <div
-                    className="bg-purple-600 h-2 rounded-full transition-all"
+                    className="bg-[#8b5cf6] h-2 rounded-full transition-all"
                     style={{ width: `${cat.percentage}%` }}
                   />
                 </div>
