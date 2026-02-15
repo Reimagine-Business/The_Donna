@@ -54,7 +54,7 @@ CREATE POLICY "Admins can view all entries"
     EXISTS (
       SELECT 1 FROM profiles
       WHERE profiles.id = auth.uid()
-      AND profiles.email = 'reimaginebusiness2025@gmail.com'
+      AND profiles.email = 'alfred@thedonnaapp.co'
     )
   );
 

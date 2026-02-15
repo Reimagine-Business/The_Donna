@@ -66,7 +66,7 @@ export default async function AdminDashboardPage() {
         </p>
         <div className="mt-2 p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
           <p className="text-sm text-white/80">
-            Admin Access: reimaginebusiness2025@gmail.com
+            Admin Access: alfred@thedonnaapp.co
           </p>
         </div>
       </div>

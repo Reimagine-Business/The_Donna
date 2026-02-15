@@ -36,8 +36,8 @@ export function TopNavMobile() {
 
   const displayName = profile?.username || user?.email?.split("@")[0] || "User";
 
-  // Check if user is admin (reimaginebusiness2025@gmail.com)
-  const isAdmin = user?.email === 'reimaginebusiness2025@gmail.com' &&
+  // Check if user is admin (alfred@thedonnaapp.co)
+  const isAdmin = user?.email === 'alfred@thedonnaapp.co' &&
                   user?.app_metadata?.role === 'admin';
 
   return (
