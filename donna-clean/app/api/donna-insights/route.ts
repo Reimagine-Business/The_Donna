@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
@@ -79,24 +79,24 @@ export async function GET() {
     const fullContext = `Business: ${profile?.business_name || "Small Business"}\n${bioContext}\n\n${financialContext}`;
     const fullPrompt = buildDonnaInsightsPrompt(fullContext);
 
-    // Call Claude with reduced tokens
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    // Call ChatGPT
+    const apiKey = process.env.CHATGPT_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "API key not configured" }, { status: 500 });
     }
 
-    const client = new Anthropic({ apiKey });
-    let response: Anthropic.Message;
+    const openai = new OpenAI({ apiKey });
+    let response: OpenAI.ChatCompletion;
 
     try {
-      response = await client.messages.create({
-        model: "claude-sonnet-4-5-20250929",
+      response = await openai.chat.completions.create({
+        model: "gpt-4o",
         max_tokens: 150,
         temperature: 0.7,
         messages: [{ role: "user", content: fullPrompt }],
       });
     } catch (aiError) {
-      console.error("[Donna Insights] Claude API error:", aiError);
+      console.error("[Donna Insights] OpenAI API error:", aiError);
       Sentry.captureException(aiError, {
         tags: { endpoint: "donna-insights", userId: user.id },
       });
@@ -134,8 +134,8 @@ export async function GET() {
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
         { auth: { autoRefreshToken: false, persistSession: false } }
       );
-      const inputTokens = response.usage?.input_tokens || 0;
-      const outputTokens = response.usage?.output_tokens || 0;
+      const inputTokens = response.usage?.prompt_tokens || 0;
+      const outputTokens = response.usage?.completion_tokens || 0;
       await adminClient.from("ai_usage_logs").insert({
         user_id: user.id,
         feature: "insights",
@@ -143,8 +143,8 @@ export async function GET() {
         output_tokens: outputTokens,
         total_tokens: inputTokens + outputTokens,
         cost_usd:
-          (inputTokens / 1_000_000) * 3 + (outputTokens / 1_000_000) * 15,
-        model: "claude-sonnet-4-5-20250929",
+          (inputTokens / 1_000_000) * 2.5 + (outputTokens / 1_000_000) * 10,
+        model: "gpt-4o",
         created_at: new Date().toISOString(),
       });
     } catch (logErr) {
@@ -152,8 +152,7 @@ export async function GET() {
     }
 
     // Parse the AI response and clean it
-    const textBlock = response.content.find((b) => b.type === "text");
-    let insights = textBlock ? textBlock.text.trim() : "";
+    let insights = response.choices[0]?.message?.content?.trim() || "";
 
     // Clean with safety net
     insights = cleanDonnaResponse(insights)
