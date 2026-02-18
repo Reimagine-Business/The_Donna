@@ -9,6 +9,7 @@ import { BusinessCards } from "@/components/home-v2/business-cards";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getRecentEntries } from "@/app/entries/actions";
+import { getReminders } from "@/app/reminders/actions";
 import { EntryListSkeleton } from "@/components/skeletons/entry-skeleton";
 import { DonnaChatWidget } from "@/components/home-v2/donna-chat-widget";
 
@@ -39,13 +40,8 @@ export default async function HomeV2Page() {
     .eq("user_id", user.id)
     .maybeSingle();
 
-  // Fetch reminders for Donna's message (REUSE existing query)
-  const { data: reminders } = await supabase
-    .from("reminders")
-    .select("*")
-    .eq("user_id", user.id)
-    .eq("status", "pending")
-    .order("due_date", { ascending: true });
+  // Fetch reminders for Donna's message (cached, deduped with alerts page)
+  const reminders = await getReminders({ statusFilter: "pending" });
 
   // Greeting based on time of day
   const hour = new Date().getHours();
@@ -106,7 +102,7 @@ export default async function HomeV2Page() {
               <div className="space-y-3 text-[#e9d5ff]">
                 <DonnaMessageBullets
                   entries={entries}
-                  reminders={reminders || []}
+                  reminders={reminders}
                 />
               </div>
             </div>

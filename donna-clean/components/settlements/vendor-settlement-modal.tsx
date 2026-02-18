@@ -277,14 +277,14 @@ export function VendorSettlementModal({
         </div>
 
         {/* Footer Actions */}
-        <div className="mt-4 pt-4 border-t flex gap-2 justify-end">
-          <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="min-w-[100px]">
+        <div className="mt-4 pt-4 border-t flex flex-col sm:flex-row gap-2">
+          <Button variant="outline" onClick={onClose} disabled={isSubmitting} className="w-full sm:w-auto sm:min-w-[100px]">
             Cancel
           </Button>
           <Button
             onClick={handleConfirmSettlement}
             disabled={!selectedItem || isSubmitting || amount <= 0}
-            className="min-w-[140px]"
+            className="w-full sm:w-auto sm:min-w-[140px]"
           >
             {isSubmitting ? 'Processing...' : `Confirm - ${formatCurrency(amount)}`}
           </Button>
