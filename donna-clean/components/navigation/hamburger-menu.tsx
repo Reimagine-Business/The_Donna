@@ -32,7 +32,7 @@ export function HamburgerMenu({ businessName = "Donna Clean", userEmail, isAdmin
       />
 
       {/* Slide-out Menu */}
-      <div className="fixed left-0 top-0 z-50 h-full w-80 bg-card shadow-xl transition-transform duration-300 translate-x-0">
+      <div className="fixed left-0 top-0 z-50 h-full max-w-[320px] w-full bg-card shadow-xl transition-transform duration-300 translate-x-0">
         <div className="flex h-full flex-col">
           {/* Header */}
           <div className="border-b border-purple-500/30 p-6">
@@ -48,7 +48,7 @@ export function HamburgerMenu({ businessName = "Donna Clean", userEmail, isAdmin
               </div>
               <button
                 onClick={onClose}
-                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-white"
+                className="flex h-8 w-8 items-center justify-center rounded-lg text-muted-foreground transition-colors hover:bg-secondary hover:text-white active:bg-secondary/50 focus:bg-secondary/50"
                 aria-label="Close menu"
               >
                 ✕
@@ -76,7 +76,7 @@ export function HamburgerMenu({ businessName = "Donna Clean", userEmail, isAdmin
                           "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
                           isActive
                             ? "bg-purple-500/20 text-purple-200"
-                            : "text-purple-200/70 hover:bg-purple-900/30 hover:text-purple-200"
+                            : "text-purple-200/70 hover:bg-purple-900/30 hover:text-purple-200 active:bg-[#8b5cf6]/20 focus:bg-[#8b5cf6]/20"
                         )}
                       >
                         <Icon className="w-5 h-5" />
@@ -104,7 +104,7 @@ export function HamburgerMenu({ businessName = "Donna Clean", userEmail, isAdmin
                           "flex items-center gap-3 rounded-lg px-4 py-3 text-sm font-medium transition-colors",
                           pathname?.startsWith('/admin')
                             ? "bg-purple-500/20 text-purple-200"
-                            : "text-purple-200/70 hover:bg-purple-900/30 hover:text-purple-200"
+                            : "text-purple-200/70 hover:bg-purple-900/30 hover:text-purple-200 active:bg-[#8b5cf6]/20 focus:bg-[#8b5cf6]/20"
                         )}
                       >
                         <ShieldCheck className="w-5 h-5 text-purple-400" />

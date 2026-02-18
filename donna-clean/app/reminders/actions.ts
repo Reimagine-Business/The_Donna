@@ -5,6 +5,42 @@ import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
 import * as Sentry from "@sentry/nextjs";
 
+// ─────────────────────────────────────────────
+// CACHED REMINDER FETCH (60s TTL per user)
+// Deduplicates when home + alerts render close together
+// ─────────────────────────────────────────────
+const reminderCache = new Map<string, { data: any; timestamp: number }>();
+const CACHE_TTL = 60_000; // 60 seconds
+
+export async function getReminders(options?: { statusFilter?: string }) {
+  const supabase = await createSupabaseServerClient();
+  const { data: { user } } = await supabase.auth.getUser();
+
+  if (!user) return [];
+
+  const cacheKey = `${user.id}:${options?.statusFilter || "all"}`;
+  const cached = reminderCache.get(cacheKey);
+  if (cached && Date.now() - cached.timestamp < CACHE_TTL) {
+    return cached.data;
+  }
+
+  let query = supabase
+    .from("reminders")
+    .select("*")
+    .eq("user_id", user.id)
+    .order("due_date", { ascending: true });
+
+  if (options?.statusFilter) {
+    query = query.eq("status", options.statusFilter);
+  }
+
+  const { data } = await query;
+  const result = data || [];
+
+  reminderCache.set(cacheKey, { data: result, timestamp: Date.now() });
+  return result;
+}
+
 export async function createReminder(formData: FormData) {
   const supabase = await createSupabaseServerClient();
   const { data: { user } } = await supabase.auth.getUser();
@@ -69,6 +105,7 @@ export async function createReminder(formData: FormData) {
       .eq("id", data.id);
   }
 
+  reminderCache.clear();
   revalidatePath("/alerts");
   revalidatePath("/home");
   return { success: true, data };
@@ -138,6 +175,7 @@ export async function markReminderDone(reminderId: string) {
     }
   }
 
+  reminderCache.clear();
   revalidatePath("/alerts");
   revalidatePath("/home");
   return { success: true };
@@ -180,6 +218,7 @@ export async function updateReminder(reminderId: string, formData: FormData) {
     return { error: "Something went wrong. Please try again." };
   }
 
+  reminderCache.clear();
   revalidatePath("/alerts");
   revalidatePath("/home");
   return { success: true };
@@ -215,6 +254,7 @@ export async function deleteReminder(reminderId: string) {
     return { error: "Something went wrong. Please try again." };
   }
 
+  reminderCache.clear();
   revalidatePath("/alerts");
   revalidatePath("/home");
   return { success: true };
