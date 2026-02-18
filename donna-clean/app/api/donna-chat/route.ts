@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import Anthropic from "@anthropic-ai/sdk";
+import OpenAI from "openai";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
@@ -137,9 +137,9 @@ export async function POST(req: NextRequest) {
     );
 
     // ─────────────────────────────────────────────
-    // CALL CLAUDE
+    // CALL CHATGPT
     // ─────────────────────────────────────────────
-    const apiKey = process.env.ANTHROPIC_API_KEY;
+    const apiKey = process.env.CHATGPT_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "API key not configured" },
@@ -147,10 +147,12 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const client = new Anthropic({ apiKey });
+    const openai = new OpenAI({ apiKey });
 
     // Build conversation messages (keep history for context)
-    const conversationMessages: Anthropic.MessageParam[] = [];
+    const conversationMessages: OpenAI.ChatCompletionMessageParam[] = [
+      { role: "system", content: fullPrompt },
+    ];
     const recentHistory = history.slice(-20);
     for (const msg of recentHistory) {
       conversationMessages.push({
@@ -164,31 +166,27 @@ export async function POST(req: NextRequest) {
     });
 
     let reply = "";
-    let claudeResponse: Anthropic.Message | null = null;
+    let aiResponse: OpenAI.ChatCompletion | null = null;
 
     try {
-      claudeResponse = await client.messages.create({
-        model: "claude-sonnet-4-5-20250929",
-        max_tokens: 400,
+      aiResponse = await openai.chat.completions.create({
+        model: "gpt-4o",
+        max_tokens: 1000,
         temperature: 0.7,
-        system: fullPrompt,
         messages: conversationMessages,
       });
 
-      const textBlock = claudeResponse.content.find(
-        (b) => b.type === "text"
-      );
-      reply = textBlock ? textBlock.text.trim() : "";
-    } catch (claudeError) {
-      console.error("[Donna Chat] Claude API error:", claudeError);
-      Sentry.captureException(claudeError, {
+      reply = aiResponse.choices[0]?.message?.content?.trim() || "";
+    } catch (aiError) {
+      console.error("[Donna Chat] OpenAI API error:", aiError);
+      Sentry.captureException(aiError, {
         tags: { endpoint: "donna-chat", userId: user.id },
       });
     }
 
-    // Fallback if Claude failed or returned empty
+    // Fallback if AI failed or returned empty
     if (!reply || reply.length < 5) {
-      reply = !claudeResponse
+      reply = !aiResponse
         ? "Hmm, I'm having a little trouble connecting right now. 😌 Give it a moment and try again — I'll be back shortly."
         : "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!";
     }
@@ -201,9 +199,9 @@ export async function POST(req: NextRequest) {
       .trim();
 
     // ─────────────────────────────────────────────
-    // UPDATE USAGE + LOG (only if Claude succeeded)
+    // UPDATE USAGE + LOG (only if AI succeeded)
     // ─────────────────────────────────────────────
-    if (claudeResponse) {
+    if (aiResponse) {
       if (todayUsage) {
         await supabase
           .from("chat_usage")
@@ -224,15 +222,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Log token usage for admin cost tracking
-    if (claudeResponse) {
+    if (aiResponse) {
       try {
         const adminClient = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!,
           { auth: { autoRefreshToken: false, persistSession: false } }
         );
-        const inputTokens = claudeResponse.usage?.input_tokens || 0;
-        const outputTokens = claudeResponse.usage?.output_tokens || 0;
+        const inputTokens = aiResponse.usage?.prompt_tokens || 0;
+        const outputTokens = aiResponse.usage?.completion_tokens || 0;
         await adminClient.from("ai_usage_logs").insert({
           user_id: user.id,
           feature: "chat",
@@ -240,9 +238,9 @@ export async function POST(req: NextRequest) {
           output_tokens: outputTokens,
           total_tokens: inputTokens + outputTokens,
           cost_usd:
-            (inputTokens / 1_000_000) * 3 +
-            (outputTokens / 1_000_000) * 15,
-          model: "claude-sonnet-4-5-20250929",
+            (inputTokens / 1_000_000) * 2.5 +
+            (outputTokens / 1_000_000) * 10,
+          model: "gpt-4o",
           created_at: new Date().toISOString(),
         });
       } catch (logErr) {
@@ -250,8 +248,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const newDailyCount = claudeResponse ? dailyCount + 1 : dailyCount;
-    const newMonthlyCount = claudeResponse ? monthlyCount + 1 : monthlyCount;
+    const newDailyCount = aiResponse ? dailyCount + 1 : dailyCount;
+    const newMonthlyCount = aiResponse ? monthlyCount + 1 : monthlyCount;
 
     return NextResponse.json({
       reply,
