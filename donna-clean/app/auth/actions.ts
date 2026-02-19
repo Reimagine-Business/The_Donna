@@ -124,7 +124,9 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
   try {
     const supabase = await createSupabaseServerClient();
     const origin = await getOrigin();
-    const redirectUrl = `${origin}/auth/update-password`;
+    // Redirect to the client-side reset-password page which handles
+    // Supabase recovery hash fragments (#access_token=...&type=recovery)
+    const redirectUrl = `${origin}/reset-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
       redirectTo: redirectUrl,
