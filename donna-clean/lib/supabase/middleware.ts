@@ -38,7 +38,9 @@ export async function updateSession(request: NextRequest) {
     data: { user },
   } = await supabase.auth.getUser();
 
-  // Protected routes that require authentication
+  // Protected routes that require authentication.
+  // Public routes like /auth/*, /reset-password, /legal, /terms, /privacy
+  // are NOT listed here and remain accessible without login.
   const isProtectedRoute =
     request.nextUrl.pathname.startsWith("/analytics") ||
     request.nextUrl.pathname.startsWith("/home") ||
