@@ -14,12 +14,18 @@ type AuthState = {
 const getOrigin = async () => {
   // Prefer explicit site URL from env (most reliable on Vercel)
   if (process.env.NEXT_PUBLIC_SITE_URL) {
-    return process.env.NEXT_PUBLIC_SITE_URL;
+    return process.env.NEXT_PUBLIC_SITE_URL.replace(/\/+$/, "");
   }
   const headerList = await headers();
+  // Try origin header first, then fall back to host-based construction
   const origin = headerList.get("origin");
   if (origin) {
-    return origin;
+    return origin.replace(/\/+$/, "");
+  }
+  const host = headerList.get("host");
+  if (host) {
+    const protocol = host.includes("localhost") ? "http" : "https";
+    return `${protocol}://${host}`;
   }
   return "http://localhost:3000";
 };
@@ -125,8 +131,14 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     const supabase = await createSupabaseServerClient();
     const origin = await getOrigin();
     // Redirect to the client-side reset-password page which handles
-    // Supabase recovery hash fragments (#access_token=...&type=recovery)
+    // Supabase recovery hash fragments (#access_token=...&type=recovery).
+    // NOTE: This URL must also be whitelisted in Supabase Dashboard under
+    // Authentication > URL Configuration > Redirect URLs:
+    //   https://www.thedonnaapp.co/reset-password
+    //   https://thedonnaapp.co/reset-password
+    //   http://localhost:3000/reset-password
     const redirectUrl = `${origin}/reset-password`;
+    console.log("[forgotPasswordAction] redirectTo:", redirectUrl);
 
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
       redirectTo: redirectUrl,
