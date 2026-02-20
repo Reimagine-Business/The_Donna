@@ -138,7 +138,6 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     //   https://thedonnaapp.co/reset-password
     //   http://localhost:3000/reset-password
     const redirectUrl = `${origin}/reset-password`;
-    console.log("[forgotPasswordAction] redirectTo:", redirectUrl);
 
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
       redirectTo: redirectUrl,
