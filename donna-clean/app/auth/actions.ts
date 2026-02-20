@@ -140,17 +140,9 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     //   http://localhost:3000/auth/callback
     const redirectUrl = `${origin}/auth/callback?next=/reset-password`;
 
-    console.log("[forgotPasswordAction] Origin:", origin);
-    console.log("[forgotPasswordAction] Redirect URL:", redirectUrl);
-
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
       redirectTo: redirectUrl,
     });
-
-    console.log(
-      "[forgotPasswordAction] resetPasswordForEmail result - error:",
-      error?.message ?? "none"
-    );
 
     if (error) {
       console.error("[forgotPasswordAction] Supabase error:", error.message, error.status);

@@ -1,24 +1,27 @@
 import { createServerClient } from "@supabase/ssr";
-import { headers } from "next/headers";
+import { cookies } from "next/headers";
 
 export async function createSupabaseServerClient() {
-  // In Next.js 16, use headers() to access cookies
-  const headersList = await headers();
-  const cookieHeader = headersList.get('cookie') || '';
+  const cookieStore = await cookies();
 
   return createServerClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
     process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!,
     {
       cookies: {
-        get(name: string) {
-          // Parse cookie header manually
-          const cookies = cookieHeader.split(';').reduce((acc, cookie) => {
-            const [key, value] = cookie.trim().split('=');
-            if (key) acc[key] = value;
-            return acc;
-          }, {} as Record<string, string>);
-          return cookies[name];
+        getAll() {
+          return cookieStore.getAll();
+        },
+        setAll(cookiesToSet) {
+          try {
+            cookiesToSet.forEach(({ name, value, options }) => {
+              cookieStore.set(name, value, options);
+            });
+          } catch {
+            // setAll can fail in Server Components (read-only context).
+            // This is expected — cookie writing only matters in Server Actions
+            // and Route Handlers where the response can carry Set-Cookie headers.
+          }
         },
       },
     }
