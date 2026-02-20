@@ -35,24 +35,30 @@ export function ResetPasswordForm({
     setLoading(false);
   }
 
-  // Detect recovery session.
+  // Comprehensive recovery session detection.
   //
-  // The PKCE code exchange is handled server-side by /auth/callback, which
-  // redirects here with ?session=ready (success) or ?error=... (failure).
-  // This page just needs to:
-  //   1. Check URL params for errors from the callback route
-  //   2. Verify the session exists via getSession()
-  //   3. Listen for onAuthStateChange as a backup (implicit flow fallback)
+  // Supabase can redirect here with different URL formats depending on the
+  // configured auth flow:
+  //   1. ?session=ready          — from our /auth/callback server route (PKCE success)
+  //   2. ?code=XXX               — PKCE code (try server-side exchange)
+  //   3. ?token_hash=XXX&type=recovery — magic link / token hash flow
+  //   4. #access_token=XXX&type=recovery — implicit flow (hash fragment)
+  //   5. Existing session         — already authenticated
+  //
+  // We also listen for onAuthStateChange as a catch-all.
   useEffect(() => {
     let mounted = true;
 
-    const urlParams = new URLSearchParams(window.location.search);
-    const urlError = urlParams.get("error");
-    const errorDescription = urlParams.get("error_description");
-    const errorCode = urlParams.get("error_code");
+    const params = new URLSearchParams(window.location.search);
+    const hashParams = new URLSearchParams(window.location.hash.substring(1));
 
-    // Handle error parameters passed from /auth/callback or Supabase
+    // Check for errors first (from callback route or Supabase redirect)
+    const urlError = params.get("error") || hashParams.get("error");
     if (urlError) {
+      const errorDescription =
+        params.get("error_description") || hashParams.get("error_description");
+      const errorCode = params.get("error_code") || hashParams.get("error_code");
+
       if (errorCode === "user_banned") {
         setError("This account has been suspended. Please contact support.");
       } else {
@@ -81,37 +87,89 @@ export function ResetPasswordForm({
       }
     });
 
-    // Check for existing session (set by /auth/callback server-side route)
-    async function checkSession() {
+    async function attemptRecovery() {
+      // Method 1: ?session=ready (from our callback route — PKCE already exchanged)
+      if (params.get("session") === "ready") {
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (!mounted) return;
+        if (session) {
+          window.history.replaceState({}, "", "/reset-password");
+          markRecovered();
+          return;
+        }
+      }
+
+      // Method 2: ?code=XXX (PKCE — try server exchange via callback route)
+      const code = params.get("code");
+      if (code) {
+        try {
+          await fetch(
+            `/auth/callback?code=${encodeURIComponent(code)}&next=/reset-password`,
+            { redirect: "manual" }
+          );
+          if (!mounted) return;
+          const {
+            data: { session },
+          } = await supabase.auth.getSession();
+          if (session) {
+            window.history.replaceState({}, "", "/reset-password");
+            markRecovered();
+            return;
+          }
+        } catch (e) {
+          console.error("[reset-password] Code exchange failed:", e);
+        }
+      }
+
+      // Method 3: ?token_hash=XXX&type=recovery (token hash / magic link flow)
+      const tokenHash = params.get("token_hash");
+      const type = params.get("type");
+      if (tokenHash && type === "recovery") {
+        const { error } = await supabase.auth.verifyOtp({
+          token_hash: tokenHash,
+          type: "recovery",
+        });
+        if (!mounted) return;
+        if (!error) {
+          window.history.replaceState({}, "", "/reset-password");
+          markRecovered();
+          return;
+        }
+        console.error("[reset-password] Token hash verification failed:", error.message);
+      }
+
+      // Method 4: #access_token=XXX&type=recovery (implicit flow via hash)
+      const accessToken = hashParams.get("access_token");
+      const hashType = hashParams.get("type");
+      if (accessToken && hashType === "recovery") {
+        // Give the Supabase client a moment to process the hash fragment
+        await new Promise((resolve) => setTimeout(resolve, 1500));
+        if (!mounted) return;
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session) {
+          window.history.replaceState({}, "", "/reset-password");
+          markRecovered();
+          return;
+        }
+      }
+
+      // Method 5: Check for existing session (user may already be authenticated)
+      if (!mounted) return;
       const {
         data: { session },
       } = await supabase.auth.getSession();
-      if (!mounted || recoveredRef.current) return;
-      if (session) {
-        // Clean up URL params (?session=ready) so they're not visible
-        window.history.replaceState({}, "", "/reset-password");
+      if (session && mounted) {
         markRecovered();
       }
     }
 
-    checkSession();
+    attemptRecovery();
 
-    // Implicit flow fallback: detect hash fragments (#access_token=...&type=recovery)
-    const hash = window.location.hash;
-    if (hash && hash.includes("type=recovery")) {
-      const hashTimeout = setTimeout(async () => {
-        if (!mounted || recoveredRef.current) return;
-        const {
-          data: { session },
-        } = await supabase.auth.getSession();
-        if (session && mounted) {
-          markRecovered();
-        }
-      }, 1500);
-      cleanupTimeouts.push(hashTimeout);
-    }
-
-    // Timeout: 8 seconds before showing "expired"
+    // Timeout: 10 seconds before showing "expired"
     const expireTimeout = setTimeout(() => {
       if (!mounted || recoveredRef.current) return;
       setLoading((prev) => {
@@ -121,7 +179,7 @@ export function ResetPasswordForm({
         }
         return prev;
       });
-    }, 8000);
+    }, 10000);
 
     return () => {
       mounted = false;

@@ -130,15 +130,15 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
   try {
     const supabase = await createSupabaseServerClient();
     const origin = await getOrigin();
-    // Redirect to the server-side callback route which exchanges the PKCE
-    // code for a session, then redirects to /reset-password with the session
-    // already established in cookies.
-    // NOTE: This URL must also be whitelisted in Supabase Dashboard under
+    // Redirect directly to /reset-password. The page handles all Supabase
+    // redirect formats: ?code=XXX (PKCE), #access_token (implicit),
+    // ?token_hash (magic link), or existing session.
+    // NOTE: This URL must be whitelisted in Supabase Dashboard under
     // Authentication > URL Configuration > Redirect URLs:
-    //   https://www.thedonnaapp.co/auth/callback
-    //   https://thedonnaapp.co/auth/callback
-    //   http://localhost:3000/auth/callback
-    const redirectUrl = `${origin}/auth/callback?next=/reset-password`;
+    //   https://www.thedonnaapp.co/reset-password
+    //   https://thedonnaapp.co/reset-password
+    //   http://localhost:3000/reset-password
+    const redirectUrl = `${origin}/reset-password`;
 
     const { error } = await supabase.auth.resetPasswordForEmail(sanitizedEmail, {
       redirectTo: redirectUrl,
