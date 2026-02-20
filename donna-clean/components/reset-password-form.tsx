@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { Lock, Eye, EyeOff, Check, AlertCircle } from "lucide-react";
@@ -25,28 +25,81 @@ export function ResetPasswordForm({
   const [error, setError] = useState("");
   const [success, setSuccess] = useState(false);
 
-  // Listen for Supabase PASSWORD_RECOVERY event from hash fragments
+  // Track whether we've already detected recovery to avoid redundant state updates
+  const recoveredRef = useRef(false);
+
+  function markRecovered() {
+    if (recoveredRef.current) return;
+    recoveredRef.current = true;
+    setRecoveryDetected(true);
+    setLoading(false);
+  }
+
+  // Detect Supabase recovery session from URL hash fragments.
+  //
+  // When Supabase redirects here, the URL contains hash fragments:
+  //   /reset-password#access_token=...&refresh_token=...&type=recovery
+  //
+  // The Supabase browser client auto-processes these on init, which can
+  // fire the PASSWORD_RECOVERY event before our useEffect runs. We use
+  // three detection strategies to handle all timing scenarios:
+  //   1. onAuthStateChange listener (catches event if it fires after mount)
+  //   2. Manual URL hash check with delayed session verification (fallback)
+  //   3. Immediate getSession() check (catches already-processed sessions)
   useEffect(() => {
+    let mounted = true;
+    const cleanupFns: (() => void)[] = [];
+
+    // Strategy 1: Auth state change listener
+    // Catches PASSWORD_RECOVERY and SIGNED_IN events
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange(async (event) => {
+    } = supabase.auth.onAuthStateChange((event, session) => {
+      if (!mounted) return;
       if (event === "PASSWORD_RECOVERY") {
-        setRecoveryDetected(true);
-        setLoading(false);
+        markRecovered();
+      }
+      // Recovery tokens also trigger SIGNED_IN after the session is established
+      if (event === "SIGNED_IN" && session) {
+        markRecovered();
       }
     });
 
-    // Also check if there's already a valid session (user may have arrived
-    // and the event already fired before this effect ran)
+    // Strategy 2: Manual URL hash fragment detection
+    // If the event already fired before the listener was registered,
+    // detect the hash and give Supabase time to finish processing
+    const hash = window.location.hash;
+    if (hash && hash.includes("type=recovery")) {
+      // Hash fragment present — Supabase client is processing it.
+      // Wait briefly then verify the session was established.
+      const hashTimeout = setTimeout(async () => {
+        if (!mounted || recoveredRef.current) return;
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session && mounted) {
+          markRecovered();
+        }
+      }, 1500);
+
+      // Clean up this timeout on unmount
+      const originalCleanup = () => clearTimeout(hashTimeout);
+      // Store for cleanup in the return
+      cleanupFns.push(originalCleanup);
+    }
+
+    // Strategy 3: Immediate session check
+    // Catches cases where the session was already established
     supabase.auth.getSession().then(({ data: { session } }) => {
+      if (!mounted || recoveredRef.current) return;
       if (session) {
-        setRecoveryDetected(true);
-        setLoading(false);
+        markRecovered();
       }
     });
 
-    // If no recovery session is detected after 5 seconds, show expired message
-    const timeout = setTimeout(() => {
+    // Timeout: 10 seconds for slow networks before showing "expired"
+    const expireTimeout = setTimeout(() => {
+      if (!mounted || recoveredRef.current) return;
       setLoading((prev) => {
         if (prev) {
           setExpired(true);
@@ -54,12 +107,15 @@ export function ResetPasswordForm({
         }
         return prev;
       });
-    }, 5000);
+    }, 10000);
 
     return () => {
+      mounted = false;
       subscription.unsubscribe();
-      clearTimeout(timeout);
+      clearTimeout(expireTimeout);
+      cleanupFns.forEach((fn) => fn());
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
 
   // Redirect to login 3 seconds after success
