@@ -144,14 +144,19 @@ export async function forgotPasswordAction(_: AuthState, formData: FormData): Pr
     });
 
     if (error) {
-      console.error("[forgotPasswordAction] Supabase error:", error);
+      console.error("[forgotPasswordAction] Supabase error:", error.message, error.status);
+      if (error.status === 429) {
+        return { error: "Too many requests. Please wait a few minutes and try again." };
+      }
       return { error: "Something went wrong. Please try again." };
     }
 
+    // Always return success — Supabase returns success even for non-existent
+    // emails (by design, for security). The user sees "check your email".
     return { success: true };
   } catch (error) {
     console.error("[Forgot Password] Unexpected error:", error);
-    return { error: "An error occurred. Please try again." };
+    return { error: "Something went wrong. Please try again later." };
   }
 }
 
