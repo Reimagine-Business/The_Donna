@@ -35,24 +35,40 @@ export function ResetPasswordForm({
     setLoading(false);
   }
 
-  // Detect Supabase recovery session.
+  // Detect recovery session.
   //
-  // Supabase supports two auth flows for password recovery:
-  //
-  // 1. PKCE flow (default): Redirects to /reset-password?code=XXXXX
-  //    The code must be exchanged for a session via exchangeCodeForSession().
-  //    The code can only be exchanged ONCE — refreshing won't work.
-  //
-  // 2. Implicit flow (fallback): Redirects with hash fragments
-  //    /reset-password#access_token=...&refresh_token=...&type=recovery
-  //    The Supabase browser client auto-processes these on init.
-  //
-  // We handle both flows plus error parameters from Supabase.
+  // The PKCE code exchange is handled server-side by /auth/callback, which
+  // redirects here with ?session=ready (success) or ?error=... (failure).
+  // This page just needs to:
+  //   1. Check URL params for errors from the callback route
+  //   2. Verify the session exists via getSession()
+  //   3. Listen for onAuthStateChange as a backup (implicit flow fallback)
   useEffect(() => {
     let mounted = true;
-    const cleanupFns: (() => void)[] = [];
 
-    // Auth state change listener — always active for both flows
+    const urlParams = new URLSearchParams(window.location.search);
+    const urlError = urlParams.get("error");
+    const errorDescription = urlParams.get("error_description");
+    const errorCode = urlParams.get("error_code");
+
+    // Handle error parameters passed from /auth/callback or Supabase
+    if (urlError) {
+      if (errorCode === "user_banned") {
+        setError("This account has been suspended. Please contact support.");
+      } else {
+        setError(
+          errorDescription
+            ? decodeURIComponent(errorDescription.replace(/\+/g, " "))
+            : "Password reset failed. Please try again."
+        );
+      }
+      setLoading(false);
+      return;
+    }
+
+    const cleanupTimeouts: ReturnType<typeof setTimeout>[] = [];
+
+    // Auth state change listener — catches PASSWORD_RECOVERY and SIGNED_IN
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event, session) => {
@@ -60,100 +76,42 @@ export function ResetPasswordForm({
       if (event === "PASSWORD_RECOVERY") {
         markRecovered();
       }
-      // Recovery tokens also trigger SIGNED_IN after the session is established
       if (event === "SIGNED_IN" && session) {
         markRecovered();
       }
     });
 
-    // Main detection logic (async to support PKCE exchange)
-    async function detectRecoverySession() {
-      const urlParams = new URLSearchParams(window.location.search);
-      const code = urlParams.get("code");
-      const urlError = urlParams.get("error");
-      const errorDescription = urlParams.get("error_description");
-      const errorCode = urlParams.get("error_code");
-
-      // Handle error parameters from Supabase (user_banned, access_denied, etc.)
-      if (urlError) {
-        if (!mounted) return;
-        if (errorCode === "user_banned") {
-          setError(
-            "This account has been suspended. Please contact support."
-          );
-        } else {
-          setError(
-            errorDescription || "Password reset failed. Please try again."
-          );
-        }
-        setLoading(false);
-        return;
-      }
-
-      // PKCE flow: exchange ?code= query parameter for a session
-      if (code) {
-        try {
-          const { data, error: exchangeError } =
-            await supabase.auth.exchangeCodeForSession(code);
-          if (!mounted) return;
-          if (exchangeError) {
-            console.error(
-              "[reset-password] Code exchange failed:",
-              exchangeError
-            );
-            setError(
-              "This reset link has expired or already been used. Please request a new one."
-            );
-            setLoading(false);
-            return;
-          }
-          if (data.session) {
-            // Clear the code from the URL so refresh doesn't re-attempt exchange
-            window.history.replaceState({}, "", "/reset-password");
-            markRecovered();
-            return;
-          }
-        } catch (err) {
-          if (!mounted) return;
-          console.error("[reset-password] Code exchange error:", err);
-          setError(
-            "Something went wrong. Please request a new reset link."
-          );
-          setLoading(false);
-          return;
-        }
-      }
-
-      // Implicit flow fallback: detect hash fragments (#access_token=...&type=recovery)
-      const hash = window.location.hash;
-      if (hash && hash.includes("type=recovery")) {
-        // Hash fragment present — Supabase client is processing it.
-        // Wait briefly then verify the session was established.
-        const hashTimeout = setTimeout(async () => {
-          if (!mounted || recoveredRef.current) return;
-          const {
-            data: { session },
-          } = await supabase.auth.getSession();
-          if (session && mounted) {
-            markRecovered();
-          }
-        }, 1500);
-        cleanupFns.push(() => clearTimeout(hashTimeout));
-      }
-
-      // Immediate session check — catches already-processed sessions
+    // Check for existing session (set by /auth/callback server-side route)
+    async function checkSession() {
       const {
         data: { session },
       } = await supabase.auth.getSession();
       if (!mounted || recoveredRef.current) return;
       if (session) {
+        // Clean up URL params (?session=ready) so they're not visible
+        window.history.replaceState({}, "", "/reset-password");
         markRecovered();
       }
     }
 
-    detectRecoverySession();
+    checkSession();
 
-    // Timeout: 10 seconds for slow networks before showing "expired"
+    // Implicit flow fallback: detect hash fragments (#access_token=...&type=recovery)
+    const hash = window.location.hash;
+    if (hash && hash.includes("type=recovery")) {
+      const hashTimeout = setTimeout(async () => {
+        if (!mounted || recoveredRef.current) return;
+        const {
+          data: { session },
+        } = await supabase.auth.getSession();
+        if (session && mounted) {
+          markRecovered();
+        }
+      }, 1500);
+      cleanupTimeouts.push(hashTimeout);
+    }
+
+    // Timeout: 8 seconds before showing "expired"
     const expireTimeout = setTimeout(() => {
       if (!mounted || recoveredRef.current) return;
       setLoading((prev) => {
@@ -163,13 +121,13 @@ export function ResetPasswordForm({
         }
         return prev;
       });
-    }, 10000);
+    }, 8000);
 
     return () => {
       mounted = false;
       subscription.unsubscribe();
       clearTimeout(expireTimeout);
-      cleanupFns.forEach((fn) => fn());
+      cleanupTimeouts.forEach((t) => clearTimeout(t));
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [supabase]);
@@ -264,7 +222,7 @@ export function ResetPasswordForm({
     );
   }
 
-  // Error state — PKCE exchange failure, URL error params, or expired link
+  // Error state — callback failure, URL error params, or submission error
   if (error && !recoveryDetected && !loading) {
     return (
       <div className={className} {...props}>
