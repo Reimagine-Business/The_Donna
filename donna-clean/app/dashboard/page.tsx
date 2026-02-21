@@ -43,21 +43,34 @@ export default async function DashboardPage() {
 
   if (!sessionError) {
     try {
-      const { data, error } = await supabase
-        .from("profiles")
-        .select("business_name, role")
-        .eq("user_id", user.id)
-        .maybeSingle();
+      // Retry profile fetch — for new users the handle_new_user trigger
+      // may still be running when we first hit the dashboard after login.
+      const maxRetries = 3;
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("business_name, role")
+          .eq("user_id", user.id)
+          .maybeSingle();
 
-      if (error && error.code !== "PGRST116") {
-        console.error("Profile fetch error:", error);
-        throw error;
+        if (error && error.code !== "PGRST116") {
+          console.error("Profile fetch error:", error);
+          throw error;
+        }
+
+        if (data) {
+          profile = data;
+          break;
+        }
+
+        // No data yet — wait before retrying so the trigger can finish
+        if (attempt < maxRetries - 1) {
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)));
+        }
       }
 
-      if (data) {
-        profile = data;
-      } else {
-        // Profile doesn't exist, try to create it
+      if (!profile) {
+        // All retries returned nothing — create the profile row ourselves
         const defaultBusinessName =
           metadata.business_name ?? user.email?.split("@")[0] ?? "Not set";
         const defaultRole = metadata.role ?? "owner";

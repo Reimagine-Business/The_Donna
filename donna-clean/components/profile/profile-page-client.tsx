@@ -48,22 +48,36 @@ export function ProfilePageClient() {
       }
       setUser(user)
 
-      // Use maybeSingle to avoid throwing when row doesn't exist
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('user_id', user.id)
-        .maybeSingle()
+      // Retry profile fetch — for new users the handle_new_user trigger
+      // may still be running when we first hit the profile page.
+      let profileData = null
+      const maxRetries = 3
+      for (let attempt = 0; attempt < maxRetries; attempt++) {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('user_id', user.id)
+          .maybeSingle()
 
-      if (error) {
-        console.error('Profile fetch error:', error.message, error.code, error.hint)
-        // Don't throw — show empty profile instead of breaking
-        setProfile(null)
-        return
+        if (error) {
+          console.error('Profile fetch error:', error.message, error.code, error.hint)
+          setProfile(null)
+          return
+        }
+
+        if (data) {
+          profileData = data
+          break
+        }
+
+        // No data yet — wait before retrying so the trigger can finish
+        if (attempt < maxRetries - 1) {
+          await new Promise((r) => setTimeout(r, 500 * (attempt + 1)))
+        }
       }
 
-      if (!data) {
-        // Profile row doesn't exist — create one
+      if (!profileData) {
+        // All retries returned nothing — create the profile row ourselves
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
           .insert({
@@ -83,7 +97,7 @@ export function ProfilePageClient() {
         }
         setProfile(newProfile)
       } else {
-        setProfile(data)
+        setProfile(profileData)
       }
       // Check if business bio exists
       try {
