@@ -70,4 +70,11 @@
   body {
     @apply bg-background text-foreground;
   }
+  /* Force dark background + light text on native dropdown options (desktop).
+     Without this, options inherit color:white from the select but render on
+     the OS-default light dropdown background, making text invisible. */
+  select option {
+    background-color: #0f0f23;
+    color: #e2e8f0;
+  }
 }
