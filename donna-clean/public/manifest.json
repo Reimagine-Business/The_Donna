@@ -2,7 +2,7 @@
   "name": "The Donna - Business Companion",
   "short_name": "The Donna",
   "description": "Your sharp, warm business companion for financial clarity",
-  "start_url": "/",
+  "start_url": "/home",
   "display": "standalone",
   "background_color": "#0f0f23",
   "theme_color": "#8b5cf6",
