@@ -50,9 +50,9 @@ export function TopNavMobile() {
             <Image
               src="/images/donna/New Donna Logo.png"
               alt="The Donna"
-              width={40}
-              height={40}
-              className="h-10 w-auto object-contain"
+              width={52}
+              height={52}
+              className="h-[52px] w-auto object-contain mix-blend-lighten"
             />
           </div>
 
