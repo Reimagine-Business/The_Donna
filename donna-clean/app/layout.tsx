@@ -4,6 +4,8 @@ import { Toaster } from "@/components/ui/toaster";
 import { CookieConsent } from "@/components/cookie-consent";
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
+import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
+import { InstallPrompt } from "@/components/pwa/install-prompt";
 import type { Viewport, Metadata } from 'next';
 
 // Metadata for SEO and social media sharing
@@ -28,6 +30,15 @@ export const metadata: Metadata = {
     title: 'The Donna - Financial Management',
     description: 'Manage your business finances with ease',
   },
+  manifest: '/manifest.json',
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: 'black-translucent',
+    title: 'The Donna',
+  },
+  other: {
+    'mobile-web-app-capable': 'yes',
+  },
 };
 
 export const viewport: Viewport = {
@@ -44,6 +55,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
+      <head>
+        <meta name="theme-color" content="#8b5cf6" />
+        <link rel="apple-touch-icon" href="/icons/apple-touch-icon.png" />
+      </head>
       <body className="min-h-screen bg-background font-sans">
         <Toaster />
         <ClientProviders>
@@ -52,6 +67,8 @@ export default function RootLayout({
         <Analytics debug={process.env.NODE_ENV === 'development'} />
         <SpeedInsights />
         <CookieConsent />
+        <ServiceWorkerRegister />
+        <InstallPrompt />
       </body>
     </html>
   );
