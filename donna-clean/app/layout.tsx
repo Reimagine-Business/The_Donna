@@ -6,6 +6,7 @@ import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ServiceWorkerRegister } from "@/components/pwa/service-worker-register";
 import { InstallPrompt } from "@/components/pwa/install-prompt";
+import { SplashScreen } from "@/components/pwa/splash-screen";
 import type { Viewport, Metadata } from 'next';
 
 // Metadata for SEO and social media sharing
@@ -61,9 +62,11 @@ export default function RootLayout({
       </head>
       <body className="min-h-screen bg-background font-sans">
         <Toaster />
-        <ClientProviders>
-          {children}
-        </ClientProviders>
+        <SplashScreen>
+          <ClientProviders>
+            {children}
+          </ClientProviders>
+        </SplashScreen>
         <Analytics debug={process.env.NODE_ENV === 'development'} />
         <SpeedInsights />
         <CookieConsent />
