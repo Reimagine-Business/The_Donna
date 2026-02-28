@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/admin/check-admin";
 import { createClient } from "@supabase/supabase-js";
-import { Users, FileText, MessageCircle, Sparkles } from "lucide-react";
+import { Users, FileText, MessageCircle, Sparkles, BarChart3 } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminDashboardPage() {
@@ -56,6 +56,9 @@ export default async function AdminDashboardPage() {
     // table may not exist yet
   }
 
+  const avgEntriesPerUser =
+    totalUsers > 0 ? Math.round((totalEntries || 0) / totalUsers) : 0;
+
   return (
     <div className="space-y-8">
       {/* Header */}
@@ -71,46 +74,74 @@ export default async function AdminDashboardPage() {
         </div>
       </div>
 
-      {/* Stats */}
-      <div className="grid gap-6 md:grid-cols-3">
-        <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-purple-500/20">
-              <Users className="h-6 w-6 text-purple-400" />
-            </div>
-            <div>
-              <div className="text-sm text-white/60">Total Users</div>
-              <div className="text-3xl font-bold text-white">{totalUsers}</div>
+      {/* Stats — row 1: 3 cards, row 2: 2 cards */}
+      <div className="space-y-4">
+        <div className="grid gap-6 md:grid-cols-3">
+          <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-purple-500/20">
+                <Users className="h-6 w-6 text-purple-400" />
+              </div>
+              <div>
+                <div className="text-sm text-white/60">Total Users</div>
+                <div className="text-3xl font-bold text-white">{totalUsers}</div>
+              </div>
             </div>
           </div>
-        </div>
 
-        <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-purple-500/20">
-              <FileText className="h-6 w-6 text-purple-400" />
+          <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-purple-500/20">
+                <FileText className="h-6 w-6 text-purple-400" />
+              </div>
+              <div>
+                <div className="text-sm text-white/60">Total Entries</div>
+                <div className="text-3xl font-bold text-white">
+                  {totalEntries || 0}
+                </div>
+              </div>
             </div>
-            <div>
-              <div className="text-sm text-white/60">Total Entries</div>
-              <div className="text-3xl font-bold text-white">
-                {totalEntries || 0}
+          </div>
+
+          <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-purple-500/20">
+                <MessageCircle className="h-6 w-6 text-purple-400" />
+              </div>
+              <div>
+                <div className="text-sm text-white/60">AI Chat Requests</div>
+                <div className="text-3xl font-bold text-white">
+                  {aiChatCount}
+                </div>
+                <div className="text-xs text-white/40 mt-1">
+                  Est. cost: ₹{totalCostINR.toFixed(2)}
+                </div>
               </div>
             </div>
           </div>
         </div>
 
-        <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
-          <div className="flex items-center gap-4">
-            <div className="p-3 rounded-lg bg-purple-500/20">
-              <MessageCircle className="h-6 w-6 text-purple-400" />
-            </div>
-            <div>
-              <div className="text-sm text-white/60">AI Chat Requests</div>
-              <div className="text-3xl font-bold text-white">
-                {aiChatCount}
+        <div className="grid gap-6 md:grid-cols-2">
+          <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-cyan-500/20">
+                <MessageCircle className="h-6 w-6 text-cyan-400" />
               </div>
-              <div className="text-xs text-white/40 mt-1">
-                Est. cost: ₹{totalCostINR.toFixed(2)}
+              <div>
+                <div className="text-sm text-white/60">Total AI Chats</div>
+                <div className="text-3xl font-bold text-white">{aiChatCount}</div>
+              </div>
+            </div>
+          </div>
+
+          <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
+            <div className="flex items-center gap-4">
+              <div className="p-3 rounded-lg bg-amber-500/20">
+                <BarChart3 className="h-6 w-6 text-amber-400" />
+              </div>
+              <div>
+                <div className="text-sm text-white/60">Avg Entries/User</div>
+                <div className="text-3xl font-bold text-white">{avgEntriesPerUser}</div>
               </div>
             </div>
           </div>
