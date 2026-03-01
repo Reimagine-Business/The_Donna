@@ -440,6 +440,9 @@ export default async function UserMonitoringPage() {
                 <th className="text-left p-4 font-medium text-sm text-white/70">
                   Last Login
                 </th>
+                <th className="text-left p-4 font-medium text-sm text-white/70">
+                  Last Entry
+                </th>
                 <th className="text-right p-4 font-medium text-sm text-white/70">
                   Entries
                 </th>
@@ -492,8 +495,8 @@ export default async function UserMonitoringPage() {
                 <StatusBadge lastEntryDate={user.last_entry_date} />
               </div>
 
-              {/* Row 1: login, last entry, entries */}
-              <div className="grid grid-cols-3 gap-2 text-xs">
+              {/* Row 1: login, last entry, signup, active days */}
+              <div className="grid grid-cols-4 gap-2 text-xs">
                 <div>
                   <p className="text-white/50">Last Login</p>
                   <p className="text-white">
@@ -502,6 +505,16 @@ export default async function UserMonitoringPage() {
                           addSuffix: true,
                         })
                       : "Never"}
+                  </p>
+                </div>
+                <div>
+                  <p className="text-white/50">Last Entry</p>
+                  <p className="text-white">
+                    {user.last_entry_date
+                      ? formatDistanceToNow(new Date(user.last_entry_date), {
+                          addSuffix: true,
+                        })
+                      : "No entries"}
                   </p>
                 </div>
                 <div>

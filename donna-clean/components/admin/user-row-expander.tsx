@@ -113,6 +113,24 @@ export function UserRowExpander({ user }: { user: UserStat }) {
           )}
         </td>
 
+        {/* Last Entry */}
+        <td className="p-4 text-sm">
+          {user.last_entry_date ? (
+            <div>
+              <div className="text-white/80">
+                {format(new Date(user.last_entry_date), "MMM d")}
+              </div>
+              <div className="text-xs text-white/40">
+                {formatDistanceToNow(new Date(user.last_entry_date), {
+                  addSuffix: true,
+                })}
+              </div>
+            </div>
+          ) : (
+            <span className="text-white/40">No entries</span>
+          )}
+        </td>
+
         {/* Entries */}
         <td className="p-4 text-right">
           <span className="font-semibold text-lg text-white">
@@ -161,7 +179,7 @@ export function UserRowExpander({ user }: { user: UserStat }) {
       {/* Expanded detail row */}
       {expanded && (
         <tr className="border-t border-purple-500/10 bg-purple-900/5">
-          <td colSpan={7} className="px-4 py-3">
+          <td colSpan={8} className="px-4 py-3">
             <div className="grid grid-cols-7 gap-4 text-xs">
               <div>
                 <p className="text-white/50 mb-1">Cash IN</p>
