@@ -59,11 +59,11 @@ export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: D
     }
 
     // Apply date filters if provided
-    if (startDate && new Date(entry.entry_date) < startDate) {
+    if (startDate && new Date(entry.entry_date + 'T00:00:00') < startDate) {
       skipped++
       continue
     }
-    if (endDate && new Date(entry.entry_date) > endDate) {
+    if (endDate && new Date(entry.entry_date + 'T00:00:00') > endDate) {
       skipped++
       continue
     }
@@ -126,10 +126,10 @@ export function calculateCOGS(entries: Entry[], startDate?: Date, endDate?: Date
   )
 
   if (startDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) >= startDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') >= startDate)
   }
   if (endDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) <= endDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') <= endDate)
   }
 
   const total = filtered.reduce((sum, e) => sum + e.amount, 0)
@@ -158,10 +158,10 @@ export function calculateOperatingExpenses(entries: Entry[], startDate?: Date, e
   )
 
   if (startDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) >= startDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') >= startDate)
   }
   if (endDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) <= endDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') <= endDate)
   }
 
   const total = filtered.reduce((sum, e) => sum + e.amount, 0)
@@ -225,7 +225,7 @@ export function getProfitTrend(entries: Entry[], months: number = 6): ProfitTren
         )
       )
       .filter(e => {
-        const entryDate = new Date(e.entry_date)
+        const entryDate = new Date(e.entry_date + 'T00:00:00')
         return entryDate >= monthStart && entryDate <= monthEnd
       })
       .reduce((sum, e) => sum + e.amount, 0)
@@ -260,10 +260,10 @@ export function getExpenseBreakdown(entries: Entry[], startDate?: Date, endDate?
   )
 
   if (startDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) >= startDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') >= startDate)
   }
   if (endDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) <= endDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') <= endDate)
   }
 
   const categoryMap = new Map<string, number>()

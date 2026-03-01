@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { format, startOfMonth, endOfMonth, endOfDay, subMonths } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DonnaIcon } from '@/components/common/donna-icon'
@@ -50,7 +50,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
     if (dateRange === 'customize' && customFromDate && customToDate) {
       return {
         startDate: customFromDate,
-        endDate: customToDate
+        endDate: endOfDay(customToDate)
       }
     }
 
@@ -68,12 +68,12 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
       case 'this-year':
         return {
           startDate: new Date(currentYear, 0, 1),
-          endDate: now
+          endDate: endOfDay(now)
         }
       case 'last-year':
         return {
           startDate: new Date(currentYear - 1, 0, 1),
-          endDate: new Date(currentYear - 1, 11, 31)
+          endDate: new Date(currentYear - 1, 11, 31, 23, 59, 59, 999)
         }
       case 'all-time':
         return {
@@ -112,7 +112,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
     // Filter by date range if specified
     if (startDate && endDate) {
       expenseEntries = expenseEntries.filter(e => {
-        const entryDate = new Date(e.entry_date)
+        const entryDate = new Date(e.entry_date + 'T00:00:00')
         return entryDate >= startDate && entryDate <= endDate
       })
     }

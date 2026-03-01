@@ -2,7 +2,7 @@
 
 import { useMemo, useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { format, startOfMonth, endOfMonth, subMonths } from 'date-fns'
+import { format, startOfMonth, endOfMonth, endOfDay, subMonths } from 'date-fns'
 import { Calendar } from '@/components/ui/calendar'
 import { Popover, PopoverContent, PopoverTrigger } from '@/components/ui/popover'
 import { DonnaIcon } from '@/components/common/donna-icon'
@@ -105,7 +105,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
     if (dateRange === 'customize' && customFromDate && customToDate) {
       return {
         startDate: customFromDate,
-        endDate: customToDate
+        endDate: endOfDay(customToDate)
       }
     }
 
@@ -123,17 +123,17 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
       case 'this-year':
         return {
           startDate: new Date(currentYear, 0, 1),
-          endDate: now
+          endDate: endOfDay(now)
         }
       case 'last-year':
         return {
           startDate: new Date(currentYear - 1, 0, 1),
-          endDate: new Date(currentYear - 1, 11, 31)
+          endDate: new Date(currentYear - 1, 11, 31, 23, 59, 59, 999)
         }
       case 'all-time':
         return {
           startDate: new Date(2000, 0, 1),
-          endDate: now
+          endDate: endOfDay(now)
         }
       default:
         return {

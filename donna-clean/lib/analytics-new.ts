@@ -78,10 +78,10 @@ export function getTotalCashIn(entries: Entry[], startDate?: Date, endDate?: Dat
   )
 
   if (startDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) >= startDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') >= startDate)
   }
   if (endDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) <= endDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') <= endDate)
   }
 
   return filtered.reduce((sum, e) => sum + e.amount, 0)
@@ -97,10 +97,10 @@ export function getTotalCashOut(entries: Entry[], startDate?: Date, endDate?: Da
   )
 
   if (startDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) >= startDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') >= startDate)
   }
   if (endDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) <= endDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') <= endDate)
   }
 
   return filtered.reduce((sum, e) => sum + e.amount, 0)
@@ -116,10 +116,10 @@ export function getCashInByCategory(entries: Entry[], startDate?: Date, endDate?
   )
 
   if (startDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) >= startDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') >= startDate)
   }
   if (endDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) <= endDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') <= endDate)
   }
 
   const categoryMap = new Map<string, { amount: number; count: number }>()
@@ -154,10 +154,10 @@ export function getCashOutByCategory(entries: Entry[], startDate?: Date, endDate
   )
 
   if (startDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) >= startDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') >= startDate)
   }
   if (endDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) <= endDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') <= endDate)
   }
 
   const categoryMap = new Map<string, { amount: number; count: number }>()
@@ -194,7 +194,7 @@ export function getCashFlowTrend(entries: Entry[], days: number = 30): CashFlowD
     const dayEnd = endOfDay(date)
 
     const dayEntries = entries.filter(e => {
-      const entryDate = new Date(e.entry_date)
+      const entryDate = new Date(e.entry_date + 'T00:00:00')
       return entryDate >= dayStart && entryDate <= dayEnd
     })
 
@@ -297,10 +297,10 @@ export function getCashEntryCount(entries: Entry[], type?: 'in' | 'out', startDa
   }
 
   if (startDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) >= startDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') >= startDate)
   }
   if (endDate) {
-    filtered = filtered.filter(e => new Date(e.entry_date) <= endDate)
+    filtered = filtered.filter(e => new Date(e.entry_date + 'T00:00:00') <= endDate)
   }
 
   return filtered.length
