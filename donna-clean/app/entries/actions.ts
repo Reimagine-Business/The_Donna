@@ -377,7 +377,7 @@ export async function getEntriesByDateRange(startDate: string, endDate: string) 
  * Defaults to last 90 days with a hard 5000-row safety cap.
  * Same return shape as getEntriesByDateRange().
  */
-export async function getEntriesForAnalytics() {
+export async function getEntriesForAnalytics(startDateOverride?: string) {
   try {
     const supabase = await createSupabaseServerClient()
     const { user } = await getOrRefreshUser(supabase)
@@ -387,9 +387,15 @@ export async function getEntriesForAnalytics() {
       return { entries: [], error: "Not authenticated" }
     }
 
-    const ninetyDaysAgo = new Date()
-    ninetyDaysAgo.setDate(ninetyDaysAgo.getDate() - 90)
-    const startDate = ninetyDaysAgo.toISOString().split('T')[0]
+    let startDate: string
+    if (startDateOverride) {
+      startDate = startDateOverride
+    } else {
+      // Default: fetch last 2 years of data to cover all period filters
+      const twoYearsAgo = new Date()
+      twoYearsAgo.setFullYear(twoYearsAgo.getFullYear() - 2)
+      startDate = twoYearsAgo.toISOString().split('T')[0]
+    }
 
     const { data, error } = await supabase
       .from('entries')
