@@ -51,10 +51,10 @@ export async function buildFinancialSummary(
     .gte("entry_date", lastMonthStart)
     .lte("entry_date", lastMonthEnd);
 
-  // Fetch pending (unsettled Credit/Advance)
+  // Fetch pending (unsettled Credit/Advance) — include category to match dashboard logic
   const { data: pendingEntries } = await supabase
     .from("entries")
-    .select("entry_type, amount, remaining_amount")
+    .select("entry_type, amount, remaining_amount, category")
     .eq("user_id", userId)
     .eq("settled", false)
     .in("entry_type", ["Credit", "Advance"]);
@@ -120,11 +120,18 @@ export async function buildFinancialSummary(
     .filter((e) => e.entry_type === "Cash OUT" || e.entry_type === "Advance")
     .reduce((sum, e) => sum + (e.amount || 0), 0);
 
-  // Calculate pending
+  // Calculate pending — must match dashboard logic exactly
+  // Pending Collections = Credit Sales only (money owed TO you)
   const pendingCollections = (pendingEntries || [])
-    .filter((e) => e.entry_type === "Credit")
+    .filter((e) => e.entry_type === "Credit" && e.category === "Sales")
     .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount ?? 0), 0);
 
+  // Pending Bills = Credit COGS/Opex/Assets (money YOU owe)
+  const pendingBills = (pendingEntries || [])
+    .filter((e) => e.entry_type === "Credit" && ["COGS", "Opex", "Assets"].includes(e.category))
+    .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount ?? 0), 0);
+
+  // Pending Advance Payments = Advance entries (money committed either way)
   const pendingPayments = (pendingEntries || [])
     .filter((e) => e.entry_type === "Advance")
     .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount ?? 0), 0);
@@ -174,7 +181,8 @@ ${lastMonthName.toUpperCase()} ${year} (comparison):
 - Cash out: ${fmt(lastOut)}
 - Net: ${netLast >= 0 ? `${fmt(netLast)} profit` : `${fmt(Math.abs(netLast))} loss`}
 ${pendingCollections > 0 ? `\nPENDING COLLECTIONS: ${fmt(pendingCollections)} owed to you` : ""}
-${pendingPayments > 0 ? `PENDING PAYMENTS: ${fmt(pendingPayments)} you owe` : ""}
+${pendingBills > 0 ? `PENDING BILLS: ${fmt(pendingBills)} you owe (credit purchases)` : ""}
+${pendingPayments > 0 ? `PENDING ADVANCES: ${fmt(pendingPayments)} advance commitments` : ""}
 ${overdueReminders.length > 0 ? `\nOVERDUE REMINDERS: ${overdueReminders.length} (${overdueReminders.map((r) => r.title).join(", ")})` : ""}
 ${upcomingReminders.length > 0 ? `UPCOMING THIS WEEK: ${upcomingReminders.length} (${upcomingReminders.map((r) => r.title).join(", ")})` : ""}`.trim();
 

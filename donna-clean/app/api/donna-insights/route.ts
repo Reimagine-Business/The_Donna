@@ -64,6 +64,8 @@ export async function GET() {
     // Build compact financial summary (pre-calculated, not raw entries)
     const financialContext = await buildFinancialSummary(supabase, user.id);
 
+    console.log("[Donna Insights] Financial context for AI prompt:", financialContext);
+
     // Get business bio for personalization
     const { data: businessProfile } = await supabase
       .from("business_profiles")
