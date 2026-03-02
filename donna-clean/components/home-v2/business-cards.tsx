@@ -129,48 +129,6 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
         />
       </div>
 
-      {/* What's Yours — Glass card with bottom glow */}
-      <div
-        className="rounded-2xl p-6 relative overflow-hidden"
-        style={{
-          background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))',
-          border: '1px solid rgba(192,132,252,0.15)',
-          borderRadius: '16px',
-        }}
-      >
-        <div className="flex items-start gap-4">
-          <div className="w-14 h-14 rounded-full bg-purple-500/20 border border-purple-400/30 flex items-center justify-center flex-shrink-0">
-            <svg
-              className="w-7 h-7 text-purple-300"
-              fill="none"
-              viewBox="0 0 24 24"
-              stroke="currentColor"
-            >
-              <path
-                strokeLinecap="round"
-                strokeLinejoin="round"
-                strokeWidth={2}
-                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
-              />
-            </svg>
-          </div>
-
-          <div className="flex-1">
-            <p className="text-[#94a3b8] text-xs font-medium uppercase tracking-widest mb-2">
-              What&apos;s Yours?
-            </p>
-            <p className="text-4xl font-extrabold text-white mb-1">
-              {fmt(snapshotData.totalOwn)}
-            </p>
-            <p className="text-[#94a3b8] text-xs">
-              Total value of everything you own
-            </p>
-          </div>
-        </div>
-        {/* Bottom glow line — purple/neutral */}
-        <div className="absolute bottom-0 left-[10%] right-[10%] h-px" style={{ background: 'linear-gradient(90deg, transparent, #c084fc, transparent)' }} />
-      </div>
-
       {/* What's Not Yours + Profit — Side by side, transparent with neon borders */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         {/* What's Not Yours — Glass card with red glow (expense/negative) */}
@@ -250,6 +208,48 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
           {/* Bottom glow line — positive/income */}
           <div className="absolute bottom-0 left-[10%] right-[10%] h-px" style={{ background: 'linear-gradient(90deg, transparent, #4ade80, transparent)' }} />
         </div>
+      </div>
+
+      {/* What's Yours — Glass card with bottom glow */}
+      <div
+        className="rounded-2xl p-6 relative overflow-hidden"
+        style={{
+          background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))',
+          border: '1px solid rgba(192,132,252,0.15)',
+          borderRadius: '16px',
+        }}
+      >
+        <div className="flex items-start gap-4">
+          <div className="w-14 h-14 rounded-full bg-purple-500/20 border border-purple-400/30 flex items-center justify-center flex-shrink-0">
+            <svg
+              className="w-7 h-7 text-purple-300"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path
+                strokeLinecap="round"
+                strokeLinejoin="round"
+                strokeWidth={2}
+                d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z"
+              />
+            </svg>
+          </div>
+
+          <div className="flex-1">
+            <p className="text-[#94a3b8] text-xs font-medium uppercase tracking-widest mb-2">
+              What&apos;s Yours?
+            </p>
+            <p className="text-4xl font-extrabold text-white mb-1">
+              {fmt(snapshotData.totalOwn)}
+            </p>
+            <p className="text-[#94a3b8] text-xs">
+              Total value of everything you own
+            </p>
+          </div>
+        </div>
+        {/* Bottom glow line — purple/neutral */}
+        <div className="absolute bottom-0 left-[10%] right-[10%] h-px" style={{ background: 'linear-gradient(90deg, transparent, #c084fc, transparent)' }} />
       </div>
 
       {/* Expandable Details */}
