@@ -5,18 +5,21 @@ type CategoryType = string
 
 /**
  * Determines the cash-flow direction of an entry.
- * Cash Pulse counts: Cash IN, Cash OUT, and Advance (direction depends on category).
- * Credit entries do NOT affect cash balance.
+ * Matches calculateCashBalance() in analytics-new.ts:
+ * Cash IN, Cash OUT, Credit Settlements, and Advance (direction depends on category).
+ * Plain Credit and Advance Settlement types do NOT affect cash balance.
  */
 function getCashDelta(entryType: EntryType, category: CategoryType, amount: number): number {
   if (entryType === 'Cash IN') return amount
   if (entryType === 'Cash OUT') return -amount
+  if (entryType === 'Credit Settlement (Collections)') return amount
+  if (entryType === 'Credit Settlement (Bills)') return -amount
   if (entryType === 'Advance') {
     // Advance with Sales = money received (inflow)
     // Advance with COGS/Opex/Assets = money paid out (outflow)
     return category === 'Sales' ? amount : -amount
   }
-  // Credit and settlement types don't affect cash balance
+  // Credit and Advance Settlement types don't affect cash balance
   return 0
 }
 
