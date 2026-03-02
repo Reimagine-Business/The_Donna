@@ -14,6 +14,7 @@ interface EditProfileModalProps {
 export function EditProfileModal({ field, currentValue, onSave, onClose }: EditProfileModalProps) {
   const [value, setValue] = useState(currentValue)
   const [loading, setLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const labels: Record<string, string> = {
     username: 'Username',
@@ -27,6 +28,16 @@ export function EditProfileModal({ field, currentValue, onSave, onClose }: EditP
       return
     }
 
+    if (field === 'username') {
+      if (!/^[a-zA-Z0-9_-]{3,20}$/.test(value)) {
+        setError(
+          'Username must be 3-20 characters. Only letters, numbers, _ and - allowed. No spaces.'
+        )
+        return
+      }
+    }
+
+    setError(null)
     setLoading(true)
     try {
       await onSave(value)
@@ -59,7 +70,7 @@ export function EditProfileModal({ field, currentValue, onSave, onClose }: EditP
           {field === 'address' ? (
             <textarea
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e) => { setValue(e.target.value); setError(null) }}
               rows={3}
               className="w-full px-4 py-2 bg-background border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
               placeholder={`Enter ${labels[field]?.toLowerCase()}`}
@@ -68,10 +79,13 @@ export function EditProfileModal({ field, currentValue, onSave, onClose }: EditP
             <input
               type="text"
               value={value}
-              onChange={(e) => setValue(e.target.value)}
+              onChange={(e) => { setValue(e.target.value); setError(null) }}
               className="w-full px-4 py-2 bg-background border border-purple-500/30 rounded-lg text-white focus:outline-none focus:border-purple-500"
               placeholder={`Enter ${labels[field]?.toLowerCase()}`}
             />
+          )}
+          {error && (
+            <p className="text-red-400 text-sm mt-2">{error}</p>
           )}
         </div>
 
