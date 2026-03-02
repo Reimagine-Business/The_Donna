@@ -128,27 +128,13 @@ export function ProfilePageClient() {
     if (!user) return
 
     try {
-      const { error, count } = await supabase
+      const { error, data: updatedData } = await supabase
         .from('profiles')
-        .update({
-          [field]: value,
-          updated_at: new Date().toISOString()
-        })
+        .update({ [field]: value, updated_at: new Date().toISOString() })
         .eq('user_id', user.id)
-        .select('', { count: 'exact', head: false })
-
-      if (error) {
-        console.error('❌ Update error:', error)
-        console.error('Error details:', {
-          message: error.message,
-          code: error.code,
-          details: error.details,
-          hint: error.hint
-        })
-        throw error
-      }
-
-      if (count !== null && count === 0) {
+        .select()
+      if (error) throw error
+      if (!updatedData || updatedData.length === 0) {
         throw new Error(
           'Profile update was blocked. Please log out and back in.'
         )
