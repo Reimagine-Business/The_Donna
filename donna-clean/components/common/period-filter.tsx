@@ -53,9 +53,10 @@ export function getDateRangeForPeriod(
   }
 
   if (period === "year" && selectedYear) {
+    // Use local time constructor so dates align with IST
     return {
-      start: new Date(selectedYear, 0, 1),
-      end: new Date(selectedYear, 11, 31, 23, 59, 59)
+      start: new Date(selectedYear, 0, 1, 0, 0, 0, 0),
+      end: new Date(selectedYear, 11, 31, 23, 59, 59, 999),
     };
   }
 
