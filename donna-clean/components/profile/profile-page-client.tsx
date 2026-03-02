@@ -1,6 +1,6 @@
 'use client'
 
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { createClient } from '@/lib/supabase/client'
 import { useRouter } from 'next/navigation'
 import { SiteHeader } from '@/components/site-header'
@@ -32,7 +32,7 @@ export function ProfilePageClient() {
   const [showLogoutConfirm, setShowLogoutConfirm] = useState(false)
   const [hasBusinessBio, setHasBusinessBio] = useState(false)
 
-  const supabase = createClient()
+  const supabase = useMemo(() => createClient(), [])
   const router = useRouter()
 
   useEffect(() => {
@@ -76,7 +76,12 @@ export function ProfilePageClient() {
         }
       }
 
-      if (!profileData) {
+      if (!profileData && profile) {
+        // Profile already exists in state but re-fetch returned null (stale client)
+        // Force page refresh as last resort
+        window.location.reload()
+        return
+      } else if (!profileData) {
         // All retries returned nothing — create the profile row ourselves
         const { data: newProfile, error: insertError } = await supabase
           .from('profiles')
@@ -123,13 +128,14 @@ export function ProfilePageClient() {
     if (!user) return
 
     try {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('profiles')
         .update({
           [field]: value,
           updated_at: new Date().toISOString()
         })
         .eq('user_id', user.id)
+        .select('', { count: 'exact', head: false })
 
       if (error) {
         console.error('❌ Update error:', error)
@@ -141,6 +147,20 @@ export function ProfilePageClient() {
         })
         throw error
       }
+
+      if (count !== null && count === 0) {
+        throw new Error(
+          'Profile update was blocked. Please log out and back in.'
+        )
+      }
+
+      // Trace the re-fetch to debug stale data issues
+      const refreshed = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('user_id', user.id)
+        .maybeSingle()
+      console.log('Profile after save:', refreshed.data)
 
       await loadProfile()
       setEditingField(null)
