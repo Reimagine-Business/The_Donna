@@ -33,7 +33,14 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
     const filteredEntries =
       start && end
         ? entries.filter((e) => {
-            const entryDate = new Date(e.entry_date);
+            // Parse date-only strings (e.g. "2025-01-15") as local midnight
+            // to avoid UTC offset shifting the date to the previous day in IST
+            const parts = e.entry_date.split("T")[0].split("-");
+            const entryDate = new Date(
+              Number(parts[0]),
+              Number(parts[1]) - 1,
+              Number(parts[2])
+            );
             return entryDate >= start && entryDate <= end;
           })
         : entries;
@@ -57,7 +64,12 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
 
     const fixedAssets = filteredEntries
-      .filter((e) => e.category === "Assets")
+      .filter(
+        (e) =>
+          e.category === "Assets" &&
+          e.entry_type !== "Credit Settlement (Bills)" &&
+          e.entry_type !== "Advance Settlement (Paid)"
+      )
       .reduce((sum, e) => sum + e.amount, 0);
 
     const totalOwn = cash + receivables + prepaid + fixedAssets;
