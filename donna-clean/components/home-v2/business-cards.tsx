@@ -38,16 +38,16 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
           })
         : entries;
 
-    const cash = calculateCashBalance(entries);
+    const cash = calculateCashBalance(filteredEntries);
 
-    const receivables = entries
+    const receivables = filteredEntries
       .filter(
         (e) =>
           e.entry_type === "Credit" && e.category === "Sales" && !e.settled
       )
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
 
-    const prepaid = entries
+    const prepaid = filteredEntries
       .filter(
         (e) =>
           e.entry_type === "Advance" &&
@@ -56,22 +56,22 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
       )
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
 
-    const fixedAssets = entries
+    const fixedAssets = filteredEntries
       .filter((e) => e.category === "Assets")
       .reduce((sum, e) => sum + e.amount, 0);
 
     const totalOwn = cash + receivables + prepaid + fixedAssets;
 
-    const creditBills = entries
+    const creditBills = filteredEntries
       .filter(
         (e) =>
           e.entry_type === "Credit" &&
-          ["COGS", "Opex"].includes(e.category) &&
+          ["COGS", "Opex", "Assets"].includes(e.category) &&
           !e.settled
       )
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
 
-    const customerAdvances = entries
+    const customerAdvances = filteredEntries
       .filter(
         (e) =>
           e.entry_type === "Advance" &&
