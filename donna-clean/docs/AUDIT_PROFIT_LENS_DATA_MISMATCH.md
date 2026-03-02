@@ -1,7 +1,7 @@
 # Audit: Profit Lens Data Mismatch
 
 **Date:** 2026-03-01
-**Status:** Analysis complete — no fixes applied
+**Status:** Fixed — home page now uses getEntriesForAnalytics(), balance.ts getCashDelta() aligned
 
 ## Problem Statement
 
