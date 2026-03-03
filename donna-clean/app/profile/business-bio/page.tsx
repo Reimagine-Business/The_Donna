@@ -28,8 +28,8 @@ interface BusinessBioData {
   team_size: string;
   monthly_sales_range: string;
   // Section 6 — Your Context Right Now
-  biggest_challenge: string;
-  main_goal: string;
+  biggest_challenge: string[];
+  main_goal: string[];
   peak_season: string;
   extra_notes: string;
 }
@@ -149,8 +149,8 @@ const EMPTY_BIO: BusinessBioData = {
   years_in_business: "",
   team_size: "",
   monthly_sales_range: "",
-  biggest_challenge: "",
-  main_goal: "",
+  biggest_challenge: [],
+  main_goal: [],
   peak_season: "",
   extra_notes: "",
 };
@@ -187,8 +187,8 @@ export default function BusinessBioPage() {
               years_in_business: ctx.years_in_business || "",
               team_size: ctx.team_size || "",
               monthly_sales_range: ctx.monthly_sales_range || "",
-              biggest_challenge: ctx.biggest_challenge || "",
-              main_goal: ctx.main_goal || "",
+              biggest_challenge: Array.isArray(ctx.biggest_challenge) ? ctx.biggest_challenge : ctx.biggest_challenge ? [ctx.biggest_challenge] : [],
+              main_goal: Array.isArray(ctx.main_goal) ? ctx.main_goal : ctx.main_goal ? [ctx.main_goal] : [],
               peak_season: ctx.peak_season || "",
               extra_notes: ctx.extra_notes || "",
             });
@@ -216,14 +216,14 @@ export default function BusinessBioPage() {
     bio.years_in_business,
     bio.team_size,
     bio.monthly_sales_range,
-    bio.biggest_challenge,
-    bio.main_goal,
+    bio.biggest_challenge.length > 0,
+    bio.main_goal.length > 0,
     bio.peak_season,
   ].filter(Boolean).length;
   const progress = Math.round((filledFields / 14) * 100);
 
   const toggleMultiSelect = (
-    field: "main_customers" | "payment_methods",
+    field: "main_customers" | "payment_methods" | "biggest_challenge" | "main_goal",
     value: string
   ) => {
     setBio((prev) => ({
@@ -575,14 +575,15 @@ export default function BusinessBioPage() {
 
         {/* Biggest Challenge */}
         <FormCard>
-          <p className="text-white font-medium mb-3">Biggest current challenge</p>
+          <p className="text-white font-medium mb-1">Biggest current challenge</p>
+          <p className="text-white/40 text-xs mb-3">Select all that apply</p>
           <div className="flex flex-wrap gap-2">
             {CHALLENGES.map((challenge) => (
-              <PickerButton
+              <MultiSelectButton
                 key={challenge}
                 label={challenge}
-                selected={bio.biggest_challenge === challenge}
-                onClick={() => setBio((p) => ({ ...p, biggest_challenge: challenge }))}
+                selected={bio.biggest_challenge.includes(challenge)}
+                onClick={() => toggleMultiSelect("biggest_challenge", challenge)}
               />
             ))}
           </div>
@@ -590,14 +591,15 @@ export default function BusinessBioPage() {
 
         {/* Main Goal */}
         <FormCard>
-          <p className="text-white font-medium mb-3">Your main goal for the next 6 months</p>
+          <p className="text-white font-medium mb-1">Your main goal for the next 6 months</p>
+          <p className="text-white/40 text-xs mb-3">Select all that apply</p>
           <div className="flex flex-wrap gap-2">
             {GOALS.map((goal) => (
-              <PickerButton
+              <MultiSelectButton
                 key={goal}
                 label={goal}
-                selected={bio.main_goal === goal}
-                onClick={() => setBio((p) => ({ ...p, main_goal: goal }))}
+                selected={bio.main_goal.includes(goal)}
+                onClick={() => toggleMultiSelect("main_goal", goal)}
               />
             ))}
           </div>

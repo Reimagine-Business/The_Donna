@@ -106,8 +106,8 @@ export async function POST(req: NextRequest) {
       team_size: formData.team_size || null,
       monthly_sales_range: formData.monthly_sales_range || null,
       // Section 6 — Your Context Right Now
-      biggest_challenge: formData.biggest_challenge || null,
-      main_goal: formData.main_goal || null,
+      biggest_challenge: Array.isArray(formData.biggest_challenge) ? formData.biggest_challenge : null,
+      main_goal: Array.isArray(formData.main_goal) ? formData.main_goal : null,
       peak_season: formData.peak_season || null,
       extra_notes: formData.extra_notes || null,
       updated_at: new Date().toISOString(),

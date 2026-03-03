@@ -752,14 +752,16 @@ export function buildBusinessBioContext(businessContext: any): string {
   }
 
   // ── Section 6: Current Context ──
-  if (ctx.biggest_challenge) {
-    lines.push(`BIGGEST CHALLENGE: ${ctx.biggest_challenge}`);
-    lines.push("→ Prioritize advice related to this challenge");
+  if (ctx.biggest_challenge?.length > 0) {
+    const challenges = Array.isArray(ctx.biggest_challenge) ? ctx.biggest_challenge.join(", ") : ctx.biggest_challenge;
+    lines.push(`BIGGEST CHALLENGES: ${challenges}`);
+    lines.push("→ Prioritize advice related to these challenges");
   }
 
-  if (ctx.main_goal) {
-    lines.push(`MAIN GOAL (next 6 months): ${ctx.main_goal}`);
-    lines.push("→ Connect advice to this goal when possible");
+  if (ctx.main_goal?.length > 0) {
+    const goals = Array.isArray(ctx.main_goal) ? ctx.main_goal.join(", ") : ctx.main_goal;
+    lines.push(`MAIN GOALS (next 6 months): ${goals}`);
+    lines.push("→ Connect advice to these goals when possible");
   }
 
   if (ctx.peak_season) {
