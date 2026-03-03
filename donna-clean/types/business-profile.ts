@@ -37,8 +37,8 @@ export interface BusinessContext {
   monthly_sales_range?: string;
 
   // Section 6 — Your Context Right Now
-  biggest_challenge?: string;
-  main_goal?: string;
+  biggest_challenge?: string[];
+  main_goal?: string[];
   peak_season?: string;
   extra_notes?: string;
 
