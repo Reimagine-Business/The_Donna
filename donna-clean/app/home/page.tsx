@@ -43,6 +43,12 @@ export default async function HomeV2Page() {
   // Fetch reminders for Donna's message (cached, deduped with alerts page)
   const reminders = await getReminders({ statusFilter: "pending" });
 
+  // Resolve display name: username → email prefix → "there"
+  const displayName =
+    profile?.username ||
+    (user.email ? user.email.split("@")[0] : null) ||
+    "there";
+
   // Greeting based on time of day
   const hour = new Date().getHours();
   const greeting =
@@ -71,7 +77,7 @@ export default async function HomeV2Page() {
                 <h1 className="text-2xl sm:text-3xl font-extrabold text-white leading-tight">
                   {greeting},<br />
                   <span className="text-[#c084fc] font-extrabold">
-                    {profile?.username || "there"}!
+                    {displayName}!
                   </span>
                 </h1>
                 <p className="text-[#94a3b8] text-xs font-normal mt-1">
