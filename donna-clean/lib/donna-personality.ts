@@ -627,10 +627,20 @@ export function buildBusinessBioContext(businessContext: any): string {
   lines.push("Reference specifics — never be generic.");
   lines.push("");
 
+  // ── Section 1: Business Identity ──
+  if (ctx.business_name) {
+    lines.push(`BUSINESS NAME: ${ctx.business_name}`);
+  }
+
   if (ctx.business_type) {
     lines.push(`BUSINESS TYPE: ${ctx.business_type}`);
   }
 
+  if (ctx.business_description) {
+    lines.push(`OWNER'S DESCRIPTION: "${ctx.business_description}"`);
+  }
+
+  // ── Section 2: What They Sell ──
   if (ctx.what_we_sell) {
     lines.push(`WHAT THEY SELL: ${ctx.what_we_sell}`);
   }
@@ -647,6 +657,24 @@ export function buildBusinessBioContext(businessContext: any): string {
     }
   }
 
+  // ── Section 3: Location & Setting ──
+  if (ctx.city_town || ctx.area_locality) {
+    const location = [ctx.city_town, ctx.area_locality].filter(Boolean).join(", ");
+    lines.push(`LOCATION: ${location}`);
+  }
+
+  if (ctx.business_setting) {
+    lines.push(`BUSINESS SETTING: ${ctx.business_setting}`);
+    if (ctx.business_setting.includes("High footfall")) {
+      lines.push("→ Footfall volume and daily walk-ins are key");
+    } else if (ctx.business_setting.includes("Residential")) {
+      lines.push("→ Repeat local customers and word-of-mouth matter most");
+    } else if (ctx.business_setting.includes("Online")) {
+      lines.push("→ Digital reach, delivery and online marketing are key");
+    }
+  }
+
+  // ── Section 4: Customers ──
   if (ctx.main_customers?.length > 0) {
     const customers = [
       ...ctx.main_customers,
@@ -671,6 +699,43 @@ export function buildBusinessBioContext(businessContext: any): string {
     }
   }
 
+  if (ctx.payment_methods?.length > 0) {
+    lines.push(`PAYMENT METHODS: ${ctx.payment_methods.join(", ")}`);
+    if (ctx.payment_methods.includes("Khata/Credit")) {
+      lines.push("→ Credit collection tracking is important");
+    }
+  }
+
+  if (ctx.gives_credit) {
+    lines.push("GIVES CREDIT: Yes");
+    if (ctx.credit_period) {
+      lines.push(`CREDIT PERIOD: ${ctx.credit_period}`);
+    }
+    lines.push("→ Collection discipline and follow-ups are critical");
+    lines.push("→ Monitor outstanding receivables closely");
+  }
+
+  // ── Section 5: Scale & Maturity ──
+  if (ctx.years_in_business) {
+    lines.push(`YEARS IN BUSINESS: ${ctx.years_in_business}`);
+    if (ctx.years_in_business === "Less than 1 year") {
+      lines.push("→ Early stage — focus on survival, cash basics, first customers");
+    } else if (ctx.years_in_business.includes("1–3")) {
+      lines.push("→ Building phase — systems and consistency matter");
+    } else if (ctx.years_in_business.includes("More than 5")) {
+      lines.push("→ Established — can think about scaling and optimization");
+    }
+  }
+
+  if (ctx.team_size) {
+    lines.push(`TEAM SIZE: ${ctx.team_size}`);
+    if (ctx.team_size === "Just me") {
+      lines.push("→ Solo operator — time is the scarcest resource");
+    } else if (ctx.team_size.includes("More than 15")) {
+      lines.push("→ Larger team — payroll management and HR costs are relevant");
+    }
+  }
+
   if (ctx.monthly_sales_range) {
     lines.push(`MONTHLY SCALE: ${ctx.monthly_sales_range}`);
     if (ctx.monthly_sales_range === "Below ₹50,000") {
@@ -686,6 +751,21 @@ export function buildBusinessBioContext(businessContext: any): string {
     }
   }
 
+  // ── Section 6: Current Context ──
+  if (ctx.biggest_challenge) {
+    lines.push(`BIGGEST CHALLENGE: ${ctx.biggest_challenge}`);
+    lines.push("→ Prioritize advice related to this challenge");
+  }
+
+  if (ctx.main_goal) {
+    lines.push(`MAIN GOAL (next 6 months): ${ctx.main_goal}`);
+    lines.push("→ Connect advice to this goal when possible");
+  }
+
+  if (ctx.peak_season) {
+    lines.push(`PEAK SEASON: ${ctx.peak_season}`);
+  }
+
   if (ctx.extra_notes) {
     lines.push("");
     lines.push("OWNER'S OWN WORDS ABOUT THEIR BUSINESS:");
@@ -694,22 +774,13 @@ export function buildBusinessBioContext(businessContext: any): string {
     lines.push("→ Reference it when relevant to show you listened");
   }
 
-  if (ctx.peak_season) {
-    lines.push(`PEAK SEASON: ${ctx.peak_season}`);
-  }
-
-  if (ctx.business_goals) {
-    lines.push(`STATED GOALS: ${ctx.business_goals}`);
-    lines.push("→ Connect advice to these goals when possible");
-  }
-
   lines.push("");
   lines.push("═══════════════════════════════════════");
   lines.push("PERSONALIZATION MANDATE:");
   lines.push("Every response must feel like Donna knows");
   lines.push("this specific business — not a generic one.");
-  lines.push("Use their business type, customer type,");
-  lines.push("and scale in every substantive response.");
+  lines.push("Use their business name, type, location,");
+  lines.push("customer type, and scale in every response.");
   lines.push("═══════════════════════════════════════");
 
   return lines.join("\n");
