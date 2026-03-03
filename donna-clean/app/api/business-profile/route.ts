@@ -82,18 +82,34 @@ export async function POST(req: NextRequest) {
 
     const formData = await req.json();
 
-    // Build business_context JSONB — supports both new Bio fields and old fields
+    // Build business_context JSONB — all Bio fields
     const businessContext: Record<string, unknown> = {
+      // Section 1 — Business Identity
+      business_name: formData.business_name || null,
       business_type: formData.business_type || null,
+      business_description: formData.business_description || null,
+      // Section 2 — What You Sell
       what_we_sell: formData.what_we_sell || null,
       product_source: formData.product_source || null,
-      main_customers: Array.isArray(formData.main_customers) ? formData.main_customers : (formData.main_customers || null),
+      // Section 3 — Location & Setting
+      city_town: formData.city_town || null,
+      area_locality: formData.area_locality || null,
+      business_setting: formData.business_setting || null,
+      // Section 4 — Your Customers
+      main_customers: Array.isArray(formData.main_customers) ? formData.main_customers : null,
       other_customers: formData.other_customers || null,
+      payment_methods: Array.isArray(formData.payment_methods) ? formData.payment_methods : null,
+      gives_credit: formData.gives_credit === true,
+      credit_period: formData.credit_period || null,
+      // Section 5 — Business Scale & Maturity
+      years_in_business: formData.years_in_business || null,
+      team_size: formData.team_size || null,
       monthly_sales_range: formData.monthly_sales_range || null,
-      extra_notes: formData.extra_notes || null,
+      // Section 6 — Your Context Right Now
+      biggest_challenge: formData.biggest_challenge || null,
+      main_goal: formData.main_goal || null,
       peak_season: formData.peak_season || null,
-      typical_monthly_costs: formData.typical_monthly_costs || null,
-      business_goals: formData.business_goals || null,
+      extra_notes: formData.extra_notes || null,
       updated_at: new Date().toISOString(),
     };
 
