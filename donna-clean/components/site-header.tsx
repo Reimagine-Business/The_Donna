@@ -49,14 +49,14 @@ export function SiteHeader() {
     <nav className="hidden w-full md:flex justify-center border-b border-b-foreground/10 h-16 bg-card">
       <div className="w-full max-w-6xl flex justify-between items-center p-3 px-5 text-sm">
         {/* Desktop Navigation Links */}
-        <DesktopNav />
+        <DesktopNav isAdmin={isAdmin} />
 
         {/* Auth & Utility Buttons */}
         <div className="flex items-center gap-3">
           {!hasEnvVars ? (
             <EnvVarWarning />
           ) : user ? (
-            <DesktopUserMenu userName={displayName} isAdmin={isAdmin} />
+            <DesktopUserMenu userName={displayName} />
           ) : (
             <div className="flex gap-2">
               <a

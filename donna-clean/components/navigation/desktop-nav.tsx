@@ -12,7 +12,11 @@ const navItems = [
   { href: "/alerts", label: "Alerts" },
 ];
 
-export function DesktopNav() {
+interface DesktopNavProps {
+  isAdmin?: boolean;
+}
+
+export function DesktopNav({ isAdmin }: DesktopNavProps) {
   const pathname = usePathname();
 
   return (
@@ -33,6 +37,18 @@ export function DesktopNav() {
           </Link>
         );
       })}
+      {isAdmin && (
+        <Link
+          href="/admin"
+          prefetch={true}
+          className={cn(
+            "text-sm font-medium transition-colors hover:text-primary",
+            pathname?.startsWith("/admin") ? "text-primary" : "text-muted-foreground"
+          )}
+        >
+          Admin
+        </Link>
+      )}
     </div>
   );
 }
