@@ -1,6 +1,6 @@
 import { requireAdmin } from "@/lib/admin/check-admin";
 import { createClient } from "@supabase/supabase-js";
-import { Users, FileText, MessageCircle, Sparkles, BarChart3 } from "lucide-react";
+import { Users, FileText, MessageCircle, Sparkles, BarChart3, ArrowLeft } from "lucide-react";
 import Link from "next/link";
 
 export default async function AdminDashboardPage() {
@@ -63,6 +63,10 @@ export default async function AdminDashboardPage() {
     <div className="space-y-8">
       {/* Header */}
       <div>
+        <Link href="/home" className="inline-flex items-center gap-2 text-white/60 hover:text-white transition-colors mb-4">
+          <ArrowLeft className="w-4 h-4" />
+          <span className="text-sm">Back</span>
+        </Link>
         <h1 className="text-3xl font-bold mb-2">Admin Dashboard</h1>
         <p className="text-muted-foreground">
           System administration for The Donna
