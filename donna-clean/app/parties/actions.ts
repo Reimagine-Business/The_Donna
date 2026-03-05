@@ -271,6 +271,73 @@ export async function deleteParty(id: string): Promise<{
 }
 
 /**
+ * Get all parties for the current user with their pending (outstanding unsettled) amount
+ */
+export async function getPartiesWithBalance(): Promise<{
+  success: boolean;
+  parties?: (Party & { pending_amount: number })[];
+  error?: string;
+}> {
+  try {
+    const supabase = await createSupabaseServerClient();
+    const { user } = await getOrRefreshUser(supabase);
+
+    if (!user) {
+      return { success: false, error: "Not authenticated" };
+    }
+
+    const { data: parties, error: partiesError } = await supabase
+      .from("parties")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("name");
+
+    if (partiesError) {
+      console.error("[getPartiesWithBalance] Query error:", partiesError);
+      Sentry.captureException(partiesError, { tags: { action: 'get-parties-with-balance' } });
+      return { success: false, error: "Something went wrong. Please try again." };
+    }
+
+    // For each party, sum remaining_amount of unsettled entries
+    const { data: entries, error: entriesError } = await supabase
+      .from("entries")
+      .select("party_id, remaining_amount")
+      .eq("user_id", user.id)
+      .eq("settled", false)
+      .not("party_id", "is", null);
+
+    if (entriesError) {
+      console.error("[getPartiesWithBalance] Entries query error:", entriesError);
+      Sentry.captureException(entriesError, { tags: { action: 'get-parties-with-balance' } });
+      return { success: false, error: "Something went wrong. Please try again." };
+    }
+
+    // Build a map of party_id -> pending_amount
+    const pendingMap: Record<string, number> = {};
+    for (const entry of entries ?? []) {
+      if (entry.party_id && entry.remaining_amount != null) {
+        pendingMap[entry.party_id] =
+          (pendingMap[entry.party_id] ?? 0) + parseFloat(entry.remaining_amount);
+      }
+    }
+
+    const result = (parties as Party[]).map((p) => ({
+      ...p,
+      pending_amount: pendingMap[p.id] ?? 0,
+    }));
+
+    return { success: true, parties: result };
+  } catch (error) {
+    console.error("[getPartiesWithBalance] Unexpected error:", error);
+    Sentry.captureException(error, { tags: { action: 'get-parties-with-balance' } });
+    return {
+      success: false,
+      error: "Something went wrong. Please try again.",
+    };
+  }
+}
+
+/**
  * Get party balance (opening balance + all transactions)
  */
 export async function getPartyBalance(partyId: string): Promise<{
