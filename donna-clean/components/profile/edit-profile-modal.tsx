@@ -29,10 +29,8 @@ export function EditProfileModal({ field, currentValue, onSave, onClose }: EditP
     }
 
     if (field === 'username') {
-      if (!/^[a-zA-Z0-9_-]{3,20}$/.test(value)) {
-        setError(
-          'Username must be 3-20 characters. Only letters, numbers, _ and - allowed. No spaces.'
-        )
+      if (value.trim().length < 1 || value.length > 30) {
+        setError('Username must be 1-30 characters')
         return
       }
     }

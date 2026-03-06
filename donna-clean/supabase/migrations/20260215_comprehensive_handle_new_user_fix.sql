@@ -88,7 +88,7 @@ BEGIN
   ) THEN
     ALTER TABLE public.profiles
     ADD CONSTRAINT username_format CHECK (
-      username IS NULL OR username ~ '^[a-zA-Z0-9_-]{3,20}$'
+      username IS NULL OR (char_length(username) BETWEEN 1 AND 30)
     );
   END IF;
 END $$;
@@ -126,8 +126,8 @@ BEGIN
     split_part(NEW.email, '@', 1)
   );
 
-  -- Validate username against CHECK constraint (3-20 chars, alphanumeric/hyphens/underscores)
-  IF _username IS NOT NULL AND _username !~ '^[a-zA-Z0-9_-]{3,20}$' THEN
+  -- Validate username against CHECK constraint (1-30 chars, any format)
+  IF _username IS NOT NULL AND (char_length(_username) < 1 OR char_length(_username) > 30) THEN
     _username := NULL;
   END IF;
 
@@ -234,7 +234,7 @@ SELECT
   au.id,
   au.email,
   CASE
-    WHEN split_part(au.email, '@', 1) ~ '^[a-zA-Z0-9_-]{3,20}$'
+    WHEN char_length(split_part(au.email, '@', 1)) BETWEEN 1 AND 30
      AND NOT EXISTS (SELECT 1 FROM public.profiles p2 WHERE p2.username = split_part(au.email, '@', 1))
     THEN split_part(au.email, '@', 1)
     ELSE NULL

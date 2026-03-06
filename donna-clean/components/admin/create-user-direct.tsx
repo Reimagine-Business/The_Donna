@@ -186,17 +186,16 @@ export function CreateUserDirect() {
             type="text"
             id="username"
             value={formData.username}
-            onChange={(e) => handleChange('username', e.target.value.toLowerCase())}
+            onChange={(e) => handleChange('username', e.target.value)}
             className="w-full px-4 py-2 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder="johndoe"
+            placeholder="TheDonna"
             required
             disabled={isLoading}
-            minLength={3}
-            maxLength={20}
-            pattern="[a-zA-Z0-9_-]+"
+            minLength={1}
+            maxLength={30}
           />
           <p className="text-xs text-muted-foreground mt-1">
-            3-20 characters, letters, numbers, underscores, or hyphens
+            1-30 characters, any format
           </p>
         </div>
 

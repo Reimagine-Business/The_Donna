@@ -32,7 +32,7 @@ export function SignupForm() {
   // Debounced username availability check
   useEffect(() => {
     const checkUsername = async () => {
-      if (formData.username.length < 3) {
+      if (formData.username.trim().length < 1) {
         setUsernameCheck({ checking: false, available: null, message: '' });
         return;
       }
@@ -164,14 +164,13 @@ export function SignupForm() {
             type="text"
             id="username"
             value={formData.username}
-            onChange={(e) => handleChange('username', e.target.value.toLowerCase())}
+            onChange={(e) => handleChange('username', e.target.value)}
             className="w-full pl-10 pr-10 py-2.5 bg-background border border-border rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
-            placeholder="johndoe"
+            placeholder="TheDonna"
             required
             disabled={isLoading}
-            minLength={3}
-            maxLength={20}
-            pattern="[a-zA-Z0-9_-]+"
+            minLength={1}
+            maxLength={30}
           />
           {usernameCheck.checking && (
             <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground animate-spin" />
@@ -189,7 +188,7 @@ export function SignupForm() {
           </p>
         )}
         <p className="text-xs text-muted-foreground mt-1">
-          3-20 characters, letters, numbers, underscores, or hyphens
+          1-30 characters, any format
         </p>
       </div>
 

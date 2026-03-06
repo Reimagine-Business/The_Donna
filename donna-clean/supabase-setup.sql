@@ -62,8 +62,8 @@ BEGIN
     split_part(NEW.email, '@', 1)
   );
 
-  -- Validate against CHECK constraint (3-20 chars, alphanumeric/hyphens/underscores)
-  IF _username IS NOT NULL AND _username !~ '^[a-zA-Z0-9_-]{3,20}$' THEN
+  -- Validate against CHECK constraint (1-30 chars, any format)
+  IF _username IS NOT NULL AND (char_length(_username) < 1 OR char_length(_username) > 30) THEN
     _username := NULL;
   END IF;
 
