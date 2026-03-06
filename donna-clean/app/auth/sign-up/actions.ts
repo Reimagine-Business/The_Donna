@@ -26,12 +26,11 @@ export async function completeSignup(data: SignupData) {
     };
   }
 
-  // Validate username format (alphanumeric, underscores, hyphens)
-  const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
-  if (!usernameRegex.test(data.username)) {
+  // Validate username length (1-30 characters, any format)
+  if (data.username.trim().length < 1 || data.username.length > 30) {
     return {
       success: false,
-      error: 'Username must be 3-20 characters (letters, numbers, _ or - only)',
+      error: 'Username must be 1-30 characters',
     };
   }
 
@@ -114,12 +113,11 @@ export async function completeSignup(data: SignupData) {
 export async function checkUsernameAvailability(username: string) {
   const supabase = await createSupabaseServerClient();
 
-  // Validate username format
-  const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
-  if (!usernameRegex.test(username)) {
+  // Validate username length (1-30 characters, any format)
+  if (username.trim().length < 1 || username.length > 30) {
     return {
       available: false,
-      error: 'Invalid username format',
+      error: 'Username must be 1-30 characters',
     };
   }
 

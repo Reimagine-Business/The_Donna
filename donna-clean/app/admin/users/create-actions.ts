@@ -29,12 +29,11 @@ export async function createUserDirect(userData: CreateUserData) {
       };
     }
 
-    // Validate username format
-    const usernameRegex = /^[a-zA-Z0-9_-]{3,20}$/;
-    if (!usernameRegex.test(userData.username)) {
+    // Validate username length (1-30 characters, any format)
+    if (userData.username.trim().length < 1 || userData.username.length > 30) {
       return {
         success: false,
-        error: 'Username must be 3-20 characters (letters, numbers, _ or - only)',
+        error: 'Username must be 1-30 characters',
       };
     }
 

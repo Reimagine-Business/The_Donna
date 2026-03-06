@@ -2,9 +2,8 @@
 --
 -- ROOT CAUSE: The trigger blindly set username = split_part(email, '@', 1),
 -- which fails when:
---   1. Email prefix contains dots (e.g. john.doe@gmail.com) → violates
---      CHECK constraint (username ~ '^[a-zA-Z0-9_-]{3,20}$')
---   2. Email prefix is < 3 or > 20 chars → violates CHECK constraint
+--   1. Email prefix is > 30 chars → violates CHECK constraint (1-30 chars, any format)
+--   2. Username is empty → violates CHECK constraint
 --   3. Another user has the same email prefix → violates UNIQUE constraint
 --   4. Admin creates user from dashboard with no metadata → same issues
 --
@@ -23,8 +22,8 @@ BEGIN
     split_part(NEW.email, '@', 1)
   );
 
-  -- Validate against the CHECK constraint (3-20 chars, alphanumeric/hyphens/underscores)
-  IF _username IS NOT NULL AND _username !~ '^[a-zA-Z0-9_-]{3,20}$' THEN
+  -- Validate against the CHECK constraint (1-30 chars, any format)
+  IF _username IS NOT NULL AND (char_length(_username) < 1 OR char_length(_username) > 30) THEN
     _username := NULL;
   END IF;
 

@@ -13,11 +13,11 @@ ADD COLUMN IF NOT EXISTS phone TEXT;
 CREATE INDEX IF NOT EXISTS idx_profiles_username ON profiles(username);
 
 -- Add constraint to ensure username follows correct format
--- (3-20 characters, alphanumeric, underscores, hyphens only)
+-- (1-30 characters, any format)
 ALTER TABLE profiles
 ADD CONSTRAINT username_format CHECK (
   username IS NULL OR
-  (username ~ '^[a-zA-Z0-9_-]{3,20}$')
+  (char_length(username) BETWEEN 1 AND 30)
 );
 
 -- Comment the columns
