@@ -216,6 +216,7 @@ export async function GET() {
 
     // Parse the structured JSON response
     let bullets: string[] = [];
+    let closingQuestion: string | null = null;
     try {
       const rawText = response.response.text().trim();
       const parsed = JSON.parse(rawText);
@@ -228,7 +229,7 @@ export async function GET() {
       if (parsed.closing_question && typeof parsed.closing_question === "string") {
         const cleanedQ = cleanDonnaResponse(parsed.closing_question.trim());
         if (cleanedQ.length > 5) {
-          bullets.push(cleanedQ);
+          closingQuestion = cleanedQ;
         }
       }
     } catch {
@@ -284,6 +285,7 @@ export async function GET() {
 
     return NextResponse.json({
       bullets,
+      closing_question: closingQuestion,
       additionalCount: Math.max(0, overdueCount + upcomingCount - 1),
       cached: false,
     });
