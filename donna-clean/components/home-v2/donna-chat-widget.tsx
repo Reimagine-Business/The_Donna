@@ -158,37 +158,116 @@ export function DonnaChatWidget() {
         }),
       });
 
-      const data = await res.json();
-
-      // Update usage from response
-      if (data.usage) {
-        setUsage({
-          dailyRemaining: data.usage.dailyRemaining ?? usage.dailyRemaining,
-          monthlyRemaining: data.usage.monthlyRemaining ?? usage.monthlyRemaining,
-          dailyLimit: data.usage.dailyLimit || 10,
-          monthlyLimit: data.usage.monthlyLimit || 100,
-        });
-      }
-
-      // Handle rate limit (429) — show Donna's friendly message
-      if (res.status === 429) {
+      // Non-SSE responses: rate limits (429) and hard errors
+      if (!res.headers.get("content-type")?.includes("text/event-stream")) {
+        const data = await res.json();
+        if (data.usage) {
+          setUsage({
+            dailyRemaining: data.usage.dailyRemaining ?? usage.dailyRemaining,
+            monthlyRemaining:
+              data.usage.monthlyRemaining ?? usage.monthlyRemaining,
+            dailyLimit: data.usage.dailyLimit || 10,
+            monthlyLimit: data.usage.monthlyLimit || 100,
+          });
+        }
         setMessages((prev) => [
           ...prev,
           {
             role: "assistant",
-            content: data.reply || "You've reached today's chat limit. Come back tomorrow!",
+            content:
+              data.reply ||
+              "Sorry, I couldn't process that. Please try again.",
           },
         ]);
         return;
       }
 
-      if (!res.ok) throw new Error("API error");
+      // SSE stream — show response progressively
+      if (!res.body) throw new Error("No response stream");
+      const reader = res.body.getReader();
+      const decoder = new TextDecoder();
+      let buffer = "";
+      let streamingStarted = false;
 
-      const assistantMessage: ChatMessage = {
-        role: "assistant",
-        content: data.reply || "Sorry, I couldn't process that. Please try again.",
-      };
-      setMessages((prev) => [...prev, assistantMessage]);
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+
+        buffer += decoder.decode(value, { stream: true });
+
+        // Process all complete SSE events in buffer
+        let boundary = buffer.indexOf("\n\n");
+        while (boundary !== -1) {
+          const eventText = buffer.slice(0, boundary).trim();
+          buffer = buffer.slice(boundary + 2);
+          boundary = buffer.indexOf("\n\n");
+
+          if (!eventText.startsWith("data: ")) continue;
+          try {
+            const payload = JSON.parse(eventText.slice(6));
+
+            if (payload.type === "chunk" && payload.text) {
+              if (!streamingStarted) {
+                // First chunk — add initial assistant message and hide spinner
+                setMessages((prev) => [
+                  ...prev,
+                  { role: "assistant", content: payload.text },
+                ]);
+                streamingStarted = true;
+                setLoading(false);
+              } else {
+                // Append subsequent chunks
+                setMessages((prev) => {
+                  const msgs = [...prev];
+                  msgs[msgs.length - 1] = {
+                    role: "assistant",
+                    content: msgs[msgs.length - 1].content + payload.text,
+                  };
+                  return msgs;
+                });
+              }
+            }
+
+            if (payload.type === "done") {
+              // Replace accumulated text with final cleaned reply
+              if (payload.reply) {
+                setMessages((prev) => {
+                  const msgs = [...prev];
+                  msgs[msgs.length - 1] = {
+                    role: "assistant",
+                    content: payload.reply,
+                  };
+                  return msgs;
+                });
+              }
+              if (payload.usage) {
+                setUsage({
+                  dailyRemaining:
+                    payload.usage.dailyRemaining ?? usage.dailyRemaining,
+                  monthlyRemaining:
+                    payload.usage.monthlyRemaining ?? usage.monthlyRemaining,
+                  dailyLimit: payload.usage.dailyLimit || 10,
+                  monthlyLimit: payload.usage.monthlyLimit || 100,
+                });
+              }
+            }
+          } catch {
+            // Malformed SSE event — skip
+          }
+        }
+      }
+
+      // If stream ended without any chunks (unexpected), add fallback
+      if (!streamingStarted) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            role: "assistant",
+            content:
+              "I'm having trouble connecting right now. Please try again in a moment.",
+          },
+        ]);
+      }
     } catch {
       setMessages((prev) => [
         ...prev,
