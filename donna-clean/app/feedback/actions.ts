@@ -1,6 +1,7 @@
 "use server";
 
 import { createSupabaseServerClient } from "@/utils/supabase/server";
+import { createClient } from "@supabase/supabase-js";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 
 export interface FeedbackResponse {
@@ -107,8 +108,16 @@ export async function getFeedbackResponses(
 export async function getBusinessBySlug(
   slug: string
 ): Promise<{ id: string; business_name: string; business_slug: string } | null> {
-  const supabase = await createSupabaseServerClient();
-  const { data } = await supabase
+  // Use service-role client to bypass RLS — this is a public server-side
+  // lookup (customer feedback page, no session). The anon key would be
+  // blocked by the existing business_profiles RLS policies.
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  const { data } = await supabaseAdmin
     .from("business_profiles")
     .select("id, business_name, business_slug")
     .eq("business_slug", slug)

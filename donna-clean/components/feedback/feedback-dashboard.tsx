@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import Link from "next/link";
 import { Star, QrCode, Download, Sparkles, MessageSquare } from "lucide-react";
 import {
   getFeedbackResponses,
@@ -341,81 +342,92 @@ export function FeedbackDashboard({ initialProfile }: Props) {
             </p>
           </div>
 
-          {/* ── QR Code Section ───────────────────────────────── */}
-          {slug ? (
-            <div
-              className="rounded-xl p-5"
-              style={{
-                background: "linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))",
-                border: "1px solid rgba(192,132,252,0.15)",
-              }}
-            >
-              <div className="flex items-center gap-2 mb-1">
-                <QrCode size={16} className="text-[#a855f7]" />
-                <p className="text-[#94a3b8] text-xs uppercase tracking-wider font-semibold">
-                  Your Feedback QR
-                </p>
-              </div>
-              <p className="text-[#64748b] text-xs mb-4">
-                Share this with your customers to collect feedback anywhere
-              </p>
-
-              <div className="flex flex-col items-center gap-4">
-                {/* QR Image */}
-                <div className="bg-white p-3 rounded-xl shadow-lg">
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src={qrUrl}
-                    alt={`QR code for ${feedbackUrl}`}
-                    width={220}
-                    height={220}
-                    className="block"
-                  />
-                </div>
-
-                <p className="text-[#94a3b8] text-xs text-center break-all max-w-xs">
-                  {feedbackUrl}
-                </p>
-
-                <div className="flex gap-3 w-full max-w-xs">
-                  <button
-                    onClick={handleDownloadQR}
-                    className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-[rgba(192,132,252,0.3)] text-[#c084fc] text-sm font-semibold transition-all active:scale-95"
-                  >
-                    <Download size={15} />
-                    Download
-                  </button>
-                  <button
-                    onClick={() => {
-                      if (navigator.share) {
-                        navigator.share({ url: feedbackUrl, title: `${profile?.business_name} Feedback` });
-                      } else {
-                        navigator.clipboard.writeText(feedbackUrl);
-                      }
-                    }}
-                    className="flex-1 py-3 rounded-xl font-semibold text-sm text-white transition-all active:scale-95"
-                    style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
-                  >
-                    Share Link
-                  </button>
-                </div>
-              </div>
-            </div>
-          ) : (
-            <div
-              className="rounded-xl p-5 text-center"
-              style={{
-                background: "linear-gradient(135deg, rgba(59,7,100,0.4), rgba(15,15,35,0.7))",
-                border: "1px solid rgba(192,132,252,0.1)",
-              }}
-            >
-              <QrCode size={32} className="text-[#4b5563] mx-auto mb-2" />
-              <p className="text-[#64748b] text-sm">
-                Complete your business profile to get your unique feedback QR code.
-              </p>
-            </div>
-          )}
         </>
+      )}
+
+      {/* ── QR Code Section — always visible, independent of period loading ── */}
+      {slug ? (
+        <div
+          className="rounded-xl p-5"
+          style={{
+            background: "linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))",
+            border: "1px solid rgba(192,132,252,0.15)",
+          }}
+        >
+          <div className="flex items-center gap-2 mb-1">
+            <QrCode size={16} className="text-[#a855f7]" />
+            <p className="text-[#94a3b8] text-xs uppercase tracking-wider font-semibold">
+              Your Feedback QR
+            </p>
+          </div>
+          <p className="text-[#64748b] text-xs mb-4">
+            Share this with your customers to collect feedback anywhere
+          </p>
+
+          <div className="flex flex-col items-center gap-4">
+            {/* QR Image */}
+            <div className="bg-white p-3 rounded-xl shadow-lg">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src={qrUrl}
+                alt={`QR code for ${feedbackUrl}`}
+                width={220}
+                height={220}
+                className="block"
+              />
+            </div>
+
+            <p className="text-[#94a3b8] text-xs text-center break-all max-w-xs">
+              {feedbackUrl}
+            </p>
+
+            <div className="flex gap-3 w-full max-w-xs">
+              <button
+                onClick={handleDownloadQR}
+                className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-[rgba(192,132,252,0.3)] text-[#c084fc] text-sm font-semibold transition-all active:scale-95"
+              >
+                <Download size={15} />
+                Download
+              </button>
+              <button
+                onClick={() => {
+                  if (navigator.share) {
+                    navigator.share({ url: feedbackUrl, title: `${profile?.business_name} Feedback` });
+                  } else {
+                    navigator.clipboard.writeText(feedbackUrl);
+                  }
+                }}
+                className="flex-1 py-3 rounded-xl font-semibold text-sm text-white transition-all active:scale-95"
+                style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+              >
+                Share Link
+              </button>
+            </div>
+          </div>
+        </div>
+      ) : (
+        <div
+          className="rounded-xl p-5 text-center"
+          style={{
+            background: "linear-gradient(135deg, rgba(59,7,100,0.4), rgba(15,15,35,0.7))",
+            border: "1px solid rgba(192,132,252,0.1)",
+          }}
+        >
+          <QrCode size={32} className="text-[#4b5563] mx-auto mb-3" />
+          <p className="text-[#94a3b8] text-sm font-medium mb-2">
+            Your QR code will appear here
+          </p>
+          <p className="text-[#64748b] text-xs mb-4">
+            Complete your Business Bio to activate your QR code
+          </p>
+          <Link
+            href="/profile/business-bio"
+            className="inline-block px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95"
+            style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
+          >
+            Complete Business Bio →
+          </Link>
+        </div>
       )}
 
       {/* ── Collect Feedback Modal ────────────────────────────── */}
