@@ -780,6 +780,93 @@ Respond as Donna now:`;
 // RESPONSE CLEANER — Used by API routes
 // ═══════════════════════════════════════════════════
 
+// ═══════════════════════════════════════════════════
+// FEEDBACK CONTEXT BUILDER
+// Converts feedback_responses rows into a plain-language
+// summary block for injection into AI prompts
+// ═══════════════════════════════════════════════════
+
+export interface FeedbackRow {
+  rating: number | null;
+  liked_categories: string[] | null;
+  improve_categories: string[] | null;
+  comment: string | null;
+}
+
+export function buildFeedbackContext(responses: FeedbackRow[]): string {
+  if (!responses || responses.length === 0) {
+    return "No customer feedback collected yet.";
+  }
+
+  const total = responses.length;
+
+  // Average rating
+  const ratings = responses
+    .filter((r) => r.rating != null)
+    .map((r) => r.rating as number);
+  const avgRating =
+    ratings.length > 0
+      ? (ratings.reduce((a, b) => a + b, 0) / ratings.length).toFixed(1)
+      : null;
+
+  // Most liked categories (from responses that have liked_categories)
+  const likedMap: Record<string, number> = {};
+  responses.forEach((r) => {
+    if (r.liked_categories) {
+      r.liked_categories.forEach((cat) => {
+        likedMap[cat] = (likedMap[cat] || 0) + 1;
+      });
+    }
+  });
+  const topLiked = Object.entries(likedMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([cat]) => cat);
+
+  // Most flagged for improvement
+  const improveMap: Record<string, number> = {};
+  responses.forEach((r) => {
+    if (r.improve_categories) {
+      r.improve_categories.forEach((cat) => {
+        improveMap[cat] = (improveMap[cat] || 0) + 1;
+      });
+    }
+  });
+  const topImprove = Object.entries(improveMap)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 3)
+    .map(([cat]) => cat);
+
+  // Recent comments (last 3 non-empty)
+  const recentComments = responses
+    .filter((r) => r.comment && r.comment.trim().length > 0)
+    .slice(0, 3)
+    .map((r) => `"${r.comment!.trim()}"`);
+
+  const lines = [
+    `CUSTOMER FEEDBACK SUMMARY (last 30 days):`,
+    `- Total responses: ${total}`,
+  ];
+
+  if (avgRating) {
+    lines.push(`- Average rating: ${avgRating} out of 5`);
+  }
+
+  if (topLiked.length > 0) {
+    lines.push(`- Most liked: ${topLiked.join(", ")}`);
+  }
+
+  if (topImprove.length > 0) {
+    lines.push(`- Most flagged for improvement: ${topImprove.join(", ")}`);
+  }
+
+  if (recentComments.length > 0) {
+    lines.push(`- Recent comments: ${recentComments.join(" | ")}`);
+  }
+
+  return lines.join("\n");
+}
+
 export function cleanDonnaResponse(text: string): string {
   return text
     // Strip code blocks
@@ -1042,6 +1129,16 @@ Never use speculative language like "feels like," "I feel," or "it feels."
 Donna speaks in declarative statements only.
 Not "Feels like the easiest win" — but "This is our easiest win."
 Not "Hmm, ₹4,015 went out" — but "₹4,015 went out."
+
+═══════════════════════════════════════════════════
+CUSTOMER FEEDBACK DATA
+═══════════════════════════════════════════════════
+You have access to customer feedback data collected through the Donna feedback feature.
+When relevant, reference this data to connect customer satisfaction with business performance.
+Never say "NPS" or "sentiment analysis" — ever.
+Say things like "6 out of 8 customers loved your food this week" or "customers flagged service this week."
+If feedback data exists, proactively mention it when generating insights about performance, customers, or how things are going.
+If no feedback data is available, do not mention feedback at all.
 `;
 
 // ═══════════════════════════════════════════════════
@@ -1198,7 +1295,17 @@ SIMPLE QUESTION EXCEPTION:
 For yes/no questions — skip the structure.
 Answer warmly in 1-2 sentences + one forward thought.
 "Yes — we're ₹1,200 ahead today 😊
-Good day. Let's keep the streak going."`;
+Good day. Let's keep the streak going."
+
+═══════════════════════════════════════════════════
+CUSTOMER FEEDBACK DATA
+═══════════════════════════════════════════════════
+You have access to customer feedback data collected through the Donna feedback feature.
+When relevant, reference this data to connect customer satisfaction with financial performance.
+Never say "NPS" or "sentiment analysis" — ever.
+Say things like "6 out of 8 customers loved your food this week" or "customers flagged service this week."
+If feedback data exists, proactively mention it when the owner asks about their business performance, customers, or how things are going.
+If no feedback data is available, do not mention feedback at all.`;
 
 // ═══════════════════════════════════════════════════
 // THE DONNA CODE — ABSOLUTE RULES

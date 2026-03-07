@@ -6,7 +6,9 @@ import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import {
   DONNA_INSIGHTS_COMPACT,
   buildBusinessBioContext,
+  buildFeedbackContext,
   cleanDonnaResponse,
+  type FeedbackRow,
 } from "@/lib/donna-personality";
 import { buildFinancialSummary } from "@/lib/financial-summary";
 import * as Sentry from "@sentry/nextjs";
@@ -78,13 +80,26 @@ export async function GET() {
     // Get business bio for personalization
     const { data: businessProfile } = await supabase
       .from("business_profiles")
-      .select("business_context")
+      .select("id, business_context")
       .eq("user_id", user.id)
       .maybeSingle();
 
     const bioContext = buildBusinessBioContext(
       businessProfile?.business_context || {}
     );
+
+    // Fetch last 30 days of customer feedback
+    let feedbackContext = "No customer feedback collected yet.";
+    if (businessProfile?.id) {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: feedbackRows } = await supabase
+        .from("feedback_responses")
+        .select("rating, liked_categories, improve_categories, comment")
+        .eq("business_id", businessProfile.id)
+        .gte("created_at", thirtyDaysAgo)
+        .order("created_at", { ascending: false });
+      feedbackContext = buildFeedbackContext((feedbackRows || []) as FeedbackRow[]);
+    }
 
     // Build user content: date + business data
     // DONNA_INSIGHTS_COMPACT (personality + GOOD/BAD examples) is systemInstruction
@@ -98,7 +113,7 @@ export async function GET() {
     const timeOfDay =
       hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
 
-    const fullContext = `Business: ${profile?.business_name || "Small Business"}\n${bioContext}\n\n${financialContext}`;
+    const fullContext = `Business: ${profile?.business_name || "Small Business"}\n${bioContext}\n\n${financialContext}\n\n${feedbackContext}`;
 
     const userContent = [
       `TODAY: ${dateStr}, ${timeOfDay}`,
