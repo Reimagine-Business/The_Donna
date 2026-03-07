@@ -174,153 +174,82 @@ export async function POST(req: NextRequest) {
     ];
 
     // ─────────────────────────────────────────────
-    // SSE STREAM BACK TO CLIENT
+    // CALL GEMINI — NON-STREAMING
     // ─────────────────────────────────────────────
-    const encoder = new TextEncoder();
+    const result = await model.generateContent({ contents });
+    const response = result.response;
+    const inputTokens = response.usageMetadata?.promptTokenCount || 0;
+    const outputTokens = response.usageMetadata?.candidatesTokenCount || 0;
 
-    const readableStream = new ReadableStream({
-      async start(controller) {
-        let fullReply = "";
-        let streamSucceeded = false;
+    let rawReply = response.text();
+    if (!rawReply || rawReply.length < 5) {
+      rawReply =
+        "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!";
+    }
+    const cleanedReply = cleanDonnaResponse(rawReply)
+      .replace(/\*\*(.*?)\*\*/g, "$1")
+      .replace(/\*(.*?)\*/g, "$1")
+      .replace(/^#{1,6}\s+/gm, "")
+      .trim();
 
-        try {
-          const streamResult = await model.generateContentStream({ contents });
+    // Update usage in DB
+    try {
+      if (todayUsage) {
+        await supabase
+          .from("chat_usage")
+          .update({
+            daily_count: dailyCount + 1,
+            updated_at: new Date().toISOString(),
+          })
+          .eq("user_id", user.id)
+          .eq("date", today);
+      } else {
+        await supabase.from("chat_usage").insert({
+          user_id: user.id,
+          date: today,
+          month_year: monthYear,
+          daily_count: 1,
+        });
+      }
+    } catch (dbErr) {
+      console.error("[Donna Chat] Usage update error:", dbErr);
+    }
 
-          for await (const chunk of streamResult.stream) {
-            const text = chunk.text();
-            if (text) {
-              fullReply += text;
-              controller.enqueue(
-                encoder.encode(
-                  `data: ${JSON.stringify({ type: "chunk", text })}\n\n`
-                )
-              );
-            }
-          }
+    // Log tokens for admin cost tracking
+    try {
+      const adminClient = createClient(
+        process.env.NEXT_PUBLIC_SUPABASE_URL!,
+        process.env.SUPABASE_SERVICE_ROLE_KEY!,
+        { auth: { autoRefreshToken: false, persistSession: false } }
+      );
+      await adminClient.from("ai_usage_logs").insert({
+        user_id: user.id,
+        feature: "chat",
+        input_tokens: inputTokens,
+        output_tokens: outputTokens,
+        total_tokens: inputTokens + outputTokens,
+        cost_usd:
+          (inputTokens / 1_000_000) * 0.1 +
+          (outputTokens / 1_000_000) * 0.4,
+        model: "gemini-2.0-flash",
+        created_at: new Date().toISOString(),
+      });
+    } catch (logErr) {
+      console.error("[Donna Chat] Usage log error:", logErr);
+    }
 
-          streamSucceeded = true;
+    const newDailyCount = dailyCount + 1;
+    const newMonthlyCount = monthlyCount + 1;
 
-          // Get full usage metadata after stream completes
-          const finalResponse = await streamResult.response;
-          const inputTokens =
-            finalResponse.usageMetadata?.promptTokenCount || 0;
-          const outputTokens =
-            finalResponse.usageMetadata?.candidatesTokenCount || 0;
-
-          // Clean the fully assembled reply
-          if (!fullReply || fullReply.length < 5) {
-            fullReply =
-              "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!";
-          }
-          const cleanedReply = cleanDonnaResponse(fullReply)
-            .replace(/\*\*(.*?)\*\*/g, "$1")
-            .replace(/\*(.*?)\*/g, "$1")
-            .replace(/^#{1,6}\s+/gm, "")
-            .trim();
-
-          // Update usage in DB
-          try {
-            if (todayUsage) {
-              await supabase
-                .from("chat_usage")
-                .update({
-                  daily_count: dailyCount + 1,
-                  updated_at: new Date().toISOString(),
-                })
-                .eq("user_id", user.id)
-                .eq("date", today);
-            } else {
-              await supabase.from("chat_usage").insert({
-                user_id: user.id,
-                date: today,
-                month_year: monthYear,
-                daily_count: 1,
-              });
-            }
-          } catch (dbErr) {
-            console.error("[Donna Chat] Usage update error:", dbErr);
-          }
-
-          // Log tokens for admin cost tracking
-          try {
-            const adminClient = createClient(
-              process.env.NEXT_PUBLIC_SUPABASE_URL!,
-              process.env.SUPABASE_SERVICE_ROLE_KEY!,
-              { auth: { autoRefreshToken: false, persistSession: false } }
-            );
-            await adminClient.from("ai_usage_logs").insert({
-              user_id: user.id,
-              feature: "chat",
-              input_tokens: inputTokens,
-              output_tokens: outputTokens,
-              total_tokens: inputTokens + outputTokens,
-              cost_usd:
-                (inputTokens / 1_000_000) * 0.1 +
-                (outputTokens / 1_000_000) * 0.4,
-              model: "gemini-2.0-flash",
-              created_at: new Date().toISOString(),
-            });
-          } catch (logErr) {
-            console.error("[Donna Chat] Usage log error:", logErr);
-          }
-
-          const newDailyCount = dailyCount + 1;
-          const newMonthlyCount = monthlyCount + 1;
-
-          // Final done event: cleaned reply + updated usage
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: "done",
-                reply: cleanedReply,
-                usage: {
-                  dailyCount: newDailyCount,
-                  monthlyCount: newMonthlyCount,
-                  dailyLimit: DAILY_LIMIT,
-                  monthlyLimit: MONTHLY_LIMIT,
-                  dailyRemaining: DAILY_LIMIT - newDailyCount,
-                  monthlyRemaining: MONTHLY_LIMIT - newMonthlyCount,
-                },
-              })}\n\n`
-            )
-          );
-        } catch (aiError) {
-          console.error("[Donna Chat] Gemini API error:", aiError);
-          Sentry.captureException(aiError, {
-            tags: { endpoint: "donna-chat", userId: user.id },
-          });
-
-          const fallback = streamSucceeded
-            ? "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!"
-            : "Hmm, I'm having a little trouble connecting right now. 😌 Give it a moment and try again — I'll be back shortly.";
-
-          controller.enqueue(
-            encoder.encode(
-              `data: ${JSON.stringify({
-                type: "done",
-                reply: fallback,
-                usage: {
-                  dailyCount,
-                  monthlyCount,
-                  dailyLimit: DAILY_LIMIT,
-                  monthlyLimit: MONTHLY_LIMIT,
-                  dailyRemaining: DAILY_LIMIT - dailyCount,
-                  monthlyRemaining: MONTHLY_LIMIT - monthlyCount,
-                },
-              })}\n\n`
-            )
-          );
-        } finally {
-          controller.close();
-        }
-      },
-    });
-
-    return new Response(readableStream, {
-      headers: {
-        "Content-Type": "text/event-stream",
-        "Cache-Control": "no-cache",
-        Connection: "keep-alive",
+    return NextResponse.json({
+      reply: cleanedReply,
+      usage: {
+        dailyCount: newDailyCount,
+        monthlyCount: newMonthlyCount,
+        dailyLimit: DAILY_LIMIT,
+        monthlyLimit: MONTHLY_LIMIT,
+        dailyRemaining: DAILY_LIMIT - newDailyCount,
+        monthlyRemaining: MONTHLY_LIMIT - newMonthlyCount,
       },
     });
   } catch (error) {
