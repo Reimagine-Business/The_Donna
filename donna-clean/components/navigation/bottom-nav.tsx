@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Edit3, TrendingUp, Search, Bell } from "lucide-react";
+import { Home, Edit3, TrendingUp, Search, Bell, MessageSquare } from "lucide-react";
 
 const navItems = [
   { href: "/home", label: "Home", icon: Home },
@@ -10,6 +10,7 @@ const navItems = [
   { href: "/analytics/cashpulse", label: "Cashpulse", icon: TrendingUp },
   { href: "/analytics/profitlens", label: "Profit Lens", icon: Search },
   { href: "/alerts", label: "Alerts", icon: Bell },
+  { href: "/feedback", label: "Feedback", icon: MessageSquare },
 ];
 
 export function BottomNav() {
@@ -25,9 +26,9 @@ export function BottomNav() {
         borderTop: '1px solid rgba(192,132,252,0.1)',
       }}
     >
-      <div className="h-full flex items-center justify-evenly px-4">
+      <div className="h-full flex items-center justify-evenly px-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href;
+          const isActive = pathname === item.href || (item.href === "/feedback" && pathname === "/feedback");
           const Icon = item.icon;
           return (
             <Link
@@ -37,9 +38,9 @@ export function BottomNav() {
               className="flex flex-col items-center gap-1 transition-all"
             >
               <div className="relative flex items-center justify-center">
-                {/* Icon container */}
+                {/* Icon container — slightly smaller to fit 6 items */}
                 <div
-                  className={`relative flex h-14 w-14 items-center justify-center rounded-xl transition-all ${
+                  className={`relative flex h-11 w-11 items-center justify-center rounded-xl transition-all ${
                     isActive
                       ? "bg-[rgba(168,85,247,0.15)] border border-[rgba(168,85,247,0.3)]"
                       : ""
@@ -47,7 +48,7 @@ export function BottomNav() {
                   style={isActive ? { boxShadow: '0 0 12px rgba(168,85,247,0.2)' } : undefined}
                 >
                   <Icon
-                    size={22}
+                    size={20}
                     strokeWidth={2}
                     className={
                       isActive ? "text-[#a855f7]" : "text-[#94a3b8]"
@@ -56,7 +57,7 @@ export function BottomNav() {
                 </div>
               </div>
               <span
-                className={`text-[10px] font-medium transition-colors ${
+                className={`text-[9px] font-medium transition-colors ${
                   isActive ? "text-[#a855f7]" : "text-[#94a3b8]"
                 }`}
               >
