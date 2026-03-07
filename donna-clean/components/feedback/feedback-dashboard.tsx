@@ -1,8 +1,9 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
 import { Star, QrCode, Download, Sparkles, MessageSquare } from "lucide-react";
+import { QRCodeSVG } from "qrcode.react";
 import {
   getFeedbackResponses,
   type FeedbackPeriod,
@@ -102,15 +103,18 @@ export function FeedbackDashboard({ initialProfile }: Props) {
 
   const slug = profile?.business_slug ?? "";
   const feedbackUrl = `https://${APP_DOMAIN}/feedback/${slug}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(feedbackUrl)}`;
+  const qrRef = useRef<SVGSVGElement>(null);
 
-  async function handleDownloadQR() {
-    const res = await fetch(qrUrl);
-    const blob = await res.blob();
+  function handleDownloadQR() {
+    const svg = qrRef.current;
+    if (!svg) return;
+    const serializer = new XMLSerializer();
+    const svgStr = serializer.serializeToString(svg);
+    const blob = new Blob([svgStr], { type: "image/svg+xml" });
     const url = URL.createObjectURL(blob);
     const a = document.createElement("a");
     a.href = url;
-    a.download = `${slug}-feedback-qr.png`;
+    a.download = `${slug}-feedback-qr.svg`;
     a.click();
     URL.revokeObjectURL(url);
   }
@@ -367,17 +371,12 @@ export function FeedbackDashboard({ initialProfile }: Props) {
           <div className="flex flex-col items-center gap-4">
             {/* QR Image */}
             <div className="bg-white p-3 rounded-xl shadow-lg">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img
-                src={qrUrl}
-                alt={`QR code for ${feedbackUrl}`}
-                width={200}
-                height={200}
-                className="block"
-                onError={(e) => {
-                  (e.currentTarget as HTMLImageElement).src =
-                    `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(feedbackUrl)}`;
-                }}
+              <QRCodeSVG
+                ref={qrRef}
+                value={feedbackUrl}
+                size={200}
+                bgColor="#ffffff"
+                fgColor="#000000"
               />
             </div>
 
