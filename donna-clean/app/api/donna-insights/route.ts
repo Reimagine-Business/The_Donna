@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
@@ -123,9 +123,31 @@ export async function GET() {
       model: "gemini-2.0-flash",
       systemInstruction: DONNA_INSIGHTS_COMPACT,
       generationConfig: {
-        maxOutputTokens: 300,
         temperature: 0.7,
+        topP: 0.95,
+        topK: 40,
+        maxOutputTokens: 1000,
         responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            insights: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.STRING,
+                description:
+                  "Warm, data-backed bullet point about the business.",
+              },
+              minItems: 3,
+              maxItems: 3,
+            },
+            closing_question: {
+              type: SchemaType.STRING,
+              description: "A single, gentle, forward-looking question.",
+            },
+          },
+          required: ["insights", "closing_question"],
+        },
       },
     });
 
@@ -196,12 +218,16 @@ export async function GET() {
       const rawText = response.response.text().trim();
       const parsed = JSON.parse(rawText);
       if (parsed.insights && Array.isArray(parsed.insights)) {
-        bullets = parsed.insights
-          .map((item: { bullet: string }) =>
-            cleanDonnaResponse(String(item.bullet || "").trim())
-          )
-          .filter((b: string) => b.length > 5)
+        bullets = (parsed.insights as string[])
+          .map((item) => cleanDonnaResponse(String(item || "").trim()))
+          .filter((b) => b.length > 5)
           .slice(0, 3);
+      }
+      if (parsed.closing_question && typeof parsed.closing_question === "string") {
+        const cleanedQ = cleanDonnaResponse(parsed.closing_question.trim());
+        if (cleanedQ.length > 5) {
+          bullets.push(cleanedQ);
+        }
       }
     } catch {
       // JSON parse failed — should not happen with responseMimeType: "application/json"
