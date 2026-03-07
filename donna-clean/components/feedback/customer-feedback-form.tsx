@@ -72,7 +72,8 @@ export function CustomerFeedbackForm({
     setSubmitting(false);
 
     if (dbError) {
-      setError("Something went wrong. Please try again.");
+      console.error("[FeedbackForm] insert error:", dbError);
+      setError(dbError.message || "Something went wrong. Please try again.");
       return;
     }
 
