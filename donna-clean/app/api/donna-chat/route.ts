@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
     // DONNA_CHAT_COMPACT goes to systemInstruction — pure personality, GOOD/BAD
     // examples, voice rules, structural guidance
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-lite",
+      model: "gemini-1.5-flash",
       systemInstruction: DONNA_CHAT_COMPACT,
       generationConfig: {
         maxOutputTokens: 1000,
@@ -231,7 +231,7 @@ export async function POST(req: NextRequest) {
         cost_usd:
           (inputTokens / 1_000_000) * 0.1 +
           (outputTokens / 1_000_000) * 0.4,
-        model: "gemini-2.0-flash-lite",
+        model: "gemini-1.5-flash",
         created_at: new Date().toISOString(),
       });
     } catch (logErr) {
