@@ -41,6 +41,7 @@ export async function updateSession(request: NextRequest) {
   // Protected routes that require authentication.
   // Public routes like /auth/*, /reset-password, /legal, /terms, /privacy
   // are NOT listed here and remain accessible without login.
+  // /feedback (owner dashboard) is protected; /feedback/[slug] (customer page) is public
   const isProtectedRoute =
     request.nextUrl.pathname.startsWith("/analytics") ||
     request.nextUrl.pathname.startsWith("/home") ||
@@ -52,7 +53,8 @@ export async function updateSession(request: NextRequest) {
     request.nextUrl.pathname.startsWith("/alerts") ||
     request.nextUrl.pathname.startsWith("/settings") ||
     request.nextUrl.pathname.startsWith("/notifications") ||
-    request.nextUrl.pathname.startsWith("/protected");
+    request.nextUrl.pathname.startsWith("/protected") ||
+    request.nextUrl.pathname === "/feedback";
 
   if (!user && isProtectedRoute) {
     const url = request.nextUrl.clone();
