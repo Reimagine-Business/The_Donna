@@ -155,17 +155,19 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
 
   return (
     <div className="space-y-3">
-      {/* Insight bullets */}
-      {bullets.map((bullet, i) => (
-        <div key={i} className="flex items-start gap-2">
-          <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#a855f7] flex-shrink-0" style={{ boxShadow: '0 0 8px #a855f7' }} />
-          <p className="text-[#e9d5ff] text-sm leading-relaxed">
-            {bullet}
-          </p>
-        </div>
-      ))}
+      {/* Insight bullets — max 3, each as <li> */}
+      <ul className="space-y-2 list-none">
+        {bullets.slice(0, 3).map((bullet, i) => (
+          <li key={i} className="flex items-start gap-2">
+            <span className="mt-1.5 w-1.5 h-1.5 rounded-full bg-[#a855f7] flex-shrink-0" style={{ boxShadow: '0 0 8px #a855f7' }} />
+            <span className="text-[#e9d5ff] text-sm leading-relaxed">
+              {bullet}
+            </span>
+          </li>
+        ))}
+      </ul>
 
-      {/* Closing question — rendered separately, never as a bullet */}
+      {/* Closing question — separate <p>, never inside the bullet map */}
       {closingQuestion && (
         <p className="text-[#c084fc] text-sm leading-relaxed mt-1">
           {closingQuestion}
