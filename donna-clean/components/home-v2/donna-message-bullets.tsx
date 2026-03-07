@@ -19,6 +19,7 @@ interface DonnaMessageBulletsProps {
 
 export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBulletsProps) {
   const [aiBullets, setAiBullets] = useState<string[] | null>(null);
+  const [closingQuestion, setClosingQuestion] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [showReminders, setShowReminders] = useState(false);
 
@@ -33,6 +34,7 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
         const data = await res.json();
         if (!cancelled && data.bullets && data.bullets.length > 0) {
           setAiBullets(data.bullets);
+          if (data.closing_question) setClosingQuestion(data.closing_question);
         }
       } catch {
         // AI failed — fallback to rule-based insights below
@@ -162,6 +164,13 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
           </p>
         </div>
       ))}
+
+      {/* Closing question — rendered separately, never as a bullet */}
+      {closingQuestion && (
+        <p className="text-[#c084fc] text-sm leading-relaxed mt-1">
+          {closingQuestion}
+        </p>
+      )}
 
       {/* Reminders pill - always visible when reminders exist */}
       {pendingReminders.length > 0 && (
