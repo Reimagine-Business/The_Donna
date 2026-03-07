@@ -1,5 +1,5 @@
 import { NextResponse } from "next/server";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
@@ -81,24 +81,26 @@ export async function GET() {
     const fullContext = `Business: ${profile?.business_name || "Small Business"}\n${bioContext}\n\n${financialContext}`;
     const fullPrompt = buildDonnaInsightsPrompt(fullContext);
 
-    // Call ChatGPT
-    const apiKey = process.env.CHATGPT_API_KEY;
+    // Call Gemini
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json({ error: "API key not configured" }, { status: 500 });
     }
 
-    const openai = new OpenAI({ apiKey });
-    let response: OpenAI.ChatCompletion;
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      generationConfig: {
+        maxOutputTokens: 150,
+        temperature: 0.7,
+      },
+    });
+    let response: Awaited<ReturnType<typeof model.generateContent>>;
 
     try {
-      response = await openai.chat.completions.create({
-        model: "gpt-4o",
-        max_tokens: 150,
-        temperature: 0.7,
-        messages: [{ role: "user", content: fullPrompt }],
-      });
+      response = await model.generateContent(fullPrompt);
     } catch (aiError) {
-      console.error("[Donna Insights] OpenAI API error:", aiError);
+      console.error("[Donna Insights] Gemini API error:", aiError);
       Sentry.captureException(aiError, {
         tags: { endpoint: "donna-insights", userId: user.id },
       });
@@ -136,8 +138,8 @@ export async function GET() {
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
         { auth: { autoRefreshToken: false, persistSession: false } }
       );
-      const inputTokens = response.usage?.prompt_tokens || 0;
-      const outputTokens = response.usage?.completion_tokens || 0;
+      const inputTokens = response.response.usageMetadata?.promptTokenCount || 0;
+      const outputTokens = response.response.usageMetadata?.candidatesTokenCount || 0;
       await adminClient.from("ai_usage_logs").insert({
         user_id: user.id,
         feature: "insights",
@@ -145,8 +147,8 @@ export async function GET() {
         output_tokens: outputTokens,
         total_tokens: inputTokens + outputTokens,
         cost_usd:
-          (inputTokens / 1_000_000) * 2.5 + (outputTokens / 1_000_000) * 10,
-        model: "gpt-4o",
+          (inputTokens / 1_000_000) * 0.10 + (outputTokens / 1_000_000) * 0.40,
+        model: "gemini-2.0-flash",
         created_at: new Date().toISOString(),
       });
     } catch (logErr) {
@@ -154,7 +156,7 @@ export async function GET() {
     }
 
     // Parse the AI response and clean it
-    let insights = response.choices[0]?.message?.content?.trim() || "";
+    let insights = response.response.text().trim();
 
     // Clean with safety net
     insights = cleanDonnaResponse(insights)
