@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
 
 const FEEDBACK_CATEGORIES = [
@@ -43,7 +43,12 @@ export function CustomerFeedbackForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const supabase = createClient();
+  // Memoize so the client is stable across renders but not a module-level singleton.
+  // createBrowserClient requires NEXT_PUBLIC_SUPABASE_URL and
+  // NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to be set in the Vercel environment
+  // and inlined at build time. If either is undefined the client cannot make
+  // requests and will throw "TypeError: Failed to fetch".
+  const supabase = useMemo(() => createClient(), []);
 
   function toggleCategory(cat: string) {
     setSelectedCategories((prev) =>
@@ -54,6 +59,17 @@ export function CustomerFeedbackForm({
   async function handleSubmit(finalComment?: string) {
     setSubmitting(true);
     setError(null);
+
+    // Guard: if env vars weren't inlined at build time the Supabase client
+    // will throw "TypeError: Failed to fetch" with no other context.
+    if (
+      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
+      !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
+    ) {
+      setSubmitting(false);
+      setError("Configuration error: Supabase env vars are missing. Please contact support.");
+      return;
+    }
 
     const commentToSave = finalComment ?? comment;
     const isPositive = (rating ?? 0) >= 4;
