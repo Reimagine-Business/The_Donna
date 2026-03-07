@@ -1,10 +1,10 @@
 import { NextResponse } from "next/server";
-import { GoogleGenerativeAI } from "@google/generative-ai";
+import { GoogleGenerativeAI, SchemaType } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import {
-  buildDonnaInsightsPrompt,
+  DONNA_INSIGHTS_COMPACT,
   buildBusinessBioContext,
   cleanDonnaResponse,
 } from "@/lib/donna-personality";
@@ -35,7 +35,6 @@ export async function GET() {
       try {
         const cachedBullets = JSON.parse(profile.cached_insights);
         if (Array.isArray(cachedBullets) && cachedBullets.length > 0) {
-          // Still need reminder counts for additionalCount
           const { data: reminders } = await supabase
             .from("reminders")
             .select("due_date, status")
@@ -45,9 +44,14 @@ export async function GET() {
           const overdueCount = (reminders || []).filter(
             (r) => r.status === "pending" && r.due_date < today
           ).length;
-          const oneWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
+          const oneWeek = new Date(Date.now() + 7 * 86400000)
+            .toISOString()
+            .split("T")[0];
           const upcomingCount = (reminders || []).filter(
-            (r) => r.status === "pending" && r.due_date >= today && r.due_date <= oneWeek
+            (r) =>
+              r.status === "pending" &&
+              r.due_date >= today &&
+              r.due_date <= oneWeek
           ).length;
 
           return NextResponse.json({
@@ -61,10 +65,13 @@ export async function GET() {
       }
     }
 
-    // Build compact financial summary (pre-calculated, not raw entries)
+    // Build compact financial summary
     const financialContext = await buildFinancialSummary(supabase, user.id);
 
-    console.log("[Donna Insights] Financial context for AI prompt:", financialContext);
+    console.log(
+      "[Donna Insights] Financial context for AI prompt:",
+      financialContext
+    );
 
     // Get business bio for personalization
     const { data: businessProfile } = await supabase
@@ -77,35 +84,84 @@ export async function GET() {
       businessProfile?.business_context || {}
     );
 
-    // Build compact prompt (~400 tokens vs ~3,500 before)
+    // Build user content: date + business data
+    // DONNA_INSIGHTS_COMPACT (personality + GOOD/BAD examples) is systemInstruction
+    const now = new Date();
+    const dateStr = now.toLocaleDateString("en-IN", {
+      day: "numeric",
+      month: "long",
+      year: "numeric",
+    });
+    const hour = now.getHours();
+    const timeOfDay =
+      hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
+
     const fullContext = `Business: ${profile?.business_name || "Small Business"}\n${bioContext}\n\n${financialContext}`;
-    const fullPrompt = buildDonnaInsightsPrompt(fullContext);
+
+    const userContent = [
+      `TODAY: ${dateStr}, ${timeOfDay}`,
+      `\nBUSINESS DATA:\n${fullContext}`,
+      `\nIf the business context includes a business name or owner name — use it naturally in one bullet. Never say "there" as a name. If no name is known, use "we" instead.`,
+      `\nReturn your response as JSON matching exactly this structure:`,
+      `{"insights":[{"bullet":"insight text here"},{"bullet":"insight text here"},{"bullet":"insight text here"}]}`,
+      `\nGenerate 3 bullets now. Numbers first. Warm. Sharp. No decoration.`,
+    ].join("");
 
     // Call Gemini
     const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
-      return NextResponse.json({ error: "API key not configured" }, { status: 500 });
+      return NextResponse.json(
+        { error: "API key not configured" },
+        { status: 500 }
+      );
     }
 
     const genAI = new GoogleGenerativeAI(apiKey);
+    // DONNA_INSIGHTS_COMPACT is systemInstruction — includes GOOD/BAD examples,
+    // voice rules, bullet structure, cultural context
     const model = genAI.getGenerativeModel({
       model: "gemini-2.0-flash",
+      systemInstruction: DONNA_INSIGHTS_COMPACT,
       generationConfig: {
-        maxOutputTokens: 150,
         temperature: 0.7,
+        topP: 0.95,
+        topK: 40,
+        maxOutputTokens: 1000,
+        responseMimeType: "application/json",
+        responseSchema: {
+          type: SchemaType.OBJECT,
+          properties: {
+            insights: {
+              type: SchemaType.ARRAY,
+              items: {
+                type: SchemaType.STRING,
+                description:
+                  "Warm, data-backed bullet point about the business.",
+              },
+              minItems: 3,
+              maxItems: 3,
+            },
+            closing_question: {
+              type: SchemaType.STRING,
+              description: "A single, gentle, forward-looking question.",
+            },
+          },
+          required: ["insights", "closing_question"],
+        },
       },
     });
+
     let response: Awaited<ReturnType<typeof model.generateContent>>;
 
     try {
-      response = await model.generateContent(fullPrompt);
+      response = await model.generateContent(userContent);
     } catch (aiError) {
       console.error("[Donna Insights] Gemini API error:", aiError);
       Sentry.captureException(aiError, {
         tags: { endpoint: "donna-insights", userId: user.id },
       });
 
-      // Fall back to cached insights from profile
+      // Fall back to cached insights
       if (profile?.cached_insights) {
         try {
           const cachedBullets = JSON.parse(profile.cached_insights);
@@ -121,7 +177,6 @@ export async function GET() {
         }
       }
 
-      // No cache available — return friendly fallback (never 500)
       return NextResponse.json({
         bullets: [
           "I'm taking a short break right now. Your recent entries are recorded safely — I'll have fresh insights for you soon.",
@@ -138,8 +193,10 @@ export async function GET() {
         process.env.SUPABASE_SERVICE_ROLE_KEY!,
         { auth: { autoRefreshToken: false, persistSession: false } }
       );
-      const inputTokens = response.response.usageMetadata?.promptTokenCount || 0;
-      const outputTokens = response.response.usageMetadata?.candidatesTokenCount || 0;
+      const inputTokens =
+        response.response.usageMetadata?.promptTokenCount || 0;
+      const outputTokens =
+        response.response.usageMetadata?.candidatesTokenCount || 0;
       await adminClient.from("ai_usage_logs").insert({
         user_id: user.id,
         feature: "insights",
@@ -147,7 +204,7 @@ export async function GET() {
         output_tokens: outputTokens,
         total_tokens: inputTokens + outputTokens,
         cost_usd:
-          (inputTokens / 1_000_000) * 0.10 + (outputTokens / 1_000_000) * 0.40,
+          (inputTokens / 1_000_000) * 0.1 + (outputTokens / 1_000_000) * 0.4,
         model: "gemini-2.0-flash",
         created_at: new Date().toISOString(),
       });
@@ -155,39 +212,26 @@ export async function GET() {
       console.error("[Donna Insights] Usage log error:", logErr);
     }
 
-    // Parse the AI response and clean it
-    let insights = response.response.text().trim();
-
-    // Clean with safety net
-    insights = cleanDonnaResponse(insights)
-      .replace(/\*\*/g, "")
-      .replace(/^#+\s*/gm, "")
-      .trim();
-
-    // Parse bullets from plain text (one per line, starting with - or •)
-    let bullets = insights
-      .split("\n")
-      .map((line) => line.replace(/^[-•]\s*/, "").trim())
-      .filter((line) => line.length > 10)
-      .slice(0, 3);
-
-    // If parsing as plain text didn't work, try JSON array
-    if (bullets.length === 0) {
-      try {
-        const rawText = insights
-          .replace(/^```(?:json)?\s*\n?/i, "")
-          .replace(/\n?```\s*$/i, "")
-          .trim();
-        const parsed = JSON.parse(rawText);
-        if (Array.isArray(parsed)) {
-          bullets = parsed
-            .map((b) => String(b).trim())
-            .filter(Boolean)
-            .slice(0, 3);
-        }
-      } catch {
-        // JSON parsing also failed
+    // Parse the structured JSON response
+    let bullets: string[] = [];
+    try {
+      const rawText = response.response.text().trim();
+      const parsed = JSON.parse(rawText);
+      if (parsed.insights && Array.isArray(parsed.insights)) {
+        bullets = (parsed.insights as string[])
+          .map((item) => cleanDonnaResponse(String(item || "").trim()))
+          .filter((b) => b.length > 5)
+          .slice(0, 3);
       }
+      if (parsed.closing_question && typeof parsed.closing_question === "string") {
+        const cleanedQ = cleanDonnaResponse(parsed.closing_question.trim());
+        if (cleanedQ.length > 5) {
+          bullets.push(cleanedQ);
+        }
+      }
+    } catch {
+      // JSON parse failed — should not happen with responseMimeType: "application/json"
+      // but handle gracefully
     }
 
     // Fallback: calm default message
@@ -199,7 +243,7 @@ export async function GET() {
       ];
     }
 
-    // SAVE TO CACHE — store as JSON array
+    // SAVE TO CACHE
     try {
       await supabase
         .from("profiles")
@@ -226,9 +270,14 @@ export async function GET() {
     const overdueCount = (reminders || []).filter(
       (r) => r.status === "pending" && r.due_date < today
     ).length;
-    const oneWeek = new Date(Date.now() + 7 * 86400000).toISOString().split("T")[0];
+    const oneWeek = new Date(Date.now() + 7 * 86400000)
+      .toISOString()
+      .split("T")[0];
     const upcomingCount = (reminders || []).filter(
-      (r) => r.status === "pending" && r.due_date >= today && r.due_date <= oneWeek
+      (r) =>
+        r.status === "pending" &&
+        r.due_date >= today &&
+        r.due_date <= oneWeek
     ).length;
 
     return NextResponse.json({
@@ -270,6 +319,9 @@ export async function DELETE() {
 
     return NextResponse.json({ success: true });
   } catch {
-    return NextResponse.json({ error: "Failed to invalidate cache" }, { status: 500 });
+    return NextResponse.json(
+      { error: "Failed to invalidate cache" },
+      { status: 500 }
+    );
   }
 }
