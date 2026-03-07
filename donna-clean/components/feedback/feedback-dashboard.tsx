@@ -102,7 +102,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
 
   const slug = profile?.business_slug ?? "";
   const feedbackUrl = `https://${APP_DOMAIN}/feedback/${slug}`;
-  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=220x220&data=${encodeURIComponent(feedbackUrl)}&color=000000&bgcolor=ffffff&qzone=2`;
+  const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(feedbackUrl)}`;
 
   async function handleDownloadQR() {
     const res = await fetch(qrUrl);
@@ -371,9 +371,13 @@ export function FeedbackDashboard({ initialProfile }: Props) {
               <img
                 src={qrUrl}
                 alt={`QR code for ${feedbackUrl}`}
-                width={220}
-                height={220}
+                width={200}
+                height={200}
                 className="block"
+                onError={(e) => {
+                  (e.currentTarget as HTMLImageElement).src =
+                    `https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(feedbackUrl)}`;
+                }}
               />
             </div>
 
