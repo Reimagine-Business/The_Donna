@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import OpenAI from "openai";
+import { GoogleGenerativeAI } from "@google/generative-ai";
 import { createClient } from "@supabase/supabase-js";
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
@@ -137,9 +137,9 @@ export async function POST(req: NextRequest) {
     );
 
     // ─────────────────────────────────────────────
-    // CALL CHATGPT
+    // CALL GEMINI
     // ─────────────────────────────────────────────
-    const apiKey = process.env.CHATGPT_API_KEY;
+    const apiKey = process.env.GEMINI_API_KEY;
     if (!apiKey) {
       return NextResponse.json(
         { error: "API key not configured" },
@@ -147,38 +147,34 @@ export async function POST(req: NextRequest) {
       );
     }
 
-    const openai = new OpenAI({ apiKey });
-
-    // Build conversation messages (keep history for context)
-    const conversationMessages: OpenAI.ChatCompletionMessageParam[] = [
-      { role: "system", content: fullPrompt },
-    ];
-    const recentHistory = history.slice(-20);
-    for (const msg of recentHistory) {
-      conversationMessages.push({
-        role: msg.role,
-        content: msg.content,
-      });
-    }
-    conversationMessages.push({
-      role: "user",
-      content: message,
+    const genAI = new GoogleGenerativeAI(apiKey);
+    const model = genAI.getGenerativeModel({
+      model: "gemini-2.0-flash",
+      systemInstruction: fullPrompt,
+      generationConfig: {
+        maxOutputTokens: 1000,
+        temperature: 0.7,
+      },
     });
 
+    // Build Gemini contents from history + current message
+    const recentHistory = history.slice(-20);
+    const contents = [
+      ...recentHistory.map((msg: ChatMessage) => ({
+        role: msg.role === "assistant" ? "model" : "user",
+        parts: [{ text: msg.content }],
+      })),
+      { role: "user", parts: [{ text: message }] },
+    ];
+
     let reply = "";
-    let aiResponse: OpenAI.ChatCompletion | null = null;
+    let geminiResult: Awaited<ReturnType<typeof model.generateContent>> | null = null;
 
     try {
-      aiResponse = await openai.chat.completions.create({
-        model: "gpt-4o",
-        max_tokens: 1000,
-        temperature: 0.7,
-        messages: conversationMessages,
-      });
-
-      reply = aiResponse.choices[0]?.message?.content?.trim() || "";
+      geminiResult = await model.generateContent({ contents });
+      reply = geminiResult.response.text().trim();
     } catch (aiError) {
-      console.error("[Donna Chat] OpenAI API error:", aiError);
+      console.error("[Donna Chat] Gemini API error:", aiError);
       Sentry.captureException(aiError, {
         tags: { endpoint: "donna-chat", userId: user.id },
       });
@@ -186,7 +182,7 @@ export async function POST(req: NextRequest) {
 
     // Fallback if AI failed or returned empty
     if (!reply || reply.length < 5) {
-      reply = !aiResponse
+      reply = !geminiResult
         ? "Hmm, I'm having a little trouble connecting right now. 😌 Give it a moment and try again — I'll be back shortly."
         : "I don't have enough data to answer that clearly yet. Try adding more entries and I'll give you a better picture!";
     }
@@ -201,7 +197,7 @@ export async function POST(req: NextRequest) {
     // ─────────────────────────────────────────────
     // UPDATE USAGE + LOG (only if AI succeeded)
     // ─────────────────────────────────────────────
-    if (aiResponse) {
+    if (geminiResult) {
       if (todayUsage) {
         await supabase
           .from("chat_usage")
@@ -222,15 +218,15 @@ export async function POST(req: NextRequest) {
     }
 
     // Log token usage for admin cost tracking
-    if (aiResponse) {
+    if (geminiResult) {
       try {
         const adminClient = createClient(
           process.env.NEXT_PUBLIC_SUPABASE_URL!,
           process.env.SUPABASE_SERVICE_ROLE_KEY!,
           { auth: { autoRefreshToken: false, persistSession: false } }
         );
-        const inputTokens = aiResponse.usage?.prompt_tokens || 0;
-        const outputTokens = aiResponse.usage?.completion_tokens || 0;
+        const inputTokens = geminiResult.response.usageMetadata?.promptTokenCount || 0;
+        const outputTokens = geminiResult.response.usageMetadata?.candidatesTokenCount || 0;
         await adminClient.from("ai_usage_logs").insert({
           user_id: user.id,
           feature: "chat",
@@ -238,9 +234,9 @@ export async function POST(req: NextRequest) {
           output_tokens: outputTokens,
           total_tokens: inputTokens + outputTokens,
           cost_usd:
-            (inputTokens / 1_000_000) * 2.5 +
-            (outputTokens / 1_000_000) * 10,
-          model: "gpt-4o",
+            (inputTokens / 1_000_000) * 0.10 +
+            (outputTokens / 1_000_000) * 0.40,
+          model: "gemini-2.0-flash",
           created_at: new Date().toISOString(),
         });
       } catch (logErr) {
@@ -248,8 +244,8 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    const newDailyCount = aiResponse ? dailyCount + 1 : dailyCount;
-    const newMonthlyCount = aiResponse ? monthlyCount + 1 : monthlyCount;
+    const newDailyCount = geminiResult ? dailyCount + 1 : dailyCount;
+    const newMonthlyCount = geminiResult ? monthlyCount + 1 : monthlyCount;
 
     return NextResponse.json({
       reply,
