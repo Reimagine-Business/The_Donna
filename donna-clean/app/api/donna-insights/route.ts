@@ -31,7 +31,9 @@ export async function GET() {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    if (profile?.cached_insights && profile?.insights_cache_date === today) {
+    const isAdmin = user.email === "alfred@thedonnaapp.co";
+
+    if (!isAdmin && profile?.cached_insights && profile?.insights_cache_date === today) {
       try {
         const cachedBullets = JSON.parse(profile.cached_insights);
         if (Array.isArray(cachedBullets) && cachedBullets.length > 0) {
@@ -103,7 +105,7 @@ export async function GET() {
       `\nBUSINESS DATA:\n${fullContext}`,
       `\nIf the business context includes a business name or owner name — use it naturally in one bullet. Never say "there" as a name. If no name is known, use "we" instead.`,
       `\nReturn your response as JSON matching exactly this structure:`,
-      `{"insights":[{"bullet":"insight text here"},{"bullet":"insight text here"},{"bullet":"insight text here"}]}`,
+      `{"insights":["insight text here","insight text here","insight text here"],"closing_question":"question here"}`,
       `\nGenerate 3 bullets now. Numbers first. Warm. Sharp. No decoration.`,
     ].join("");
 
