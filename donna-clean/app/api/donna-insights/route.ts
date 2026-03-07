@@ -122,7 +122,7 @@ export async function GET() {
     // DONNA_INSIGHTS_COMPACT is systemInstruction — includes GOOD/BAD examples,
     // voice rules, bullet structure, cultural context
     const model = genAI.getGenerativeModel({
-      model: "gemini-2.0-flash-001",
+      model: "gemini-2.0-flash-lite",
       systemInstruction: DONNA_INSIGHTS_COMPACT,
       generationConfig: {
         temperature: 0.7,
@@ -207,7 +207,7 @@ export async function GET() {
         total_tokens: inputTokens + outputTokens,
         cost_usd:
           (inputTokens / 1_000_000) * 0.1 + (outputTokens / 1_000_000) * 0.4,
-        model: "gemini-2.0-flash-001",
+        model: "gemini-2.0-flash-lite",
         created_at: new Date().toISOString(),
       });
     } catch (logErr) {
