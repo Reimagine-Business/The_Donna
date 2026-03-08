@@ -131,22 +131,34 @@ CREATE TRIGGER set_updated_at
 -- ═══════════════════════════════════════════════════════════
 
 -- Storage Policy 1: Upload
+-- Users may only upload into their own folder: logos/<user_id>/...
 CREATE POLICY "Users can upload own logo"
 ON storage.objects FOR INSERT
 TO authenticated
-WITH CHECK (bucket_id = 'logos');
+WITH CHECK (
+  bucket_id = 'logos'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
 
--- Storage Policy 2: View
+-- Storage Policy 2: View (public — logos are meant to be displayed)
 CREATE POLICY "Anyone can view logos"
 ON storage.objects FOR SELECT
 TO public
 USING (bucket_id = 'logos');
 
 -- Storage Policy 3: Update
+-- Users may only overwrite files inside their own folder: logos/<user_id>/...
 CREATE POLICY "Users can update own logo"
 ON storage.objects FOR UPDATE
 TO authenticated
-USING (bucket_id = 'logos');
+USING (
+  bucket_id = 'logos'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+)
+WITH CHECK (
+  bucket_id = 'logos'
+  AND (storage.foldername(name))[1] = auth.uid()::text
+);
 
 -- ═══════════════════════════════════════════════════════════
 -- SETUP COMPLETE!

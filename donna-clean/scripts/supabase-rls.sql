@@ -5,6 +5,6 @@ CREATE POLICY "Enable realtime broadcast"
 ON entries
 FOR ALL
 USING (user_id = auth.uid())
-WITH CHECK (true);
+WITH CHECK (user_id = auth.uid());
 
 ALTER PUBLICATION supabase_realtime ADD TABLE entries;

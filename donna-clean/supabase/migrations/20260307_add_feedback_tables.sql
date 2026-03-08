@@ -97,15 +97,41 @@ BEGIN
 END;
 $$;
 
--- ── 5. Public SELECT policy on business_profiles (for customer page) ──
--- Allows anon users to look up a business by slug (gets business_name only).
--- RLS must be already enabled; this adds one more policy.
+-- ── 5. Public lookup function for business_profiles (for customer page) ──
+-- Anon users need only 4 safe columns (id, business_name, business_slug,
+-- feedback_categories) to render the customer feedback form.  A direct anon
+-- SELECT policy would expose ALL columns including the sensitive
+-- business_context JSONB (monthly sales, team size, goals, etc.).
+-- A SECURITY DEFINER function is used instead: it runs as its owner and
+-- returns only the safe columns, so anon never has direct table access.
 DROP POLICY IF EXISTS "Public can read business name by slug" ON business_profiles;
-CREATE POLICY "Public can read business name by slug"
-  ON business_profiles
-  FOR SELECT
-  TO anon
-  USING (business_slug IS NOT NULL);
+
+-- Revoke any residual direct anon SELECT on the table
+REVOKE SELECT ON business_profiles FROM anon;
+
+CREATE OR REPLACE FUNCTION public.get_business_public_profile(p_slug TEXT)
+RETURNS TABLE (
+  id                  UUID,
+  business_name       TEXT,
+  business_slug       TEXT,
+  feedback_categories TEXT[]
+)
+LANGUAGE sql
+SECURITY DEFINER
+STABLE
+SET search_path = public
+AS $$
+  SELECT
+    id,
+    business_name,
+    business_slug,
+    feedback_categories
+  FROM business_profiles
+  WHERE business_slug = p_slug
+    AND business_slug IS NOT NULL;
+$$;
+
+GRANT EXECUTE ON FUNCTION public.get_business_public_profile(TEXT) TO anon, authenticated;
 
 -- ── 6. feedback_responses table ──────────────────────────────
 CREATE TABLE IF NOT EXISTS feedback_responses (
