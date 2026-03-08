@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
 import { Star, QrCode, Download, Sparkles, Settings } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -360,24 +359,24 @@ export function FeedbackDashboard({ initialProfile }: Props) {
       )}
 
       {/* ── QR Code Section — always visible, independent of period loading ── */}
-      {slug ? (
-        <div
-          className="rounded-xl p-5"
-          style={{
-            background: "linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))",
-            border: "1px solid rgba(192,132,252,0.15)",
-          }}
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <QrCode size={16} className="text-[#a855f7]" />
-            <p className="text-[#94a3b8] text-xs uppercase tracking-wider font-semibold">
-              Your Feedback QR
-            </p>
-          </div>
-          <p className="text-[#64748b] text-xs mb-4">
-            Share this with your customers to collect feedback anywhere
+      <div
+        className="rounded-xl p-5"
+        style={{
+          background: "linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))",
+          border: "1px solid rgba(192,132,252,0.15)",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <QrCode size={16} className="text-[#a855f7]" />
+          <p className="text-[#94a3b8] text-xs uppercase tracking-wider font-semibold">
+            Your Feedback QR
           </p>
+        </div>
+        <p className="text-[#64748b] text-xs mb-4">
+          Share this with your customers to collect feedback anywhere
+        </p>
 
+        {slug ? (
           <div className="flex flex-col items-center gap-4">
             {/* QR Image */}
             <div className="bg-white p-3 rounded-xl shadow-lg">
@@ -417,31 +416,13 @@ export function FeedbackDashboard({ initialProfile }: Props) {
               </button>
             </div>
           </div>
-        </div>
-      ) : (
-        <div
-          className="rounded-xl p-5 text-center"
-          style={{
-            background: "linear-gradient(135deg, rgba(59,7,100,0.4), rgba(15,15,35,0.7))",
-            border: "1px solid rgba(192,132,252,0.1)",
-          }}
-        >
-          <QrCode size={32} className="text-[#4b5563] mx-auto mb-3" />
-          <p className="text-[#94a3b8] text-sm font-medium mb-2">
-            Your QR code will appear here
-          </p>
-          <p className="text-[#64748b] text-xs mb-4">
-            Complete your Business Bio to activate your QR code
-          </p>
-          <Link
-            href="/profile/business-bio"
-            className="inline-block px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
-          >
-            Complete Business Bio →
-          </Link>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col items-center py-4">
+            <div className="w-6 h-6 border-2 border-[#a855f7] border-t-transparent rounded-full animate-spin mb-3" />
+            <p className="text-[#64748b] text-xs">Setting up your QR code…</p>
+          </div>
+        )}
+      </div>
 
       {/* ── Collect Feedback Modal ────────────────────────────── */}
       {showModal && profile && (

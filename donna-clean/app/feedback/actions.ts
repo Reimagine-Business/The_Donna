@@ -82,7 +82,38 @@ export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null>
     return fallback ? { ...fallback, feedback_categories: null } : null;
   }
 
-  return data ?? null;
+  // No profile row yet — create a minimal one so the QR code works immediately
+  if (!data) {
+    const autoSlug = user.id.replace(/-/g, "").slice(0, 12);
+    const { data: inserted, error: insertErr } = await supabase
+      .from("business_profiles")
+      .insert({ user_id: user.id, business_name: "My Business", business_slug: autoSlug })
+      .select("id, business_name, business_slug, feedback_categories")
+      .single();
+    if (insertErr) {
+      console.error("[getOwnerBusinessProfile] insert error:", insertErr.message);
+      return null;
+    }
+    return inserted;
+  }
+
+  // Profile exists but no slug — generate one now
+  if (!data.business_slug) {
+    const autoSlug = user.id.replace(/-/g, "").slice(0, 12);
+    const { data: updated, error: updateErr } = await supabase
+      .from("business_profiles")
+      .update({ business_slug: autoSlug })
+      .eq("user_id", user.id)
+      .select("id, business_name, business_slug, feedback_categories")
+      .single();
+    if (updateErr) {
+      console.error("[getOwnerBusinessProfile] slug update error:", updateErr.message);
+      return { ...data, business_slug: autoSlug }; // return with local slug even if save failed
+    }
+    return updated;
+  }
+
+  return data;
 }
 
 export async function saveFeedbackCategories(
