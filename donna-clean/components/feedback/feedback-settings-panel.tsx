@@ -2,7 +2,8 @@
 
 import { useState } from "react";
 import { X, Plus, Check } from "lucide-react";
-import { saveFeedbackCategories, DEFAULT_FEEDBACK_CATEGORIES } from "@/app/feedback/actions";
+import { saveFeedbackCategories } from "@/app/feedback/actions";
+import { DEFAULT_FEEDBACK_CATEGORIES } from "@/lib/feedback-constants";
 
 const PRESET_CATEGORIES = [
   "Food",

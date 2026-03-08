@@ -16,14 +16,6 @@ export interface FeedbackResponse {
   created_at: string;
 }
 
-export const DEFAULT_FEEDBACK_CATEGORIES = [
-  "Food",
-  "Service",
-  "Ambience",
-  "Value for Money",
-  "Cleanliness",
-];
-
 export interface BusinessProfile {
   id: string;
   business_name: string;

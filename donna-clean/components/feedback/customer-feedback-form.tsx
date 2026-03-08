@@ -2,7 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
-import { DEFAULT_FEEDBACK_CATEGORIES } from "@/app/feedback/actions";
+import { DEFAULT_FEEDBACK_CATEGORIES } from "@/lib/feedback-constants";
 
 const RATING_EMOJIS = [
   { score: 1, emoji: "😞", label: "Terrible" },

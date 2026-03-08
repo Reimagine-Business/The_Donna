@@ -6,11 +6,11 @@ import { Star, QrCode, Download, Sparkles, Settings } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   getFeedbackResponses,
-  DEFAULT_FEEDBACK_CATEGORIES,
   type FeedbackPeriod,
   type FeedbackResponse,
   type BusinessProfile,
 } from "@/app/feedback/actions";
+import { DEFAULT_FEEDBACK_CATEGORIES } from "@/lib/feedback-constants";
 import { CollectFeedbackModal } from "./collect-feedback-modal";
 import { FeedbackSettingsPanel } from "./feedback-settings-panel";
 
