@@ -19,13 +19,17 @@ CREATE TABLE IF NOT EXISTS ai_usage_logs (
 -- Enable RLS
 ALTER TABLE ai_usage_logs ENABLE ROW LEVEL SECURITY;
 
--- Only service role can insert (API routes use service role)
--- No user-facing policies needed
-CREATE POLICY "Service role full access"
+-- Service role (used by donna-chat and donna-insights API routes) bypasses RLS
+-- by default — no INSERT policy needed for it.
+-- Authenticated users can only SELECT their own rows.
+-- No authenticated INSERT policy: only service role writes to this table.
+DROP POLICY IF EXISTS "Service role full access" ON ai_usage_logs;
+
+CREATE POLICY "Users can view own usage logs"
   ON ai_usage_logs
-  FOR ALL
-  USING (true)
-  WITH CHECK (true);
+  FOR SELECT
+  TO authenticated
+  USING (auth.uid() = user_id);
 
 -- Index for fast lookups
 CREATE INDEX IF NOT EXISTS idx_ai_usage_logs_user_id ON ai_usage_logs(user_id);
