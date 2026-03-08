@@ -138,50 +138,55 @@ export function FeedbackDashboard({ initialProfile }: Props) {
 
     const W = 148;
     const H = 210;
-    const topH = 42; // ~20% of card height
+    const topH = 26; // ~40% shorter header band
 
     // White background
     doc.setFillColor(255, 255, 255);
     doc.rect(0, 0, W, H, "F");
 
-    // Top section — deep purple
+    // Deep purple border around entire card (2.5pt → ~0.88mm)
+    doc.setDrawColor(58, 12, 110); // deep purple #3A0C6E
+    doc.setLineWidth(0.88);
+    doc.rect(0.44, 0.44, W - 0.88, H - 0.88);
+
+    // Top section — deep purple header band
     doc.setFillColor(107, 33, 168); // #6B21A8
     doc.rect(0, 0, W, topH, "F");
 
-    // Business name (white, bold, large)
+    // Business name (white, bold, centred in header)
     const businessNameText = profile?.business_name ?? "Your Business";
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(20);
+    doc.setFontSize(16);
     const nameLines = doc.splitTextToSize(businessNameText, W - 16);
-    const nameY = topH / 2 - ((nameLines.length - 1) * 10) / 2 + 3;
+    const nameY = topH / 2 + 2;
     doc.text(nameLines, W / 2, nameY, { align: "center" });
 
-    // "How was your visit?"
+    // "Help us know what you think!" — purple, bold
     doc.setTextColor(107, 33, 168);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(17);
-    doc.text("How was your visit?", W / 2, 58, { align: "center" });
+    doc.setFontSize(15);
+    doc.text("Help us know what you think!", W / 2, 40, { align: "center" });
 
-    // "Scan to share — takes 10 seconds"
+    // "Spare 10 seconds to share ✨" — grey, normal
     doc.setTextColor(150, 150, 150);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text("Scan to share \u2014 takes 10 seconds", W / 2, 67, { align: "center" });
+    doc.text("Spare 10 seconds to share \u2728", W / 2, 50, { align: "center" });
 
-    // QR code — centered, 76mm × 76mm
-    const qrSize = 76;
+    // QR code — ~30% larger: 99mm × 99mm, centred in remaining space
+    const qrSize = 99;
     const qrX = (W - qrSize) / 2;
-    doc.addImage(qrDataUrl, "PNG", qrX, 76, qrSize, qrSize);
+    doc.addImage(qrDataUrl, "PNG", qrX, 58, qrSize, qrSize);
 
     // Bottom text
     doc.setTextColor(160, 160, 160);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(9);
-    doc.text("Powered by The Donna", W / 2, 193, { align: "center" });
+    doc.text("Powered by The Donna", W / 2, 196, { align: "center" });
     doc.setFontSize(8);
     doc.setTextColor(190, 190, 190);
-    doc.text("thedonnaapp.co", W / 2, 201, { align: "center" });
+    doc.text("thedonnaapp.co", W / 2, 204, { align: "center" });
 
     // Download
     const safeName = (profile?.business_name ?? "business")
