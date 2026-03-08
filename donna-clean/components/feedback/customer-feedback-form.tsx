@@ -101,16 +101,15 @@ export function CustomerFeedbackForm({
     return (
       <div className="flex flex-col items-center justify-center min-h-full px-6 py-12 text-center">
         <div className="text-6xl mb-6">👋</div>
-        <h1 className="text-3xl font-bold text-gray-800 mb-3">{businessName}</h1>
+        <h1 className="text-3xl font-bold text-gray-800 mb-3">Got 10 seconds?</h1>
         <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-          How was your experience at{" "}
-          <span className="font-semibold text-gray-800">{businessName}</span> today?
+          Tell us how we did today.
         </p>
         <button
           onClick={() => setStep("rating")}
           className="bg-violet-600 text-white px-10 py-4 rounded-2xl text-lg font-semibold shadow-lg active:scale-95 transition-transform"
         >
-          Share Feedback
+          Sure, let&apos;s go
         </button>
       </div>
     );
