@@ -158,6 +158,7 @@ CREATE POLICY "Users can delete own categories"
 DROP POLICY IF EXISTS "Users can view own alerts" ON public.alerts;
 DROP POLICY IF EXISTS "Users can update own alerts" ON public.alerts;
 DROP POLICY IF EXISTS "System can insert alerts" ON public.alerts;
+DROP POLICY IF EXISTS "Authenticated users can insert own alerts" ON public.alerts;
 
 -- Create new policies
 CREATE POLICY "Users can view own alerts"
@@ -171,10 +172,14 @@ CREATE POLICY "Users can update own alerts"
     USING (auth.uid() = user_id)
     WITH CHECK (auth.uid() = user_id);
 
-CREATE POLICY "System can insert alerts"
+-- Authenticated users can only insert alerts scoped to their own user_id.
+-- Service role (used by server-side trigger functions) bypasses RLS by default
+-- and does not need an explicit policy.
+CREATE POLICY "Authenticated users can insert own alerts"
     ON public.alerts
     FOR INSERT
-    WITH CHECK (true); -- Allow system (service role) to insert alerts
+    TO authenticated
+    WITH CHECK (auth.uid() = user_id);
 
 -- =====================================================
 -- 4. CREATE DEFAULT CATEGORIES FUNCTION
