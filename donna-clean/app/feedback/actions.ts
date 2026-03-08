@@ -23,38 +23,54 @@ export interface BusinessProfile {
   feedback_categories: string[] | null;
 }
 
-export type FeedbackPeriod = "today" | "this-week" | "this-month" | "custom";
+export type FeedbackPeriod =
+  | "this-month"
+  | "last-month"
+  | "this-year"
+  | "last-year"
+  | "all-time"
+  | "customize";
 
 function getPeriodDates(
   period: FeedbackPeriod,
   customStart?: string,
   customEnd?: string
-): { startDate: Date; endDate: Date } {
-  const endDate = new Date();
+): { startDate: Date | null; endDate: Date | null } {
+  const now = new Date();
+  const year = now.getFullYear();
+  const month = now.getMonth();
 
   switch (period) {
-    case "today": {
-      const startDate = new Date();
-      startDate.setHours(0, 0, 0, 0);
-      return { startDate, endDate };
+    case "this-month":
+      return {
+        startDate: new Date(year, month, 1, 0, 0, 0, 0),
+        endDate: new Date(year, month + 1, 0, 23, 59, 59, 999),
+      };
+    case "last-month": {
+      const lm = month === 0 ? 11 : month - 1;
+      const ly = month === 0 ? year - 1 : year;
+      return {
+        startDate: new Date(ly, lm, 1, 0, 0, 0, 0),
+        endDate: new Date(ly, lm + 1, 0, 23, 59, 59, 999),
+      };
     }
-    case "this-week": {
-      const startDate = new Date();
-      startDate.setDate(startDate.getDate() - startDate.getDay());
-      startDate.setHours(0, 0, 0, 0);
+    case "this-year":
+      return {
+        startDate: new Date(year, 0, 1, 0, 0, 0, 0),
+        endDate: new Date(year, month, now.getDate(), 23, 59, 59, 999),
+      };
+    case "last-year":
+      return {
+        startDate: new Date(year - 1, 0, 1, 0, 0, 0, 0),
+        endDate: new Date(year - 1, 11, 31, 23, 59, 59, 999),
+      };
+    case "all-time":
+      return { startDate: null, endDate: null };
+    case "customize": {
+      const startDate = customStart ? new Date(customStart) : null;
+      const endDate = customEnd ? new Date(customEnd) : null;
+      if (endDate) endDate.setHours(23, 59, 59, 999);
       return { startDate, endDate };
-    }
-    case "this-month": {
-      const startDate = new Date();
-      startDate.setDate(1);
-      startDate.setHours(0, 0, 0, 0);
-      return { startDate, endDate };
-    }
-    case "custom": {
-      const startDate = customStart ? new Date(customStart) : new Date(0);
-      const customEndDate = customEnd ? new Date(customEnd) : endDate;
-      customEndDate.setHours(23, 59, 59, 999);
-      return { startDate, endDate: customEndDate };
     }
   }
 }
@@ -168,13 +184,16 @@ export async function getFeedbackResponses(
 
   const { startDate, endDate } = getPeriodDates(period, customStart, customEnd);
 
-  const { data: responses, error: responsesError } = await supabase
+  let query = supabase
     .from("feedback_responses")
     .select("*")
     .eq("business_id", profile.id)
-    .gte("created_at", startDate.toISOString())
-    .lte("created_at", endDate.toISOString())
     .order("created_at", { ascending: false });
+
+  if (startDate) query = query.gte("created_at", startDate.toISOString());
+  if (endDate) query = query.lte("created_at", endDate.toISOString());
+
+  const { data: responses, error: responsesError } = await query;
 
   if (responsesError) {
     console.error(
@@ -183,8 +202,8 @@ export async function getFeedbackResponses(
       responsesError.code,
       "business_id:", profile.id,
       "period:", period,
-      "start:", startDate.toISOString(),
-      "end:", endDate.toISOString()
+      "start:", startDate?.toISOString(),
+      "end:", endDate?.toISOString()
     );
   }
 
