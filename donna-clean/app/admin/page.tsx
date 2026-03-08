@@ -1,3 +1,4 @@
+import { redirect } from "next/navigation";
 import { requireAdmin } from "@/lib/admin/check-admin";
 import { createClient } from "@supabase/supabase-js";
 import { Users, FileText, MessageCircle, Sparkles, BarChart3, ArrowLeft } from "lucide-react";
@@ -5,6 +6,7 @@ import Link from "next/link";
 
 export default async function AdminDashboardPage() {
   await requireAdmin();
+  redirect("/admin/home");
 
   // Use service role client for ALL admin queries (bypasses RLS)
   const supabaseAdmin = createClient(
