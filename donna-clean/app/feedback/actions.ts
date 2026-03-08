@@ -64,11 +64,23 @@ export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null>
   const { user } = await getOrRefreshUser(supabase);
   if (!user) return null;
 
-  const { data } = await supabase
+  const { data, error } = await supabase
     .from("business_profiles")
     .select("id, business_name, business_slug, feedback_categories")
     .eq("user_id", user.id)
     .maybeSingle();
+
+  if (error) {
+    console.error("[getOwnerBusinessProfile] select error:", error.message, error.code);
+    // Fallback: select without feedback_categories in case the column doesn't exist yet
+    const { data: fallback, error: fbErr } = await supabase
+      .from("business_profiles")
+      .select("id, business_name, business_slug")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    if (fbErr) console.error("[getOwnerBusinessProfile] fallback error:", fbErr.message);
+    return fallback ? { ...fallback, feedback_categories: null } : null;
+  }
 
   return data ?? null;
 }
@@ -98,23 +110,52 @@ export async function getFeedbackResponses(
   const { user } = await getOrRefreshUser(supabase);
   if (!user) return { responses: [], businessProfile: null };
 
-  const { data: profile } = await supabase
-    .from("business_profiles")
-    .select("id, business_name, business_slug, feedback_categories")
-    .eq("user_id", user.id)
-    .maybeSingle();
+  let profile: BusinessProfile | null = null;
+  {
+    const { data, error } = await supabase
+      .from("business_profiles")
+      .select("id, business_name, business_slug, feedback_categories")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (error) {
+      console.error("[getFeedbackResponses] profile select error:", error.message, error.code);
+      // Fallback without feedback_categories
+      const { data: fallback, error: fbErr } = await supabase
+        .from("business_profiles")
+        .select("id, business_name, business_slug")
+        .eq("user_id", user.id)
+        .maybeSingle();
+      if (fbErr) console.error("[getFeedbackResponses] profile fallback error:", fbErr.message);
+      profile = fallback ? { ...fallback, feedback_categories: null } : null;
+    } else {
+      profile = data ?? null;
+    }
+  }
 
   if (!profile) return { responses: [], businessProfile: null };
 
   const { startDate, endDate } = getPeriodDates(period, customStart, customEnd);
 
-  const { data: responses } = await supabase
+  const { data: responses, error: responsesError } = await supabase
     .from("feedback_responses")
     .select("*")
     .eq("business_id", profile.id)
     .gte("created_at", startDate.toISOString())
     .lte("created_at", endDate.toISOString())
     .order("created_at", { ascending: false });
+
+  if (responsesError) {
+    console.error(
+      "[getFeedbackResponses] responses query error:",
+      responsesError.message,
+      responsesError.code,
+      "business_id:", profile.id,
+      "period:", period,
+      "start:", startDate.toISOString(),
+      "end:", endDate.toISOString()
+    );
+  }
 
   return {
     responses: responses ?? [],
