@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback, useRef } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { format } from "date-fns";
 import { Star, QrCode, Download, Sparkles, Settings } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
@@ -121,20 +121,74 @@ export function FeedbackDashboard({ initialProfile }: Props) {
 
   const slug = profile?.business_slug ?? "";
   const feedbackUrl = `https://${APP_DOMAIN}/feedback/${slug}`;
-  const qrRef = useRef<SVGSVGElement>(null);
 
-  function handleDownloadQR() {
-    const svg = qrRef.current;
-    if (!svg) return;
-    const serializer = new XMLSerializer();
-    const svgStr = serializer.serializeToString(svg);
-    const blob = new Blob([svgStr], { type: "image/svg+xml" });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement("a");
-    a.href = url;
-    a.download = `${slug}-feedback-qr.svg`;
-    a.click();
-    URL.revokeObjectURL(url);
+  async function handleDownloadPDF() {
+    if (!slug) return;
+
+    // Generate high-res QR code as PNG data URL
+    const QRCode = (await import("qrcode")).default;
+    const qrDataUrl = await QRCode.toDataURL(feedbackUrl, {
+      width: 400,
+      margin: 1,
+      color: { dark: "#000000", light: "#ffffff" },
+    });
+
+    const { jsPDF } = await import("jspdf");
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: "a5" });
+
+    const W = 148;
+    const H = 210;
+    const topH = 42; // ~20% of card height
+
+    // White background
+    doc.setFillColor(255, 255, 255);
+    doc.rect(0, 0, W, H, "F");
+
+    // Top section — deep purple
+    doc.setFillColor(107, 33, 168); // #6B21A8
+    doc.rect(0, 0, W, topH, "F");
+
+    // Business name (white, bold, large)
+    const businessNameText = profile?.business_name ?? "Your Business";
+    doc.setTextColor(255, 255, 255);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(20);
+    const nameLines = doc.splitTextToSize(businessNameText, W - 16);
+    const nameY = topH / 2 - ((nameLines.length - 1) * 10) / 2 + 3;
+    doc.text(nameLines, W / 2, nameY, { align: "center" });
+
+    // "How was your visit?"
+    doc.setTextColor(107, 33, 168);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(17);
+    doc.text("How was your visit?", W / 2, 58, { align: "center" });
+
+    // "Scan to share — takes 10 seconds"
+    doc.setTextColor(150, 150, 150);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Scan to share \u2014 takes 10 seconds", W / 2, 67, { align: "center" });
+
+    // QR code — centered, 76mm × 76mm
+    const qrSize = 76;
+    const qrX = (W - qrSize) / 2;
+    doc.addImage(qrDataUrl, "PNG", qrX, 76, qrSize, qrSize);
+
+    // Bottom text
+    doc.setTextColor(160, 160, 160);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(9);
+    doc.text("Powered by The Donna", W / 2, 193, { align: "center" });
+    doc.setFontSize(8);
+    doc.setTextColor(190, 190, 190);
+    doc.text("thedonnaapp.co", W / 2, 201, { align: "center" });
+
+    // Download
+    const safeName = (profile?.business_name ?? "business")
+      .toLowerCase()
+      .replace(/\s+/g, "-")
+      .replace(/[^a-z0-9-]/g, "");
+    doc.save(`${safeName}-feedback-qr.pdf`);
   }
 
   return (
@@ -419,7 +473,6 @@ export function FeedbackDashboard({ initialProfile }: Props) {
           <div className="flex flex-col items-center gap-4">
             <div className="bg-white p-3 rounded-xl shadow-lg">
               <QRCodeSVG
-                ref={qrRef}
                 value={feedbackUrl}
                 size={200}
                 bgColor="#ffffff"
@@ -433,7 +486,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
 
             <div className="flex gap-3 w-full max-w-xs">
               <button
-                onClick={handleDownloadQR}
+                onClick={handleDownloadPDF}
                 className="flex-1 flex items-center justify-center gap-2 py-3 rounded-xl border border-[rgba(192,132,252,0.3)] text-[#c084fc] text-sm font-semibold transition-all active:scale-95"
               >
                 <Download size={15} />
