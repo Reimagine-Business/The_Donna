@@ -1,4 +1,5 @@
 import { requireAdmin } from "@/lib/admin/check-admin";
+import { AdminNav } from "@/components/admin/admin-nav";
 
 export const dynamic = 'force-dynamic';
 export const revalidate = 0;
@@ -15,9 +16,10 @@ export default async function AdminLayout({
   return (
     <div className="min-h-screen bg-background">
       <div className="border-b border-border bg-card">
-        <div className="container mx-auto px-4 py-4">
+        <div className="container mx-auto px-4 pt-4">
           <h1 className="text-2xl font-bold text-white">Admin Dashboard</h1>
           <p className="text-sm text-muted-foreground">System administration and management</p>
+          <AdminNav />
         </div>
       </div>
       <div className="container mx-auto px-4 py-6">
@@ -26,3 +28,4 @@ export default async function AdminLayout({
     </div>
   );
 }
+
