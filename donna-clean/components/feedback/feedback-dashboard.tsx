@@ -2,23 +2,17 @@
 
 import { useState, useEffect, useCallback, useRef } from "react";
 import Link from "next/link";
-import { Star, QrCode, Download, Sparkles, MessageSquare } from "lucide-react";
+import { Star, QrCode, Download, Sparkles, Settings } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import {
   getFeedbackResponses,
+  DEFAULT_FEEDBACK_CATEGORIES,
   type FeedbackPeriod,
   type FeedbackResponse,
   type BusinessProfile,
 } from "@/app/feedback/actions";
 import { CollectFeedbackModal } from "./collect-feedback-modal";
-
-const FEEDBACK_CATEGORIES = [
-  "Food",
-  "Service",
-  "Ambience",
-  "Value for Money",
-  "Cleanliness",
-];
+import { FeedbackSettingsPanel } from "./feedback-settings-panel";
 
 const PERIOD_LABELS: Record<FeedbackPeriod, string> = {
   today: "Today",
@@ -33,7 +27,10 @@ interface Props {
   initialProfile: BusinessProfile | null;
 }
 
-function computeStats(responses: FeedbackResponse[]) {
+function computeStats(
+  responses: FeedbackResponse[],
+  feedbackCategories: string[]
+) {
   if (responses.length === 0) {
     return {
       average: 0,
@@ -56,7 +53,7 @@ function computeStats(responses: FeedbackResponse[]) {
   );
 
   const categories: Record<string, { liked: number; improve: number }> = {};
-  FEEDBACK_CATEGORIES.forEach((cat) => {
+  feedbackCategories.forEach((cat) => {
     categories[cat] = { liked: 0, improve: 0 };
   });
 
@@ -82,6 +79,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
   const [responses, setResponses] = useState<FeedbackResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
+  const [showSettings, setShowSettings] = useState(false);
 
   const loadData = useCallback(async () => {
     setLoading(true);
@@ -99,7 +97,12 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     loadData();
   }, [loadData]);
 
-  const { average, total, breakdown, categories } = computeStats(responses);
+  const activeCategories =
+    profile?.feedback_categories && profile.feedback_categories.length > 0
+      ? profile.feedback_categories
+      : DEFAULT_FEEDBACK_CATEGORIES;
+
+  const { average, total, breakdown, categories } = computeStats(responses, activeCategories);
 
   const slug = profile?.business_slug ?? "";
   const feedbackUrl = `https://${APP_DOMAIN}/feedback/${slug}`;
@@ -129,7 +132,14 @@ export function FeedbackDashboard({ initialProfile }: Props) {
             {profile?.business_name ?? "Your Business"}
           </p>
         </div>
-        <MessageSquare size={28} className="text-[#a855f7]" />
+        <button
+          onClick={() => setShowSettings(true)}
+          className="w-10 h-10 flex items-center justify-center rounded-full transition-all active:scale-95"
+          style={{ background: "rgba(168,85,247,0.15)", border: "1px solid rgba(168,85,247,0.3)" }}
+          aria-label="Feedback Settings"
+        >
+          <Settings size={18} className="text-[#a855f7]" />
+        </button>
       </div>
 
       {/* ── Period Selector ───────────────────────────────────── */}
@@ -291,12 +301,12 @@ export function FeedbackDashboard({ initialProfile }: Props) {
                   .filter(([, v]) => v.liked > 0 || v.improve > 0)
                   .sort((a, b) => b[1].liked - a[1].liked)
                   .concat(
-                    // Always show all default categories even if 0
+                    // Always show all active categories even if 0
                     Object.entries(categories).filter(
                       ([k, v]) =>
                         v.liked === 0 &&
                         v.improve === 0 &&
-                        FEEDBACK_CATEGORIES.includes(k)
+                        activeCategories.includes(k)
                     )
                   )
                   .filter(
@@ -439,9 +449,23 @@ export function FeedbackDashboard({ initialProfile }: Props) {
           businessId={profile.id}
           businessName={profile.business_name}
           businessSlug={profile.business_slug}
+          categories={activeCategories}
           onClose={() => {
             setShowModal(false);
             loadData();
+          }}
+        />
+      )}
+
+      {/* ── Feedback Settings Panel ───────────────────────────── */}
+      {showSettings && (
+        <FeedbackSettingsPanel
+          currentCategories={profile?.feedback_categories ?? null}
+          onClose={() => setShowSettings(false)}
+          onSaved={(cats) => {
+            setProfile((prev) =>
+              prev ? { ...prev, feedback_categories: cats } : prev
+            );
           }}
         />
       )}

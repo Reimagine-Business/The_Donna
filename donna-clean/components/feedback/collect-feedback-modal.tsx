@@ -7,6 +7,7 @@ interface Props {
   businessId: string;
   businessName: string;
   businessSlug: string;
+  categories?: string[];
   onClose: () => void;
 }
 
@@ -14,6 +15,7 @@ export function CollectFeedbackModal({
   businessId,
   businessName,
   businessSlug,
+  categories,
   onClose,
 }: Props) {
   return (
@@ -39,6 +41,7 @@ export function CollectFeedbackModal({
           businessName={businessName}
           businessSlug={businessSlug}
           collectionMode="direct"
+          categories={categories}
           onComplete={onClose}
         />
       </div>

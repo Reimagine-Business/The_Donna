@@ -2,14 +2,7 @@
 
 import { useState, useMemo } from "react";
 import { createClient } from "@/lib/supabase/client";
-
-const FEEDBACK_CATEGORIES = [
-  "Food",
-  "Service",
-  "Ambience",
-  "Value for Money",
-  "Cleanliness",
-];
+import { DEFAULT_FEEDBACK_CATEGORIES } from "@/app/feedback/actions";
 
 const RATING_EMOJIS = [
   { score: 1, emoji: "😞", label: "Terrible" },
@@ -26,6 +19,7 @@ interface Props {
   businessName: string;
   businessSlug: string;
   collectionMode: "qr" | "direct";
+  categories?: string[];
   onComplete?: () => void;
 }
 
@@ -34,8 +28,11 @@ export function CustomerFeedbackForm({
   businessName,
   businessSlug,
   collectionMode,
+  categories,
   onComplete,
 }: Props) {
+  const feedbackCategories =
+    categories && categories.length > 0 ? categories : DEFAULT_FEEDBACK_CATEGORIES;
   const [step, setStep] = useState<Step>("welcome");
   const [rating, setRating] = useState<number | null>(null);
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
@@ -170,7 +167,7 @@ export function CustomerFeedbackForm({
         <p className="text-gray-500 mb-8 text-sm">Select at least one</p>
 
         <div className="flex flex-wrap justify-center gap-3 mb-10 max-w-sm">
-          {FEEDBACK_CATEGORIES.map((cat) => (
+          {feedbackCategories.map((cat) => (
             <button
               key={cat}
               onClick={() => toggleCategory(cat)}

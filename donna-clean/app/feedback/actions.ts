@@ -16,10 +16,19 @@ export interface FeedbackResponse {
   created_at: string;
 }
 
+export const DEFAULT_FEEDBACK_CATEGORIES = [
+  "Food",
+  "Service",
+  "Ambience",
+  "Value for Money",
+  "Cleanliness",
+];
+
 export interface BusinessProfile {
   id: string;
   business_name: string;
   business_slug: string;
+  feedback_categories: string[] | null;
 }
 
 export type FeedbackPeriod = "today" | "this-week" | "this-month" | "custom";
@@ -65,11 +74,27 @@ export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null>
 
   const { data } = await supabase
     .from("business_profiles")
-    .select("id, business_name, business_slug")
+    .select("id, business_name, business_slug, feedback_categories")
     .eq("user_id", user.id)
     .maybeSingle();
 
   return data ?? null;
+}
+
+export async function saveFeedbackCategories(
+  categories: string[]
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createSupabaseServerClient();
+  const { user } = await getOrRefreshUser(supabase);
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const { error } = await supabase
+    .from("business_profiles")
+    .update({ feedback_categories: categories })
+    .eq("user_id", user.id);
+
+  if (error) return { success: false, error: error.message };
+  return { success: true };
 }
 
 export async function getFeedbackResponses(
@@ -83,7 +108,7 @@ export async function getFeedbackResponses(
 
   const { data: profile } = await supabase
     .from("business_profiles")
-    .select("id, business_name, business_slug")
+    .select("id, business_name, business_slug, feedback_categories")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -105,9 +130,12 @@ export async function getFeedbackResponses(
   };
 }
 
-export async function getBusinessBySlug(
-  slug: string
-): Promise<{ id: string; business_name: string; business_slug: string } | null> {
+export async function getBusinessBySlug(slug: string): Promise<{
+  id: string;
+  business_name: string;
+  business_slug: string;
+  feedback_categories: string[] | null;
+} | null> {
   // Use service-role client to bypass RLS — this is a public server-side
   // lookup (customer feedback page, no session). The anon key would be
   // blocked by the existing business_profiles RLS policies.
@@ -119,7 +147,7 @@ export async function getBusinessBySlug(
 
   const { data } = await supabaseAdmin
     .from("business_profiles")
-    .select("id, business_name, business_slug")
+    .select("id, business_name, business_slug, feedback_categories")
     .eq("business_slug", slug)
     .maybeSingle();
 
