@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef } from "react";
-import Link from "next/link";
+import { format } from "date-fns";
 import { Star, QrCode, Download, Sparkles, Settings } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import {
@@ -13,13 +13,21 @@ import {
 import { DEFAULT_FEEDBACK_CATEGORIES } from "@/lib/feedback-constants";
 import { CollectFeedbackModal } from "./collect-feedback-modal";
 import { FeedbackSettingsPanel } from "./feedback-settings-panel";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Calendar } from "@/components/ui/calendar";
 
-const PERIOD_LABELS: Record<FeedbackPeriod, string> = {
-  today: "Today",
-  "this-week": "This Week",
-  "this-month": "This Month",
-  custom: "Custom Range",
-};
+const PERIOD_OPTIONS: { value: FeedbackPeriod; label: string }[] = [
+  { value: "this-month", label: "This Month" },
+  { value: "last-month", label: "Last Month" },
+  { value: "this-year", label: "This Year" },
+  { value: "last-year", label: "Last Year" },
+  { value: "all-time", label: "All Time" },
+  { value: "customize", label: "Customize" },
+];
 
 const APP_DOMAIN = "thedonnaapp.co";
 
@@ -74,8 +82,9 @@ function computeStats(
 export function FeedbackDashboard({ initialProfile }: Props) {
   const [profile, setProfile] = useState<BusinessProfile | null>(initialProfile);
   const [period, setPeriod] = useState<FeedbackPeriod>("this-month");
-  const [customStart, setCustomStart] = useState("");
-  const [customEnd, setCustomEnd] = useState("");
+  const [customFromDate, setCustomFromDate] = useState<Date | undefined>();
+  const [customToDate, setCustomToDate] = useState<Date | undefined>();
+  const [showCustomDatePickers, setShowCustomDatePickers] = useState(false);
   const [responses, setResponses] = useState<FeedbackResponse[]>([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -83,15 +92,21 @@ export function FeedbackDashboard({ initialProfile }: Props) {
 
   const loadData = useCallback(async () => {
     setLoading(true);
-    const result = await getFeedbackResponses(
-      period,
-      customStart || undefined,
-      customEnd || undefined
-    );
+    // Convert Date objects to ISO strings for the server action
+    const startIso = customFromDate?.toISOString();
+    const endIso = customToDate
+      ? new Date(
+          customToDate.getFullYear(),
+          customToDate.getMonth(),
+          customToDate.getDate(),
+          23, 59, 59, 999
+        ).toISOString()
+      : undefined;
+    const result = await getFeedbackResponses(period, startIso, endIso);
     setResponses(result.responses);
     if (result.businessProfile) setProfile(result.businessProfile);
     setLoading(false);
-  }, [period, customStart, customEnd]);
+  }, [period, customFromDate, customToDate]);
 
   useEffect(() => {
     loadData();
@@ -124,7 +139,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
 
   return (
     <div className="space-y-5">
-      {/* Header */}
+      {/* ── 1. Header ─────────────────────────────────────────── */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-extrabold text-white">Feedback</h1>
@@ -142,49 +157,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
         </button>
       </div>
 
-      {/* ── Period Selector ───────────────────────────────────── */}
-      <div
-        className="rounded-xl p-4"
-        style={{
-          background: "linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))",
-          border: "1px solid rgba(192,132,252,0.15)",
-        }}
-      >
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-[#94a3b8] text-sm font-medium">Period:</span>
-          <select
-            value={period}
-            onChange={(e) => setPeriod(e.target.value as FeedbackPeriod)}
-            className="px-3 py-1.5 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-          >
-            {(Object.keys(PERIOD_LABELS) as FeedbackPeriod[]).map((p) => (
-              <option key={p} value={p}>
-                {PERIOD_LABELS[p]}
-              </option>
-            ))}
-          </select>
-
-          {period === "custom" && (
-            <div className="flex items-center gap-2 flex-wrap mt-1 w-full">
-              <input
-                type="date"
-                value={customStart}
-                onChange={(e) => setCustomStart(e.target.value)}
-                className="px-3 py-1.5 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-              <span className="text-[#94a3b8] text-sm">to</span>
-              <input
-                type="date"
-                value={customEnd}
-                onChange={(e) => setCustomEnd(e.target.value)}
-                className="px-3 py-1.5 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
-              />
-            </div>
-          )}
-        </div>
-      </div>
-
-      {/* ── Collect Feedback Button ───────────────────────────── */}
+      {/* ── 2. Collect Feedback Now ───────────────────────────── */}
       <button
         onClick={() => setShowModal(true)}
         className="w-full py-4 rounded-xl font-bold text-white text-base transition-all active:scale-95"
@@ -196,13 +169,79 @@ export function FeedbackDashboard({ initialProfile }: Props) {
         Collect Feedback Now
       </button>
 
+      {/* ── 3. Period Selector ────────────────────────────────── */}
+      <div
+        className="rounded-xl p-4"
+        style={{
+          background: "linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))",
+          border: "1px solid rgba(192,132,252,0.15)",
+        }}
+      >
+        <div className="flex flex-wrap items-center gap-2">
+          <span className="text-[#94a3b8] text-sm font-medium">Period:</span>
+          <select
+            value={period}
+            onChange={(e) => {
+              const value = e.target.value as FeedbackPeriod;
+              setPeriod(value);
+              setShowCustomDatePickers(value === "customize");
+            }}
+            className="px-3 py-1.5 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm focus:outline-none focus:ring-2 focus:ring-purple-500"
+          >
+            {PERIOD_OPTIONS.map(({ value, label }) => (
+              <option key={value} value={value}>
+                {label}
+              </option>
+            ))}
+          </select>
+        </div>
+
+        {showCustomDatePickers && (
+          <div className="flex flex-wrap items-center gap-2 mt-3">
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="px-3 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  {customFromDate ? format(customFromDate, "MMM dd, yyyy") : "From Date"}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={customFromDate}
+                  onSelect={setCustomFromDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+
+            <span className="text-[#94a3b8] text-sm">to</span>
+
+            <Popover>
+              <PopoverTrigger asChild>
+                <button className="px-3 py-2 bg-purple-900/30 border border-purple-500/30 rounded-lg text-white text-sm hover:bg-purple-900/50 focus:outline-none focus:ring-2 focus:ring-purple-500">
+                  {customToDate ? format(customToDate, "MMM dd, yyyy") : "To Date"}
+                </button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0" align="start">
+                <Calendar
+                  mode="single"
+                  selected={customToDate}
+                  onSelect={setCustomToDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+          </div>
+        )}
+      </div>
+
       {loading ? (
         <div className="flex items-center justify-center py-16">
           <div className="w-8 h-8 border-2 border-[#a855f7] border-t-transparent rounded-full animate-spin" />
         </div>
       ) : (
         <>
-          {/* ── Average Rating Card ───────────────────────────── */}
+          {/* ── 4. Average Rating Card ────────────────────────── */}
           <div
             className="rounded-xl p-5"
             style={{
@@ -238,7 +277,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
             </div>
           </div>
 
-          {/* ── Rating Breakdown ──────────────────────────────── */}
+          {/* ── 5. Rating Breakdown ───────────────────────────── */}
           <div
             className="rounded-xl p-5"
             style={{
@@ -280,7 +319,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
             </div>
           </div>
 
-          {/* ── Category Breakdown ────────────────────────────── */}
+          {/* ── 6. Category Breakdown ─────────────────────────── */}
           <div
             className="rounded-xl p-5"
             style={{
@@ -336,7 +375,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
             )}
           </div>
 
-          {/* ── Donna's Take (placeholder) ────────────────────── */}
+          {/* ── 7. Donna's Take ───────────────────────────────── */}
           <div
             className="rounded-xl p-5 relative overflow-hidden"
             style={{
@@ -355,31 +394,29 @@ export function FeedbackDashboard({ initialProfile }: Props) {
               patterns, celebrate wins, and flag areas to improve — automatically.
             </p>
           </div>
-
         </>
       )}
 
-      {/* ── QR Code Section — always visible, independent of period loading ── */}
-      {slug ? (
-        <div
-          className="rounded-xl p-5"
-          style={{
-            background: "linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))",
-            border: "1px solid rgba(192,132,252,0.15)",
-          }}
-        >
-          <div className="flex items-center gap-2 mb-1">
-            <QrCode size={16} className="text-[#a855f7]" />
-            <p className="text-[#94a3b8] text-xs uppercase tracking-wider font-semibold">
-              Your Feedback QR
-            </p>
-          </div>
-          <p className="text-[#64748b] text-xs mb-4">
-            Share this with your customers to collect feedback anywhere
+      {/* ── 8. QR Code Section ───────────────────────────────── */}
+      <div
+        className="rounded-xl p-5"
+        style={{
+          background: "linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))",
+          border: "1px solid rgba(192,132,252,0.15)",
+        }}
+      >
+        <div className="flex items-center gap-2 mb-1">
+          <QrCode size={16} className="text-[#a855f7]" />
+          <p className="text-[#94a3b8] text-xs uppercase tracking-wider font-semibold">
+            Your Feedback QR
           </p>
+        </div>
+        <p className="text-[#64748b] text-xs mb-4">
+          Share this with your customers to collect feedback anywhere
+        </p>
 
+        {slug ? (
           <div className="flex flex-col items-center gap-4">
-            {/* QR Image */}
             <div className="bg-white p-3 rounded-xl shadow-lg">
               <QRCodeSVG
                 ref={qrRef}
@@ -417,31 +454,13 @@ export function FeedbackDashboard({ initialProfile }: Props) {
               </button>
             </div>
           </div>
-        </div>
-      ) : (
-        <div
-          className="rounded-xl p-5 text-center"
-          style={{
-            background: "linear-gradient(135deg, rgba(59,7,100,0.4), rgba(15,15,35,0.7))",
-            border: "1px solid rgba(192,132,252,0.1)",
-          }}
-        >
-          <QrCode size={32} className="text-[#4b5563] mx-auto mb-3" />
-          <p className="text-[#94a3b8] text-sm font-medium mb-2">
-            Your QR code will appear here
-          </p>
-          <p className="text-[#64748b] text-xs mb-4">
-            Complete your Business Bio to activate your QR code
-          </p>
-          <Link
-            href="/profile/business-bio"
-            className="inline-block px-5 py-2.5 rounded-xl text-sm font-semibold text-white transition-all active:scale-95"
-            style={{ background: "linear-gradient(135deg, #7c3aed, #a855f7)" }}
-          >
-            Complete Business Bio →
-          </Link>
-        </div>
-      )}
+        ) : (
+          <div className="flex flex-col items-center py-4">
+            <div className="w-6 h-6 border-2 border-[#a855f7] border-t-transparent rounded-full animate-spin mb-3" />
+            <p className="text-[#64748b] text-xs">Setting up your QR code…</p>
+          </div>
+        )}
+      </div>
 
       {/* ── Collect Feedback Modal ────────────────────────────── */}
       {showModal && profile && (
