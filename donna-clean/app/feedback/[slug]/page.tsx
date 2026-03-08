@@ -44,6 +44,7 @@ export default async function CustomerFeedbackPage({ params }: Props) {
           businessName={business.business_name}
           businessSlug={business.business_slug}
           collectionMode="qr"
+          categories={business.feedback_categories ?? undefined}
         />
       </div>
     </div>

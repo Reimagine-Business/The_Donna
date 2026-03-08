@@ -6,7 +6,9 @@ import { getOrRefreshUser } from "@/lib/supabase/get-user";
 import {
   DONNA_CHAT_COMPACT,
   buildBusinessBioContext,
+  buildFeedbackContext,
   cleanDonnaResponse,
+  type FeedbackRow,
 } from "@/lib/donna-personality";
 import { buildChatFinancialContext } from "@/lib/financial-summary";
 import * as Sentry from "@sentry/nextjs";
@@ -112,7 +114,7 @@ export async function POST(req: NextRequest) {
 
     const { data: businessProfile } = await supabase
       .from("business_profiles")
-      .select("business_context")
+      .select("id, business_context")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -122,7 +124,20 @@ export async function POST(req: NextRequest) {
 
     const financialContext = await buildChatFinancialContext(supabase, user.id);
 
-    // Build user content: date + bio + financial data + question
+    // Fetch last 30 days of customer feedback
+    let feedbackContext = "No customer feedback collected yet.";
+    if (businessProfile?.id) {
+      const thirtyDaysAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+      const { data: feedbackRows } = await supabase
+        .from("feedback_responses")
+        .select("rating, liked_categories, improve_categories, comment")
+        .eq("business_id", businessProfile.id)
+        .gte("created_at", thirtyDaysAgo)
+        .order("created_at", { ascending: false });
+      feedbackContext = buildFeedbackContext((feedbackRows || []) as FeedbackRow[]);
+    }
+
+    // Build user content: date + bio + financial data + feedback + question
     // DONNA_CHAT_COMPACT (personality + GOOD/BAD examples) is systemInstruction
     const dateStr = new Date().toLocaleDateString("en-IN", {
       day: "numeric",
@@ -133,6 +148,7 @@ export async function POST(req: NextRequest) {
       `CURRENT DATE: ${dateStr}`,
       bioContext ? `\nABOUT THIS BUSINESS:\n${bioContext}` : "",
       `\nFINANCIAL DATA:\n${financialContext}`,
+      `\n${feedbackContext}`,
       `\nUSER ASKS: "${message}"`,
       `\nRespond as Donna (max 120 words, use "we/us/let's", face emojis only):`,
       `Address the owner by name if known from bio context. Never use "there" as a substitute for a name — use "we" if name is unknown.`,
