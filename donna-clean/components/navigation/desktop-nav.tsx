@@ -10,7 +10,6 @@ const navItems = [
   { href: "/analytics/cashpulse", label: "Cashpulse" },
   { href: "/analytics/profitlens", label: "Profit Lens" },
   { href: "/alerts", label: "Alerts" },
-  { href: "/feedback", label: "Feedback" },
 ];
 
 interface DesktopNavProps {

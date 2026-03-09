@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Edit3, TrendingUp, Search, Bell, MessageSquare } from "lucide-react";
+import { Home, Edit3, TrendingUp, Search, Bell } from "lucide-react";
 
 const navItems = [
   { href: "/home", label: "Home", icon: Home },
@@ -10,7 +10,6 @@ const navItems = [
   { href: "/analytics/cashpulse", label: "Cashpulse", icon: TrendingUp },
   { href: "/analytics/profitlens", label: "Profit Lens", icon: Search },
   { href: "/alerts", label: "Alerts", icon: Bell },
-  { href: "/feedback", label: "Feedback", icon: MessageSquare },
 ];
 
 export function BottomNav() {
@@ -28,7 +27,7 @@ export function BottomNav() {
     >
       <div className="h-full flex items-center justify-evenly px-1">
         {navItems.map((item) => {
-          const isActive = pathname === item.href || (item.href === "/feedback" && pathname === "/feedback");
+          const isActive = pathname === item.href;
           const Icon = item.icon;
           return (
             <Link
