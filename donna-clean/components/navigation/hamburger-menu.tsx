@@ -4,7 +4,7 @@ import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
 import { LogoutButton } from "@/components/logout-button";
-import { User, Settings, Shield, ShieldCheck } from "lucide-react";
+import { User, Settings, Shield, MessageSquare, ShieldCheck } from "lucide-react";
 
 interface HamburgerMenuProps {
   businessName?: string;
@@ -16,6 +16,7 @@ interface HamburgerMenuProps {
 const settingsItems = [
   { href: "/profile", label: "Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/legal", label: "Privacy & Legal", icon: Shield },
 ];
 

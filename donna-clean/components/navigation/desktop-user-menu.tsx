@@ -4,7 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
-import { User, Settings, Shield, LogOut, ChevronDown } from "lucide-react";
+import { User, Settings, Shield, MessageSquare, LogOut, ChevronDown } from "lucide-react";
 import { logoutAction } from "@/app/auth/actions";
 
 interface DesktopUserMenuProps {
@@ -14,6 +14,7 @@ interface DesktopUserMenuProps {
 const menuItems = [
   { href: "/profile", label: "Profile", icon: User },
   { href: "/settings", label: "Settings", icon: Settings },
+  { href: "/feedback", label: "Feedback", icon: MessageSquare },
   { href: "/legal", label: "Privacy & Legal", icon: Shield },
 ];
 
