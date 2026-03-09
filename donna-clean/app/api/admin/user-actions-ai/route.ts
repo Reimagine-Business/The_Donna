@@ -145,7 +145,7 @@ export async function GET(req: NextRequest) {
               items: {
                 type: SchemaType.OBJECT,
                 properties: {
-                  priority: { type: SchemaType.STRING, enum: ["urgent", "watch", "good", "none"] },
+                  priority: { type: SchemaType.STRING, format: "enum", enum: ["urgent", "watch", "good", "none"] },
                   username: { type: SchemaType.STRING },
                   action:   { type: SchemaType.STRING },
                   reason:   { type: SchemaType.STRING },
