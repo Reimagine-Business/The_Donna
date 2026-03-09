@@ -8,9 +8,14 @@ import {
   MessageCircle,
   Users as UsersIcon,
   BarChart3,
+  UserPlus,
+  Mail,
+  ChevronDown,
 } from "lucide-react";
 import Link from "next/link";
 import { UserRowExpander } from "@/components/admin/user-row-expander";
+import { CreateUserDirect } from "@/components/admin/create-user-direct";
+import { InviteUserButton } from "@/components/admin/invite-user-button";
 
 type EnhancedUserStat = {
   user_id: string;
@@ -424,6 +429,52 @@ export default async function UserMonitoringPage() {
           </div>
         </div>
       </div>
+
+      {/* Add Users — collapsible */}
+      <details className="group border border-purple-500/30 rounded-xl bg-purple-900/10">
+        <summary className="flex items-center justify-between p-4 cursor-pointer list-none select-none">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-purple-500/20">
+              <UserPlus className="h-5 w-5 text-purple-400" />
+            </div>
+            <div>
+              <h2 className="text-lg font-semibold text-white">Add Users</h2>
+              <p className="text-sm text-white/60">Create an account directly or invite by email</p>
+            </div>
+          </div>
+          <ChevronDown className="h-5 w-5 text-white/40 transition-transform group-open:rotate-180" />
+        </summary>
+
+        <div className="px-4 pb-6 space-y-6">
+          {/* Create directly */}
+          <div className="space-y-3 pt-2 border-t border-purple-500/10">
+            <div className="flex items-center gap-2 pt-2">
+              <UserPlus className="h-4 w-4 text-purple-400" />
+              <h3 className="text-sm font-semibold text-white">Create Account Directly</h3>
+            </div>
+            <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+              <p className="text-xs text-white/80">
+                Creates the account instantly with a temporary password. User can login immediately and change their password. Standard access — no admin privileges.
+              </p>
+            </div>
+            <CreateUserDirect />
+          </div>
+
+          {/* Invite by email */}
+          <div className="space-y-3 pt-4 border-t border-purple-500/10">
+            <div className="flex items-center gap-2">
+              <Mail className="h-4 w-4 text-purple-400" />
+              <h3 className="text-sm font-semibold text-white">Invite by Email</h3>
+            </div>
+            <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg">
+              <p className="text-xs text-white/80">
+                Sends an invitation email so the user can set up their own account and password.
+              </p>
+            </div>
+            <InviteUserButton />
+          </div>
+        </div>
+      </details>
 
       {/* Desktop Table */}
       <div className="border border-purple-500/30 rounded-xl overflow-hidden hidden md:block">
