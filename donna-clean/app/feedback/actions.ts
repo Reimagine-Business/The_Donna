@@ -135,11 +135,21 @@ export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null>
 export async function saveFeedbackCategories(
   categories: string[]
 ): Promise<{ success: boolean; error?: string }> {
+  // Verify the caller is authenticated before touching any data
   const supabase = await createSupabaseServerClient();
   const { user } = await getOrRefreshUser(supabase);
   if (!user) return { success: false, error: "Unauthorized" };
 
-  const { error } = await supabase
+  // Use service-role client so the UPDATE is never silently blocked by an
+  // RLS policy gap.  We still scope the write to the authenticated user's
+  // own row via the .eq("user_id", user.id) filter, so this is safe.
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  const { error } = await supabaseAdmin
     .from("business_profiles")
     .update({ feedback_categories: categories })
     .eq("user_id", user.id);

@@ -29,7 +29,6 @@ const PERIOD_OPTIONS: { value: FeedbackPeriod; label: string }[] = [
   { value: "customize", label: "Customize" },
 ];
 
-const APP_DOMAIN = "thedonnaapp.co";
 
 interface Props {
   initialProfile: BusinessProfile | null;
@@ -120,7 +119,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
   const { average, total, breakdown, categories } = computeStats(responses, activeCategories);
 
   const slug = profile?.business_slug ?? "";
-  const feedbackUrl = `https://${APP_DOMAIN}/feedback/${slug}`;
+  const feedbackUrl = `${window.location.origin}/feedback/${slug}`;
 
   async function handleDownloadPDF() {
     if (!slug) return;
