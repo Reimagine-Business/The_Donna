@@ -101,9 +101,16 @@ export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null>
   // No profile row yet — create a minimal one so the QR code works immediately
   if (!data) {
     const autoSlug = user.id.replace(/-/g, "").slice(0, 12);
+    // Pull the real business name from profiles rather than defaulting to a placeholder
+    const { data: profileRow } = await supabase
+      .from("profiles")
+      .select("business_name")
+      .eq("user_id", user.id)
+      .maybeSingle();
+    const realName = profileRow?.business_name || "";
     const { data: inserted, error: insertErr } = await supabase
       .from("business_profiles")
-      .insert({ user_id: user.id, business_name: "My Business", business_slug: autoSlug })
+      .insert({ user_id: user.id, business_name: realName, business_slug: autoSlug })
       .select("id, business_name, business_slug, feedback_categories")
       .single();
     if (insertErr) {

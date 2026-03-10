@@ -153,7 +153,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     doc.rect(0, 0, W, topH, "F");
 
     // Business name (white, bold, centred in header)
-    const businessNameText = profile?.business_name ?? "Your Business";
+    const businessNameText = profile?.business_name || "Your Business";
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(16);
@@ -188,7 +188,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     doc.text("thedonnaapp.co", W / 2, 204, { align: "center" });
 
     // Download
-    const safeName = (profile?.business_name ?? "business")
+    const safeName = (profile?.business_name || "business")
       .toLowerCase()
       .replace(/\s+/g, "-")
       .replace(/[^a-z0-9-]/g, "");
