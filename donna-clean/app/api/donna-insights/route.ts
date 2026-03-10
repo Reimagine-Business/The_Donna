@@ -10,7 +10,7 @@ import {
   cleanDonnaResponse,
   type FeedbackRow,
 } from "@/lib/donna-personality";
-import { buildFinancialSummary } from "@/lib/financial-summary";
+import { buildChatFinancialContext } from "@/lib/financial-summary";
 import * as Sentry from "@sentry/nextjs";
 
 export const dynamic = "force-dynamic";
@@ -69,8 +69,8 @@ export async function GET() {
       }
     }
 
-    // Build compact financial summary
-    const financialContext = await buildFinancialSummary(supabase, user.id);
+    // Build financial context (includes 3-month trend, same as chat route)
+    const financialContext = await buildChatFinancialContext(supabase, user.id);
 
     console.log(
       "[Donna Insights] Financial context for AI prompt:",
@@ -113,7 +113,7 @@ export async function GET() {
     const timeOfDay =
       hour < 12 ? "morning" : hour < 17 ? "afternoon" : "evening";
 
-    const fullContext = `Business: ${profile?.business_name || "Small Business"}\n${bioContext}\n\n${financialContext}\n\n${feedbackContext}`;
+    const fullContext = `ABOUT THIS BUSINESS:\n${bioContext}\n\n${financialContext}\n\n${feedbackContext}`;
 
     const userContent = [
       `TODAY: ${dateStr}, ${timeOfDay}`,
