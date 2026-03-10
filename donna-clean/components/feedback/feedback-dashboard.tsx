@@ -168,52 +168,48 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     const qrX = (W - qrSize) / 2;
     doc.addImage(qrDataUrl, "PNG", qrX, 37, qrSize, qrSize);
 
-    // ── 7. Hand + phone SVG illustration (bottom-left) ───────
-    // 4 fingers on LEFT, thumb on RIGHT.
-    // Control points intentionally outside the viewport (e.g. x=-18) so the
-    // visible curve portion bulges ~22 px from the phone edge — clearly legible
-    // at PDF scale. The Bezier curve itself never goes below x≈4 (stays in view).
-    const handSvg = [
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 155" width="120" height="155">',
-      // Phone body
-      '<rect x="27" y="4" width="62" height="102" rx="9" fill="none" stroke="#1a0535" stroke-width="4"/>',
-      // Screen
-      '<rect x="34" y="14" width="48" height="76" rx="3" fill="none" stroke="#1a0535" stroke-width="2"/>',
-      // Home button
-      '<circle cx="58" cy="97" r="5" fill="none" stroke="#1a0535" stroke-width="2.5"/>',
-      // Thumb — RIGHT side (control x=120 → arc reaches x≈104, 15 px bulge right)
-      '<path d="M89 58 Q120 68 89 88" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
-      // Index — LEFT side (control x=-18 → arc reaches x≈4, 23 px bulge left)
-      '<path d="M27 28 Q-18 40 27 54" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
-      // Middle
-      '<path d="M27 46 Q-18 58 27 72" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
-      // Ring (control x=-14 → arc reaches x≈6)
-      '<path d="M27 63 Q-14 75 27 89" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
-      // Pinky — shorter arc (control x=-6 → arc reaches x≈10)
-      '<path d="M27 79 Q-6 88 27 98" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
-      // Palm — open curve below phone connecting thumb side to finger side
-      '<path d="M27 98 Q20 116 30 128 L52 136 L72 133 Q86 126 89 110 L89 88" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
-      '</svg>',
-    ].join("");
+    // ── 7. Phone icon — jsPDF primitives only, no SVG/canvas ────
+    // Positioned bottom-left: origin (px, py), phone 30×50 mm
+    const px = 8;   // left edge of phone
+    const py = 136; // top edge of phone
+    const pw = 30;  // phone width (mm)
+    const ph = 50;  // phone height (mm)
 
-    const svgBlob = new Blob([handSvg], { type: "image/svg+xml" });
-    const svgUrl = URL.createObjectURL(svgBlob);
-    const svgImg = new window.Image();
-    await new Promise<void>((resolve) => {
-      svgImg.onload = () => resolve();
-      svgImg.src = svgUrl;
-    });
-    // 2× canvas resolution for sharper strokes in the PDF
-    const handCanvas = document.createElement("canvas");
-    handCanvas.width = 240;
-    handCanvas.height = 310;
-    const handCtx = handCanvas.getContext("2d");
-    if (handCtx) handCtx.drawImage(svgImg, 0, 0, 240, 310);
-    URL.revokeObjectURL(svgUrl);
-    const handPng = handCanvas.toDataURL("image/png");
+    doc.setDrawColor(255, 255, 255); // white strokes on purple bg
+    doc.setFillColor(107, 33, 168);  // match card bg (no fill bleed)
+    doc.setLineWidth(1.2);
 
-    // Place illustration at bottom-left (54 × 70 mm in PDF)
-    doc.addImage(handPng, "PNG", 3, 132, 54, 70);
+    // Phone outline — rounded rect (jsPDF roundedRect stroke only)
+    doc.roundedRect(px, py, pw, ph, 3, 3, "S");
+
+    // Speaker slot at top
+    doc.setLineWidth(0.8);
+    doc.line(px + pw * 0.35, py + 3.5, px + pw * 0.65, py + 3.5);
+
+    // Home button circle at bottom
+    doc.circle(px + pw / 2, py + ph - 5, 2, "S");
+
+    // Screen area
+    doc.setLineWidth(0.5);
+    doc.rect(px + 3, py + 8, pw - 6, ph - 18, "S");
+
+    // 3×3 QR-like grid inside the screen
+    // Each cell ~4×4 mm, grid starts at (px+5, py+11)
+    const gx = px + 5;
+    const gy = py + 11;
+    const cs = 4; // cell size mm
+    doc.setLineWidth(0.4);
+    for (let row = 0; row < 3; row++) {
+      for (let col = 0; col < 3; col++) {
+        // Alternate filled/empty for QR-code visual rhythm
+        if ((row + col) % 2 === 0) {
+          doc.setFillColor(255, 255, 255);
+          doc.rect(gx + col * cs, gy + row * cs, cs - 0.8, cs - 0.8, "F");
+        } else {
+          doc.rect(gx + col * cs, gy + row * cs, cs - 0.8, cs - 0.8, "S");
+        }
+      }
+    }
 
     // ── 8. Business name — white bold caps on darker circle ───
     doc.setFillColor(82, 18, 138); // slightly darker purple #52128A
