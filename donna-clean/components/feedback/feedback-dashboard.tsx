@@ -169,25 +169,30 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     doc.addImage(qrDataUrl, "PNG", qrX, 37, qrSize, qrSize);
 
     // ── 7. Hand + phone SVG illustration (bottom-left) ───────
-    // Each finger is a single quadratic arc (no return stroke) — no blob shapes
+    // 4 fingers on LEFT, thumb on RIGHT.
+    // Control points intentionally outside the viewport (e.g. x=-18) so the
+    // visible curve portion bulges ~22 px from the phone edge — clearly legible
+    // at PDF scale. The Bezier curve itself never goes below x≈4 (stays in view).
     const handSvg = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 155" width="120" height="155">',
-      // Phone body outline
-      '<rect x="27" y="4" width="62" height="102" rx="9" fill="none" stroke="#1a0535" stroke-width="3.5"/>',
-      // Screen outline
+      // Phone body
+      '<rect x="27" y="4" width="62" height="102" rx="9" fill="none" stroke="#1a0535" stroke-width="4"/>',
+      // Screen
       '<rect x="34" y="14" width="48" height="76" rx="3" fill="none" stroke="#1a0535" stroke-width="2"/>',
       // Home button
       '<circle cx="58" cy="97" r="5" fill="none" stroke="#1a0535" stroke-width="2.5"/>',
-      // Thumb — single arc left side, start (27,58) → bulge left → end (27,92)
-      '<path d="M27 58 Q4 68 27 92" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
-      // Index — single arc right side
-      '<path d="M89 36 Q113 48 89 60" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
-      // Middle — single arc right side
-      '<path d="M89 54 Q113 66 89 78" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
-      // Ring — single arc right side
-      '<path d="M89 71 Q111 83 89 94" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
-      // Palm — open curve at base, no fill, no closed loop
-      '<path d="M27 92 Q21 112 31 122 L51 130 L70 127 Q84 120 87 108 L89 94" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
+      // Thumb — RIGHT side (control x=120 → arc reaches x≈104, 15 px bulge right)
+      '<path d="M89 58 Q120 68 89 88" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
+      // Index — LEFT side (control x=-18 → arc reaches x≈4, 23 px bulge left)
+      '<path d="M27 28 Q-18 40 27 54" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
+      // Middle
+      '<path d="M27 46 Q-18 58 27 72" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
+      // Ring (control x=-14 → arc reaches x≈6)
+      '<path d="M27 63 Q-14 75 27 89" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
+      // Pinky — shorter arc (control x=-6 → arc reaches x≈10)
+      '<path d="M27 79 Q-6 88 27 98" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round"/>',
+      // Palm — open curve below phone connecting thumb side to finger side
+      '<path d="M27 98 Q20 116 30 128 L52 136 L72 133 Q86 126 89 110 L89 88" fill="none" stroke="#1a0535" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
       '</svg>',
     ].join("");
 
