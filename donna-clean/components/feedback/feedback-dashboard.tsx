@@ -168,52 +168,10 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     const qrX = (W - qrSize) / 2;
     doc.addImage(qrDataUrl, "PNG", qrX, 37, qrSize, qrSize);
 
-    // ── 7. Phone icon — jsPDF primitives only, no SVG/canvas ────
-    // Positioned bottom-left: origin (px, py), phone 30×50 mm
-    const px = 8;   // left edge of phone
-    const py = 136; // top edge of phone
-    const pw = 30;  // phone width (mm)
-    const ph = 50;  // phone height (mm)
-
-    doc.setDrawColor(255, 255, 255); // white strokes on purple bg
-    doc.setFillColor(107, 33, 168);  // match card bg (no fill bleed)
-    doc.setLineWidth(1.2);
-
-    // Phone outline — rounded rect (jsPDF roundedRect stroke only)
-    doc.roundedRect(px, py, pw, ph, 3, 3, "S");
-
-    // Speaker slot at top
-    doc.setLineWidth(0.8);
-    doc.line(px + pw * 0.35, py + 3.5, px + pw * 0.65, py + 3.5);
-
-    // Home button circle at bottom
-    doc.circle(px + pw / 2, py + ph - 5, 2, "S");
-
-    // Screen area
-    doc.setLineWidth(0.5);
-    doc.rect(px + 3, py + 8, pw - 6, ph - 18, "S");
-
-    // 3×3 QR-like grid inside the screen
-    // Each cell ~4×4 mm, grid starts at (px+5, py+11)
-    const gx = px + 5;
-    const gy = py + 11;
-    const cs = 4; // cell size mm
-    doc.setLineWidth(0.4);
-    for (let row = 0; row < 3; row++) {
-      for (let col = 0; col < 3; col++) {
-        // Alternate filled/empty for QR-code visual rhythm
-        if ((row + col) % 2 === 0) {
-          doc.setFillColor(255, 255, 255);
-          doc.rect(gx + col * cs, gy + row * cs, cs - 0.8, cs - 0.8, "F");
-        } else {
-          doc.rect(gx + col * cs, gy + row * cs, cs - 0.8, cs - 0.8, "S");
-        }
-      }
-    }
-
-    // ── 8. Business name — white bold caps on darker circle ───
+    // ── 7. Business name — white bold caps, circle centred in bottom half ──
+    // Bottom half = y 148 (bubble tail tip) → 204 (footer): centre ≈ y 170
     doc.setFillColor(82, 18, 138); // slightly darker purple #52128A
-    doc.circle(113, 166, 32, "F");
+    doc.circle(W / 2, 170, 32, "F");
 
     const businessNameText = (profile?.business_name || "Your Business").toUpperCase();
     doc.setTextColor(255, 255, 255);
@@ -221,13 +179,13 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     doc.setFontSize(13);
     const nameLines = doc.splitTextToSize(businessNameText, 56) as string[];
     const lineH = 7;
-    let nameY = 166 - ((nameLines.length - 1) * lineH) / 2;
+    let nameY = 170 - ((nameLines.length - 1) * lineH) / 2;
     for (const line of nameLines) {
-      doc.text(line, 113, nameY, { align: "center" });
+      doc.text(line, W / 2, nameY, { align: "center" });
       nameY += lineH;
     }
 
-    // ── 9. Footer ─────────────────────────────────────────────
+    // ── 8. Footer ─────────────────────────────────────────────
     doc.setTextColor(210, 185, 255);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
