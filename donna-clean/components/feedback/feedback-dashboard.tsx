@@ -169,25 +169,25 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     doc.addImage(qrDataUrl, "PNG", qrX, 37, qrSize, qrSize);
 
     // ── 7. Hand + phone SVG illustration (bottom-left) ───────
-    // Clean minimal line-art: solid dark strokes, no fills, transparent bg
+    // Each finger is a single quadratic arc (no return stroke) — no blob shapes
     const handSvg = [
       '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 155" width="120" height="155">',
-      // Phone body — rounded rect outline only
+      // Phone body outline
       '<rect x="27" y="4" width="62" height="102" rx="9" fill="none" stroke="#1a0535" stroke-width="3.5"/>',
-      // Screen area
+      // Screen outline
       '<rect x="34" y="14" width="48" height="76" rx="3" fill="none" stroke="#1a0535" stroke-width="2"/>',
       // Home button
       '<circle cx="58" cy="97" r="5" fill="none" stroke="#1a0535" stroke-width="2.5"/>',
-      // Thumb — left side curving around phone
-      '<path d="M27 62 Q10 57 8 71 Q6 85 18 90 Q22 92 27 91" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
-      // Index finger — right side
-      '<path d="M89 36 Q108 34 110 46 Q112 57 101 60 L89 60" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
-      // Middle finger — right side
-      '<path d="M89 54 Q108 52 110 64 Q112 75 101 77 L89 77" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
-      // Ring finger — right side
-      '<path d="M89 71 Q106 69 108 81 Q110 91 99 93 L89 93" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
-      // Palm — open curve connecting grip to wrist, no fill
-      '<path d="M27 91 Q22 110 30 122 L49 131 L70 128 Q85 122 87 108 L89 93" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
+      // Thumb — single arc left side, start (27,58) → bulge left → end (27,92)
+      '<path d="M27 58 Q4 68 27 92" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
+      // Index — single arc right side
+      '<path d="M89 36 Q113 48 89 60" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
+      // Middle — single arc right side
+      '<path d="M89 54 Q113 66 89 78" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
+      // Ring — single arc right side
+      '<path d="M89 71 Q111 83 89 94" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
+      // Palm — open curve at base, no fill, no closed loop
+      '<path d="M27 92 Q21 112 31 122 L51 130 L70 127 Q84 120 87 108 L89 94" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
       '</svg>',
     ].join("");
 
@@ -198,11 +198,12 @@ export function FeedbackDashboard({ initialProfile }: Props) {
       svgImg.onload = () => resolve();
       svgImg.src = svgUrl;
     });
+    // 2× canvas resolution for sharper strokes in the PDF
     const handCanvas = document.createElement("canvas");
-    handCanvas.width = 120;
-    handCanvas.height = 155;
+    handCanvas.width = 240;
+    handCanvas.height = 310;
     const handCtx = handCanvas.getContext("2d");
-    if (handCtx) handCtx.drawImage(svgImg, 0, 0);
+    if (handCtx) handCtx.drawImage(svgImg, 0, 0, 240, 310);
     URL.revokeObjectURL(svgUrl);
     const handPng = handCanvas.toDataURL("image/png");
 
