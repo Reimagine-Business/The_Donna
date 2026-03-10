@@ -34,7 +34,7 @@ export default async function CustomerFeedbackPage({ params }: Props) {
         style={{ background: "rgba(124,58,237,0.08)" }}
       >
         <span className="text-violet-600 text-xs font-semibold tracking-wide uppercase">
-          Customer Feedback
+          {business.business_name || "Customer Feedback"}
         </span>
       </div>
 
