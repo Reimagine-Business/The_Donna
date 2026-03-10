@@ -169,25 +169,25 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     doc.addImage(qrDataUrl, "PNG", qrX, 37, qrSize, qrSize);
 
     // ── 7. Hand + phone SVG illustration (bottom-left) ───────
-    // Rendered to canvas so jsPDF can embed it as PNG
+    // Clean minimal line-art: solid dark strokes, no fills, transparent bg
     const handSvg = [
-      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 180" width="140" height="180">',
-      // Phone body
-      '<rect x="42" y="14" width="56" height="96" rx="8" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4.5"/>',
-      // Screen glass
-      '<rect x="49" y="24" width="42" height="70" rx="3" fill="#ffffff" fill-opacity="0.09" stroke="#140532" stroke-opacity="0.45" stroke-width="2.5"/>',
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 120 155" width="120" height="155">',
+      // Phone body — rounded rect outline only
+      '<rect x="27" y="4" width="62" height="102" rx="9" fill="none" stroke="#1a0535" stroke-width="3.5"/>',
+      // Screen area
+      '<rect x="34" y="14" width="48" height="76" rx="3" fill="none" stroke="#1a0535" stroke-width="2"/>',
       // Home button
-      '<circle cx="70" cy="101" r="5.5" fill="none" stroke="#140532" stroke-opacity="0.65" stroke-width="2.5"/>',
-      // Thumb on left side
-      '<path d="M42 56 Q24 52 21 66 Q18 80 30 85 L42 87" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
-      // Index finger
-      '<path d="M98 38 Q116 34 119 47 Q121 59 110 63 L98 66" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round"/>',
-      // Middle finger
-      '<path d="M98 55 Q116 51 119 64 Q121 76 110 80 L98 83" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round"/>',
-      // Ring finger
-      '<path d="M98 72 Q114 68 116 81 Q118 93 107 96 L98 99" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round"/>',
-      // Palm + wrist closing the grip
-      '<path d="M42 87 Q36 108 44 124 L63 132 L83 129 Q98 122 100 108 L98 99 L98 38 Q98 26 88 22 L42 26 Z" fill="#b48cdc" fill-opacity="0.22" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linejoin="round"/>',
+      '<circle cx="58" cy="97" r="5" fill="none" stroke="#1a0535" stroke-width="2.5"/>',
+      // Thumb — left side curving around phone
+      '<path d="M27 62 Q10 57 8 71 Q6 85 18 90 Q22 92 27 91" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
+      // Index finger — right side
+      '<path d="M89 36 Q108 34 110 46 Q112 57 101 60 L89 60" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
+      // Middle finger — right side
+      '<path d="M89 54 Q108 52 110 64 Q112 75 101 77 L89 77" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
+      // Ring finger — right side
+      '<path d="M89 71 Q106 69 108 81 Q110 91 99 93 L89 93" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round"/>',
+      // Palm — open curve connecting grip to wrist, no fill
+      '<path d="M27 91 Q22 110 30 122 L49 131 L70 128 Q85 122 87 108 L89 93" fill="none" stroke="#1a0535" stroke-width="3.5" stroke-linecap="round" stroke-linejoin="round"/>',
       '</svg>',
     ].join("");
 
@@ -199,25 +199,25 @@ export function FeedbackDashboard({ initialProfile }: Props) {
       svgImg.src = svgUrl;
     });
     const handCanvas = document.createElement("canvas");
-    handCanvas.width = 140;
-    handCanvas.height = 180;
+    handCanvas.width = 120;
+    handCanvas.height = 155;
     const handCtx = handCanvas.getContext("2d");
     if (handCtx) handCtx.drawImage(svgImg, 0, 0);
     URL.revokeObjectURL(svgUrl);
     const handPng = handCanvas.toDataURL("image/png");
 
-    // Place illustration at bottom-left (56 × 72 mm in PDF)
-    doc.addImage(handPng, "PNG", 3, 132, 56, 72);
+    // Place illustration at bottom-left (54 × 70 mm in PDF)
+    doc.addImage(handPng, "PNG", 3, 132, 54, 70);
 
     // ── 8. Business name — white bold caps on darker circle ───
     doc.setFillColor(82, 18, 138); // slightly darker purple #52128A
-    doc.circle(113, 166, 29, "F");
+    doc.circle(113, 166, 32, "F");
 
     const businessNameText = (profile?.business_name || "Your Business").toUpperCase();
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    const nameLines = doc.splitTextToSize(businessNameText, 50) as string[];
+    const nameLines = doc.splitTextToSize(businessNameText, 56) as string[];
     const lineH = 7;
     let nameY = 166 - ((nameLines.length - 1) * lineH) / 2;
     for (const line of nameLines) {
