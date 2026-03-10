@@ -124,10 +124,10 @@ export function FeedbackDashboard({ initialProfile }: Props) {
   async function handleDownloadPDF() {
     if (!slug) return;
 
-    // Generate high-res QR code as PNG data URL
+    // High-res QR code
     const QRCode = (await import("qrcode")).default;
     const qrDataUrl = await QRCode.toDataURL(feedbackUrl, {
-      width: 400,
+      width: 600,
       margin: 1,
       color: { dark: "#000000", light: "#ffffff" },
     });
@@ -137,57 +137,101 @@ export function FeedbackDashboard({ initialProfile }: Props) {
 
     const W = 148;
     const H = 210;
-    const topH = 26; // ~40% shorter header band
 
-    // White background
-    doc.setFillColor(255, 255, 255);
+    // ── 1. Full purple background ─────────────────────────────
+    doc.setFillColor(107, 33, 168); // #6B21A8
     doc.rect(0, 0, W, H, "F");
 
-    // Deep purple border around entire card (2.5pt → ~0.88mm)
-    doc.setDrawColor(58, 12, 110); // deep purple #3A0C6E
-    doc.setLineWidth(0.88);
-    doc.rect(0.44, 0.44, W - 0.88, H - 0.88);
+    // ── 2. White speech bubble body (rounded rect) ────────────
+    doc.setFillColor(255, 255, 255);
+    doc.roundedRect(6, 6, 136, 116, 8, 8, "F");
 
-    // Top section — deep purple header band
-    doc.setFillColor(107, 33, 168); // #6B21A8
-    doc.rect(0, 0, W, topH, "F");
+    // ── 3. Speech bubble tail — white triangle, bottom-left ───
+    // Vertices: (18, 120) → (42, 120) → (12, 148) → close
+    doc.setFillColor(255, 255, 255);
+    doc.lines([[24, 0], [-30, 28], [6, -28]], 18, 120, [1, 1], "F", true);
 
-    // Business name (white, bold, centred in header)
-    const businessNameText = profile?.business_name || "Your Business";
+    // ── 4. Headline inside bubble ─────────────────────────────
+    doc.setTextColor(40, 10, 80);
+    doc.setFont("helvetica", "bold");
+    doc.setFontSize(13);
+    doc.text("Help us know what you think!", W / 2, 22, { align: "center" });
+
+    // ── 5. Sub-heading inside bubble (italic) ─────────────────
+    doc.setTextColor(110, 60, 150);
+    doc.setFont("helvetica", "italic");
+    doc.setFontSize(10);
+    doc.text("Spare 10 seconds to share", W / 2, 31, { align: "center" });
+
+    // ── 6. QR code centred inside bubble ─────────────────────
+    const qrSize = 74;
+    const qrX = (W - qrSize) / 2;
+    doc.addImage(qrDataUrl, "PNG", qrX, 37, qrSize, qrSize);
+
+    // ── 7. Hand + phone SVG illustration (bottom-left) ───────
+    // Rendered to canvas so jsPDF can embed it as PNG
+    const handSvg = [
+      '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 140 180" width="140" height="180">',
+      // Phone body
+      '<rect x="42" y="14" width="56" height="96" rx="8" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4.5"/>',
+      // Screen glass
+      '<rect x="49" y="24" width="42" height="70" rx="3" fill="#ffffff" fill-opacity="0.09" stroke="#140532" stroke-opacity="0.45" stroke-width="2.5"/>',
+      // Home button
+      '<circle cx="70" cy="101" r="5.5" fill="none" stroke="#140532" stroke-opacity="0.65" stroke-width="2.5"/>',
+      // Thumb on left side
+      '<path d="M42 56 Q24 52 21 66 Q18 80 30 85 L42 87" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round" stroke-linejoin="round"/>',
+      // Index finger
+      '<path d="M98 38 Q116 34 119 47 Q121 59 110 63 L98 66" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round"/>',
+      // Middle finger
+      '<path d="M98 55 Q116 51 119 64 Q121 76 110 80 L98 83" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round"/>',
+      // Ring finger
+      '<path d="M98 72 Q114 68 116 81 Q118 93 107 96 L98 99" fill="none" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linecap="round"/>',
+      // Palm + wrist closing the grip
+      '<path d="M42 87 Q36 108 44 124 L63 132 L83 129 Q98 122 100 108 L98 99 L98 38 Q98 26 88 22 L42 26 Z" fill="#b48cdc" fill-opacity="0.22" stroke="#140532" stroke-opacity="0.75" stroke-width="4" stroke-linejoin="round"/>',
+      '</svg>',
+    ].join("");
+
+    const svgBlob = new Blob([handSvg], { type: "image/svg+xml" });
+    const svgUrl = URL.createObjectURL(svgBlob);
+    const svgImg = new window.Image();
+    await new Promise<void>((resolve) => {
+      svgImg.onload = () => resolve();
+      svgImg.src = svgUrl;
+    });
+    const handCanvas = document.createElement("canvas");
+    handCanvas.width = 140;
+    handCanvas.height = 180;
+    const handCtx = handCanvas.getContext("2d");
+    if (handCtx) handCtx.drawImage(svgImg, 0, 0);
+    URL.revokeObjectURL(svgUrl);
+    const handPng = handCanvas.toDataURL("image/png");
+
+    // Place illustration at bottom-left (56 × 72 mm in PDF)
+    doc.addImage(handPng, "PNG", 3, 132, 56, 72);
+
+    // ── 8. Business name — white bold caps on darker circle ───
+    doc.setFillColor(82, 18, 138); // slightly darker purple #52128A
+    doc.circle(113, 166, 29, "F");
+
+    const businessNameText = (profile?.business_name || "Your Business").toUpperCase();
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(16);
-    const nameLines = doc.splitTextToSize(businessNameText, W - 16);
-    const nameY = topH / 2 + 2;
-    doc.text(nameLines, W / 2, nameY, { align: "center" });
+    doc.setFontSize(13);
+    const nameLines = doc.splitTextToSize(businessNameText, 50) as string[];
+    const lineH = 7;
+    let nameY = 166 - ((nameLines.length - 1) * lineH) / 2;
+    for (const line of nameLines) {
+      doc.text(line, 113, nameY, { align: "center" });
+      nameY += lineH;
+    }
 
-    // "Help us know what you think!" — purple, bold
-    doc.setTextColor(107, 33, 168);
-    doc.setFont("helvetica", "bold");
-    doc.setFontSize(15);
-    doc.text("Help us know what you think!", W / 2, 40, { align: "center" });
-
-    // "Spare 10 seconds to share ✨" — grey, normal
-    doc.setTextColor(150, 150, 150);
+    // ── 9. Footer ─────────────────────────────────────────────
+    doc.setTextColor(210, 185, 255);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text("Spare 10 seconds to share \u2728", W / 2, 50, { align: "center" });
-
-    // QR code — ~30% larger: 99mm × 99mm, centred in remaining space
-    const qrSize = 99;
-    const qrX = (W - qrSize) / 2;
-    doc.addImage(qrDataUrl, "PNG", qrX, 58, qrSize, qrSize);
-
-    // Bottom text
-    doc.setTextColor(160, 160, 160);
-    doc.setFont("helvetica", "normal");
-    doc.setFontSize(9);
-    doc.text("Powered by The Donna", W / 2, 196, { align: "center" });
     doc.setFontSize(8);
-    doc.setTextColor(190, 190, 190);
-    doc.text("thedonnaapp.co", W / 2, 204, { align: "center" });
+    doc.text("Powered by The Donna", W / 2, 204, { align: "center" });
 
-    // Download
+    // ── 10. Save ──────────────────────────────────────────────
     const safeName = (profile?.business_name || "business")
       .toLowerCase()
       .replace(/\s+/g, "-")
