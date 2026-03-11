@@ -35,6 +35,8 @@ type EnhancedUserStat = {
   total_ai_chats: number;
   last_ai_chat: string | null;
   active_days_30d: number;
+  total_feedback: number;
+  last_feedback_date: string | null;
 };
 
 function formatDaysSince(dateStr: string): string {
@@ -139,6 +141,8 @@ export default async function UserMonitoringPage() {
         total_ai_chats: Number(row.total_ai_chats) || 0,
         last_ai_chat: (row.last_ai_chat as string) || null,
         active_days_30d: Number(row.active_days_30d) || 0,
+        total_feedback: 0,
+        last_feedback_date: null,
       }));
     } else {
       throw new Error("RPC returned empty");
@@ -289,6 +293,8 @@ export default async function UserMonitoringPage() {
         total_ai_chats: aiCounts[user.id]?.total || 0,
         last_ai_chat: aiCounts[user.id]?.lastChat || null,
         active_days_30d: es?.activeDays30d.size || 0,
+        total_feedback: 0,
+        last_feedback_date: null,
       };
     });
 
@@ -302,6 +308,44 @@ export default async function UserMonitoringPage() {
         new Date(a.last_sign_in).getTime()
       );
     });
+  }
+
+  // ---------- Enrich with feedback counts (both RPC and fallback paths) ----------
+  try {
+    const [{ data: bizProfiles }, { data: feedbackRows }] = await Promise.all([
+      supabaseAdmin
+        .from("business_profiles")
+        .select("id, user_id"),
+      supabaseAdmin
+        .from("feedback_responses")
+        .select("business_id, created_at")
+        .order("created_at", { ascending: false }),
+    ]);
+
+    // business_id → user_id lookup
+    const bizToUser = new Map(
+      (bizProfiles || []).map((bp: { id: string; user_id: string }) => [bp.id, bp.user_id])
+    );
+
+    // user_id → { count, lastDate }
+    const feedbackByUser: Record<string, { count: number; lastDate: string | null }> = {};
+    (feedbackRows || []).forEach((f: { business_id: string; created_at: string }) => {
+      const userId = bizToUser.get(f.business_id);
+      if (!userId) return;
+      if (!feedbackByUser[userId]) feedbackByUser[userId] = { count: 0, lastDate: null };
+      feedbackByUser[userId].count++;
+      if (!feedbackByUser[userId].lastDate || f.created_at > feedbackByUser[userId].lastDate!) {
+        feedbackByUser[userId].lastDate = f.created_at;
+      }
+    });
+
+    usersWithStats = usersWithStats.map((u) => ({
+      ...u,
+      total_feedback: feedbackByUser[u.user_id]?.count || 0,
+      last_feedback_date: feedbackByUser[u.user_id]?.lastDate || null,
+    }));
+  } catch {
+    // feedback_responses may not exist yet — leave totals as 0
   }
 
   // ---------- Aggregate summary stats ----------
@@ -610,8 +654,8 @@ export default async function UserMonitoringPage() {
                 </div>
               </div>
 
-              {/* Row 3: settlements, parties, AI */}
-              <div className="grid grid-cols-3 gap-2 text-xs border-t border-purple-500/10 pt-2">
+              {/* Row 3: settlements, parties, AI, feedback */}
+              <div className="grid grid-cols-4 gap-2 text-xs border-t border-purple-500/10 pt-2">
                 <div>
                   <p className="text-white/50">Settlements</p>
                   <p className="text-white font-medium">
@@ -632,6 +676,17 @@ export default async function UserMonitoringPage() {
                       <span className="ml-1 inline-block w-1.5 h-1.5 rounded-full bg-cyan-400" />
                     )}
                   </p>
+                </div>
+                <div>
+                  <p className="text-white/50">Feedback</p>
+                  <p className="text-white font-medium">
+                    {user.total_feedback || "\u2014"}
+                  </p>
+                  {user.last_feedback_date && (
+                    <p className="text-white/30">
+                      {formatDistanceToNow(new Date(user.last_feedback_date), { addSuffix: true })}
+                    </p>
+                  )}
                 </div>
               </div>
             </div>

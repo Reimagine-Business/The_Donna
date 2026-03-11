@@ -22,6 +22,8 @@ type UserStat = {
   total_ai_chats: number;
   last_ai_chat: string | null;
   active_days_30d: number;
+  total_feedback: number;
+  last_feedback_date: string | null;
 };
 
 function formatDaysSince(dateStr: string): string {
@@ -180,7 +182,7 @@ export function UserRowExpander({ user }: { user: UserStat }) {
       {expanded && (
         <tr className="border-t border-purple-500/10 bg-purple-900/5">
           <td colSpan={8} className="px-4 py-3">
-            <div className="grid grid-cols-7 gap-4 text-xs">
+            <div className="grid grid-cols-8 gap-4 text-xs">
               <div>
                 <p className="text-white/50 mb-1">Cash IN</p>
                 <p className="text-green-400 font-semibold text-sm">
@@ -231,6 +233,19 @@ export function UserRowExpander({ user }: { user: UserStat }) {
                 {user.last_ai_chat && (
                   <p className="text-white/30 mt-0.5">
                     {formatDistanceToNow(new Date(user.last_ai_chat), {
+                      addSuffix: true,
+                    })}
+                  </p>
+                )}
+              </div>
+              <div>
+                <p className="text-white/50 mb-1">Feedback</p>
+                <p className="text-white font-semibold text-sm">
+                  {user.total_feedback || "\u2014"}
+                </p>
+                {user.last_feedback_date && (
+                  <p className="text-white/30 mt-0.5">
+                    {formatDistanceToNow(new Date(user.last_feedback_date), {
                       addSuffix: true,
                     })}
                   </p>
