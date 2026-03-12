@@ -9,7 +9,7 @@ export default async function AdminLayout({
 }: {
   children: React.ReactNode;
 }) {
-  // CRITICAL: Only alfred@thedonnaapp.co can access
+  // CRITICAL: Only the admin email (NEXT_PUBLIC_ADMIN_EMAIL) can access
   // This checks both email AND role
   await requireAdmin();
 

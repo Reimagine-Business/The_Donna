@@ -6,7 +6,7 @@ import { getOrRefreshUser } from "@/lib/supabase/get-user";
 
 export const dynamic = "force-dynamic";
 
-const ADMIN_EMAIL = "alfred@thedonnaapp.co";
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "alfred@thedonnaapp.co";
 const CACHE_TTL_MS = 60 * 60 * 1000; // 1 hour
 
 // Module-level cache — single admin user, no DB column needed

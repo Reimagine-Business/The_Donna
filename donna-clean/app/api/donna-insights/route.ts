@@ -33,7 +33,7 @@ export async function GET() {
       .eq("user_id", user.id)
       .maybeSingle();
 
-    const isAdmin = user.email === "alfred@thedonnaapp.co";
+    const isAdmin = user.email === (process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? "alfred@thedonnaapp.co");
 
     if (!isAdmin && profile?.cached_insights && profile?.insights_cache_date === today) {
       try {
