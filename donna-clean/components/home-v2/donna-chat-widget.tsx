@@ -148,6 +148,9 @@ export function DonnaChatWidget() {
     setInput("");
     setLoading(true);
 
+    const controller = new AbortController();
+    const timeoutId = setTimeout(() => controller.abort(), 30000);
+
     try {
       const res = await fetch("/api/donna-chat", {
         method: "POST",
@@ -156,7 +159,9 @@ export function DonnaChatWidget() {
           message: trimmed,
           history: messages,
         }),
+        signal: controller.signal,
       });
+      clearTimeout(timeoutId);
 
       // Non-SSE responses: rate limits (429) and hard errors
       if (!res.headers.get("content-type")?.includes("text/event-stream")) {

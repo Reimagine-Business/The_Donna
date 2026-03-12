@@ -2,7 +2,7 @@ import { createSupabaseServerClient } from '@/utils/supabase/server';
 import { redirect } from 'next/navigation';
 
 // ONLY this email can access admin
-const ADMIN_EMAIL = 'alfred@thedonnaapp.co';
+const ADMIN_EMAIL = process.env.NEXT_PUBLIC_ADMIN_EMAIL ?? 'alfred@thedonnaapp.co';
 
 export async function requireAdmin() {
   const supabase = await createSupabaseServerClient();

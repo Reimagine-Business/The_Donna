@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Plus, X, Check, Pencil, Trash2 } from "lucide-react";
 import { getParties, createParty, getPartiesWithBalance, updateParty, deleteParty } from "@/app/parties/actions";
 import type { Party, PartyType } from "@/lib/parties";
@@ -52,23 +52,22 @@ function ManagePartiesModal({
   const [deletingId, setDeletingId] = useState<string | null>(null);
   const [confirmDeleteId, setConfirmDeleteId] = useState<string | null>(null);
 
-  // Reset tab when modal opens
-  useEffect(() => {
-    if (open) {
-      setActiveTab(initialTab);
-      loadParties();
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [open, initialTab]);
-
-  async function loadParties() {
+  const loadParties = useCallback(async () => {
     setLoading(true);
     const result = await getPartiesWithBalance();
     if (result.success && result.parties) {
       setParties(result.parties);
     }
     setLoading(false);
-  }
+  }, []);
+
+  // Reset tab when modal opens
+  useEffect(() => {
+    if (open) {
+      setActiveTab(initialTab);
+      loadParties();
+    }
+  }, [open, initialTab, loadParties]);
 
   function startEdit(party: PartyWithPending) {
     setEditingId(party.id);
