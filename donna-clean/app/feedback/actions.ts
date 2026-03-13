@@ -3,6 +3,8 @@
 import { createSupabaseServerClient } from "@/utils/supabase/server";
 import { createClient } from "@supabase/supabase-js";
 import { getOrRefreshUser } from "@/lib/supabase/get-user";
+import { headers } from "next/headers";
+import { checkRateLimit, RateLimitError } from "@/lib/rate-limit";
 
 export interface FeedbackResponse {
   id: string;
@@ -73,6 +75,70 @@ function getPeriodDates(
       return { startDate, endDate };
     }
   }
+}
+
+export async function submitFeedback(params: {
+  businessId: string;
+  businessSlug: string;
+  rating: number;
+  likedCategories: string[] | null;
+  improveCategories: string[] | null;
+  comment: string | null;
+  collectionMode: string;
+}): Promise<{ success: boolean; error?: string }> {
+  const { businessId, businessSlug, rating, likedCategories, improveCategories, comment, collectionMode } = params;
+
+  // --- Input validation ---
+  if (!Number.isInteger(rating) || rating < 1 || rating > 5) {
+    return { success: false, error: "Invalid rating." };
+  }
+
+  // Strip HTML tags, trim, and enforce 500-char limit
+  const cleanedComment = comment
+    ? comment.replace(/<[^>]*>/g, "").trim().slice(0, 500) || null
+    : null;
+
+  // --- Rate limiting: 10 submissions per IP per business per hour ---
+  const reqHeaders = await headers();
+  const ip =
+    reqHeaders.get("x-forwarded-for")?.split(",")[0]?.trim() ??
+    reqHeaders.get("x-real-ip") ??
+    "unknown";
+  const rateLimitKey = `${ip}:${businessSlug}`;
+
+  try {
+    await checkRateLimit(rateLimitKey, "feedback-submit");
+  } catch (error) {
+    if (error instanceof RateLimitError) {
+      return { success: false, error: "Too many submissions. Please try again later." };
+    }
+    // KV unavailable — fail open (don't block legitimate users)
+    console.warn("[submitFeedback] rate limit check failed:", error);
+  }
+
+  // --- INSERT ---
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  const { error: insertError } = await supabaseAdmin.from("feedback_responses").insert({
+    business_id: businessId,
+    business_slug: businessSlug,
+    rating,
+    liked_categories: likedCategories,
+    improve_categories: improveCategories,
+    comment: cleanedComment,
+    collection_mode: collectionMode,
+  });
+
+  if (insertError) {
+    console.error("[submitFeedback] insert error:", insertError.message);
+    return { success: false, error: "Failed to save feedback. Please try again." };
+  }
+
+  return { success: true };
 }
 
 export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null> {
