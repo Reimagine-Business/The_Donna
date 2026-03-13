@@ -177,7 +177,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
     doc.setFontSize(13);
-    const nameLines = doc.splitTextToSize(businessNameText, 56) as string[];
+    const nameLines = (doc.splitTextToSize(businessNameText, 56) as string[]).slice(0, 4);
     const lineH = 7;
     let nameY = 170 - ((nameLines.length - 1) * lineH) / 2;
     for (const line of nameLines) {

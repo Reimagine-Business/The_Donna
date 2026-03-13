@@ -229,37 +229,38 @@ export function sanitizeAmount(amount: string | number): number {
  * Sanitize object with multiple fields
  * Useful for sanitizing entire form data
  */
-export function sanitizeObject<T extends Record<string, any>>(
+export function sanitizeObject<T extends Record<string, unknown>>(
   obj: T,
   fields: Record<keyof T, 'string' | 'number' | 'email' | 'date' | 'color' | 'text'>
 ): Partial<T> {
   const sanitized: Partial<T> = {}
 
-  for (const key in fields) {
+  for (const _key in fields) {
+    const key = _key as keyof T
     const value = obj[key]
     const type = fields[key]
 
     switch (type) {
       case 'string':
-        sanitized[key] = sanitizeString(value) as any
+        sanitized[key] = sanitizeString(value) as T[keyof T]
         break
       case 'number':
-        sanitized[key] = sanitizeNumber(value) as any
+        sanitized[key] = sanitizeNumber(value) as T[keyof T]
         break
       case 'email':
-        sanitized[key] = sanitizeEmail(value) as any
+        sanitized[key] = sanitizeEmail(value) as T[keyof T]
         break
       case 'date':
-        sanitized[key] = sanitizeDate(value) as any
+        sanitized[key] = sanitizeDate(value) as T[keyof T]
         break
       case 'color':
-        sanitized[key] = sanitizeColor(value) as any
+        sanitized[key] = sanitizeColor(value) as T[keyof T]
         break
       case 'text':
-        sanitized[key] = sanitizeText(value) as any
+        sanitized[key] = sanitizeText(value) as T[keyof T]
         break
       default:
-        sanitized[key] = value
+        sanitized[key] = value as T[keyof T]
     }
   }
 
