@@ -241,24 +241,36 @@ export function sanitizeObject<T extends Record<string, unknown>>(
     const type = fields[key]
 
     switch (type) {
-      case 'string':
-        sanitized[key] = sanitizeString(value) as T[keyof T]
+      case 'string': {
+        const v = typeof value === 'string' ? value : null
+        sanitized[key] = sanitizeString(v) as T[keyof T]
         break
-      case 'number':
-        sanitized[key] = sanitizeNumber(value) as T[keyof T]
+      }
+      case 'number': {
+        const v = typeof value === 'number' || typeof value === 'string' ? value : 0
+        sanitized[key] = sanitizeNumber(v) as T[keyof T]
         break
-      case 'email':
-        sanitized[key] = sanitizeEmail(value) as T[keyof T]
+      }
+      case 'email': {
+        const v = typeof value === 'string' ? value : null
+        sanitized[key] = sanitizeEmail(v) as T[keyof T]
         break
-      case 'date':
-        sanitized[key] = sanitizeDate(value) as T[keyof T]
+      }
+      case 'date': {
+        const v = typeof value === 'string' ? value : null
+        sanitized[key] = sanitizeDate(v) as T[keyof T]
         break
-      case 'color':
-        sanitized[key] = sanitizeColor(value) as T[keyof T]
+      }
+      case 'color': {
+        const v = typeof value === 'string' ? value : null
+        sanitized[key] = sanitizeColor(v) as T[keyof T]
         break
-      case 'text':
-        sanitized[key] = sanitizeText(value) as T[keyof T]
+      }
+      case 'text': {
+        const v = typeof value === 'string' ? value : null
+        sanitized[key] = sanitizeText(v) as T[keyof T]
         break
+      }
       default:
         sanitized[key] = value as T[keyof T]
     }
