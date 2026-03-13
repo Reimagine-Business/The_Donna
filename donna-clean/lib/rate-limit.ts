@@ -27,6 +27,7 @@ const RATE_LIMITS: Record<string, RateLimitConfig> = {
   'health-check': { limit: 10, window: 60 },          // 10 per minute
   'business-profile': { limit: 20, window: 60 },      // 20 per minute
   'revalidate': { limit: 10, window: 60 },            // 10 per minute
+  'feedback-submit': { limit: 10, window: 3600 },     // 10 per business per hour (anon)
   'default': { limit: 100, window: 3600 },            // Default: 100 per hour
 }
 

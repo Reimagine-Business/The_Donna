@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useMemo } from "react";
-import { createClient } from "@/lib/supabase/client";
+import { useState } from "react";
+import { submitFeedback } from "@/app/feedback/actions";
 import { DEFAULT_FEEDBACK_CATEGORIES } from "@/lib/feedback-constants";
 
 const RATING_EMOJIS = [
@@ -40,13 +40,6 @@ export function CustomerFeedbackForm({
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  // Memoize so the client is stable across renders but not a module-level singleton.
-  // createBrowserClient requires NEXT_PUBLIC_SUPABASE_URL and
-  // NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY to be set in the Vercel environment
-  // and inlined at build time. If either is undefined the client cannot make
-  // requests and will throw "TypeError: Failed to fetch".
-  const supabase = useMemo(() => createClient(), []);
-
   function toggleCategory(cat: string) {
     setSelectedCategories((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
@@ -57,36 +50,23 @@ export function CustomerFeedbackForm({
     setSubmitting(true);
     setError(null);
 
-    // Guard: if env vars weren't inlined at build time the Supabase client
-    // will throw "TypeError: Failed to fetch" with no other context.
-    if (
-      !process.env.NEXT_PUBLIC_SUPABASE_URL ||
-      !process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY
-    ) {
-      setSubmitting(false);
-      setError("Configuration error: Supabase env vars are missing. Please contact support.");
-      return;
-    }
-
     const commentToSave = finalComment ?? comment;
     const isPositive = (rating ?? 0) >= 4;
 
-    const { error: dbError } = await supabase.from("feedback_responses").insert({
-      business_id: businessId,
-      business_slug: businessSlug,
-      rating,
-      liked_categories: isPositive && selectedCategories.length > 0 ? selectedCategories : null,
-      improve_categories:
-        !isPositive && selectedCategories.length > 0 ? selectedCategories : null,
-      comment: commentToSave.trim() || null,
-      collection_mode: collectionMode,
+    const result = await submitFeedback({
+      businessId,
+      businessSlug,
+      rating: rating ?? 0,
+      likedCategories: isPositive && selectedCategories.length > 0 ? selectedCategories : null,
+      improveCategories: !isPositive && selectedCategories.length > 0 ? selectedCategories : null,
+      comment: commentToSave || null,
+      collectionMode,
     });
 
     setSubmitting(false);
 
-    if (dbError) {
-      console.error("[FeedbackForm] insert error:", dbError);
-      setError(dbError.message || "Something went wrong. Please try again.");
+    if (!result.success) {
+      setError(result.error ?? "Something went wrong. Please try again.");
       return;
     }
 
