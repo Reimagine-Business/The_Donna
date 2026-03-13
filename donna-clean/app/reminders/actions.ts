@@ -9,7 +9,18 @@ import * as Sentry from "@sentry/nextjs";
 // CACHED REMINDER FETCH (60s TTL per user)
 // Deduplicates when home + alerts render close together
 // ─────────────────────────────────────────────
-const reminderCache = new Map<string, { data: unknown; timestamp: number }>();
+interface Reminder {
+  id: string;
+  user_id: string;
+  title: string;
+  description: string | null;
+  due_date: string;
+  category: string;
+  frequency: string;
+  status: string;
+}
+
+const reminderCache = new Map<string, { data: Reminder[]; timestamp: number }>();
 const CACHE_TTL = 60_000; // 60 seconds
 
 export async function getReminders(options?: { statusFilter?: string }) {
