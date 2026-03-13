@@ -222,12 +222,13 @@ export async function saveFeedbackCategories(
     { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  const { error } = await supabaseAdmin
+  const { error, count } = await supabaseAdmin
     .from("business_profiles")
-    .update({ feedback_categories: categories })
+    .update({ feedback_categories: categories }, { count: "exact" })
     .eq("user_id", user.id);
 
   if (error) return { success: false, error: error.message };
+  if (count === 0) return { success: false, error: "Business profile not found" };
   return { success: true };
 }
 
@@ -302,20 +303,15 @@ export async function getBusinessBySlug(slug: string): Promise<{
   business_slug: string;
   feedback_categories: string[] | null;
 } | null> {
-  // Use service-role client to bypass RLS — this is a public server-side
-  // lookup (customer feedback page, no session). The anon key would be
-  // blocked by the existing business_profiles RLS policies.
-  const supabaseAdmin = createClient(
+  // Use the anon client + SECURITY DEFINER RPC — no service role needed.
+  // get_business_public_profile() is granted to anon and only exposes
+  // the 4 safe columns (id, business_name, business_slug, feedback_categories).
+  const supabaseAnon = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.SUPABASE_SERVICE_ROLE_KEY!,
-    { auth: { autoRefreshToken: false, persistSession: false } }
+    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
   );
 
-  const { data } = await supabaseAdmin
-    .from("business_profiles")
-    .select("id, business_name, business_slug, feedback_categories")
-    .eq("business_slug", slug)
-    .maybeSingle();
+  const { data } = await supabaseAnon.rpc("get_business_public_profile", { p_slug: slug });
 
-  return data ?? null;
+  return (data as { id: string; business_name: string; business_slug: string; feedback_categories: string[] | null }[] | null)?.[0] ?? null;
 }
