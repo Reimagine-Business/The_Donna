@@ -138,40 +138,48 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     const W = 148;
     const H = 210;
 
-    // ── 1. Light lavender background ──────────────────────────
-    doc.setFillColor(245, 240, 255); // #F5F0FF
+    // ── 1. White / very faint lavender background ───────────────
+    doc.setFillColor(252, 250, 255); // near-white lavender
     doc.rect(0, 0, W, H, "F");
 
-    // ── 2. Gradient purple header banner (rounded top corners) ─
-    const headerH = 58;
-    doc.setFillColor(107, 33, 168); // #6B21A8
-    doc.roundedRect(0, 0, W, headerH, 8, 8, "F");
-    // Square off the rounded bottom corners
-    doc.rect(0, headerH - 10, W, 10, "F");
+    // ── 2. Compact purple header with soft bottom fade ─────────
+    const headerH = 44;
+    // Deeper purple base
+    doc.setFillColor(88, 28, 135); // #581C87
+    doc.roundedRect(0, 0, W, headerH, 6, 6, "F");
+    // Square off bottom corners
+    doc.rect(0, headerH - 8, W, 8, "F");
+    // Soft fade strip below header for smooth transition
+    doc.setFillColor(200, 180, 230); // light purple fade
+    doc.rect(0, headerH, W, 1.5, "F");
+    doc.setFillColor(230, 220, 245);
+    doc.rect(0, headerH + 1.5, W, 1, "F");
 
     // ── 3. Headline in header ─────────────────────────────────
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(14);
-    doc.text("Help us know what you think!", W / 2, 26, { align: "center" });
+    doc.setFontSize(13);
+    doc.text("Help us know what you think!", W / 2, 20, { align: "center" });
 
     // ── 4. Sub-heading in header ──────────────────────────────
-    doc.setTextColor(225, 200, 255);
+    doc.setTextColor(220, 200, 250);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
-    doc.text("Spare 10 seconds to share", W / 2, 39, { align: "center" });
+    doc.setFontSize(9);
+    doc.text("Spare 10 seconds to share", W / 2, 31, { align: "center" });
 
-    // ── 5. Gold border frame around QR code ───────────────────
-    const qrSize = 72;
-    const goldPad = 5;
+    // ── 5. Thin gold border frame around QR code ──────────────
+    const qrSize = 68;
+    const goldPad = 2.5; // thin refined frame
     const qrFrameSize = qrSize + goldPad * 2;
     const qrFrameX = (W - qrFrameSize) / 2;
-    const qrFrameY = headerH + 10;
+    const qrFrameY = headerH + 14; // breathing room below header
 
-    doc.setFillColor(255, 215, 0); // #FFD700 gold
-    doc.roundedRect(qrFrameX, qrFrameY, qrFrameSize, qrFrameSize, 5, 5, "F");
+    // Gold frame — draw as a stroked rounded rect for thin look
+    doc.setDrawColor(212, 175, 55); // classic gold #D4AF37
+    doc.setLineWidth(1.8);
+    doc.roundedRect(qrFrameX, qrFrameY, qrFrameSize, qrFrameSize, 3, 3, "S");
 
-    // White background inside gold frame for QR
+    // White background inside frame for QR
     doc.setFillColor(255, 255, 255);
     doc.rect(qrFrameX + goldPad, qrFrameY + goldPad, qrSize, qrSize, "F");
 
@@ -179,34 +187,38 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     doc.addImage(qrDataUrl, "PNG", qrFrameX + goldPad, qrFrameY + goldPad, qrSize, qrSize);
 
     // ── 7. "Scan to share your feedback" below QR ─────────────
-    const belowQrY = qrFrameY + qrFrameSize + 10;
-    doc.setTextColor(100, 70, 140);
+    const belowQrY = qrFrameY + qrFrameSize + 8;
+    doc.setTextColor(90, 60, 130);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(10);
+    doc.setFontSize(9);
     doc.text("Scan to share your feedback", W / 2, belowQrY, { align: "center" });
 
-    // ── 8. Business name — purple circle badge ─────────────────
-    const circleY = belowQrY + 22;
-    doc.setFillColor(124, 58, 237); // #7c3aed
-    doc.circle(W / 2, circleY, 22, "F");
-
+    // ── 8. Business name — compact purple pill badge ───────────
+    const badgeY = belowQrY + 12;
     const businessNameText = (profile?.business_name || "Your Business").toUpperCase();
-    doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(11);
-    const nameLines = (doc.splitTextToSize(businessNameText, 38) as string[]).slice(0, 3);
-    const lineH = 6;
-    let nameY = circleY - ((nameLines.length - 1) * lineH) / 2;
+    doc.setFontSize(10);
+    const nameLines = (doc.splitTextToSize(businessNameText, 50) as string[]).slice(0, 2);
+    const lineH = 5;
+    const badgeH = nameLines.length * lineH + 8;
+    const badgeW = 60;
+    const badgeX = (W - badgeW) / 2;
+
+    doc.setFillColor(88, 28, 135); // match header purple
+    doc.roundedRect(badgeX, badgeY, badgeW, badgeH, badgeH / 2, badgeH / 2, "F");
+
+    doc.setTextColor(255, 255, 255);
+    let nameY = badgeY + (badgeH / 2) - ((nameLines.length - 1) * lineH) / 2 + 1;
     for (const line of nameLines) {
       doc.text(line, W / 2, nameY, { align: "center" });
       nameY += lineH;
     }
 
     // ── 9. Footer ─────────────────────────────────────────────
-    doc.setTextColor(160, 150, 180);
+    doc.setTextColor(170, 160, 190);
     doc.setFont("helvetica", "normal");
-    doc.setFontSize(8);
-    doc.text("Powered by The Donna", W / 2, H - 6, { align: "center" });
+    doc.setFontSize(7);
+    doc.text("Powered by The Donna", W / 2, H - 8, { align: "center" });
 
     // ── 10. Save ──────────────────────────────────────────────
     const safeName = (profile?.business_name || "business")
