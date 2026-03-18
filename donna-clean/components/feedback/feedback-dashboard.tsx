@@ -138,58 +138,75 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     const W = 148;
     const H = 210;
 
-    // ── 1. Full purple background ─────────────────────────────
-    doc.setFillColor(107, 33, 168); // #6B21A8
+    // ── 1. Light lavender background ──────────────────────────
+    doc.setFillColor(245, 240, 255); // #F5F0FF
     doc.rect(0, 0, W, H, "F");
 
-    // ── 2. White speech bubble body (rounded rect) ────────────
-    doc.setFillColor(255, 255, 255);
-    doc.roundedRect(6, 6, 136, 116, 8, 8, "F");
+    // ── 2. Gradient purple header banner (rounded top corners) ─
+    const headerH = 58;
+    doc.setFillColor(107, 33, 168); // #6B21A8
+    doc.roundedRect(0, 0, W, headerH, 8, 8, "F");
+    // Square off the rounded bottom corners
+    doc.rect(0, headerH - 10, W, 10, "F");
 
-    // ── 3. Speech bubble tail — white triangle, bottom-left ───
-    // Vertices: (18, 120) → (42, 120) → (12, 148) → close
-    doc.setFillColor(255, 255, 255);
-    doc.lines([[24, 0], [-30, 28], [6, -28]], 18, 120, [1, 1], "F", true);
-
-    // ── 4. Headline inside bubble ─────────────────────────────
-    doc.setTextColor(40, 10, 80);
+    // ── 3. Headline in header ─────────────────────────────────
+    doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    doc.text("Help us know what you think!", W / 2, 22, { align: "center" });
+    doc.setFontSize(14);
+    doc.text("Help us know what you think!", W / 2, 26, { align: "center" });
 
-    // ── 5. Sub-heading inside bubble (italic) ─────────────────
-    doc.setTextColor(110, 60, 150);
-    doc.setFont("helvetica", "italic");
+    // ── 4. Sub-heading in header ──────────────────────────────
+    doc.setTextColor(225, 200, 255);
+    doc.setFont("helvetica", "normal");
     doc.setFontSize(10);
-    doc.text("Spare 10 seconds to share", W / 2, 31, { align: "center" });
+    doc.text("Spare 10 seconds to share", W / 2, 39, { align: "center" });
 
-    // ── 6. QR code centred inside bubble ─────────────────────
-    const qrSize = 74;
-    const qrX = (W - qrSize) / 2;
-    doc.addImage(qrDataUrl, "PNG", qrX, 37, qrSize, qrSize);
+    // ── 5. Gold border frame around QR code ───────────────────
+    const qrSize = 72;
+    const goldPad = 5;
+    const qrFrameSize = qrSize + goldPad * 2;
+    const qrFrameX = (W - qrFrameSize) / 2;
+    const qrFrameY = headerH + 10;
 
-    // ── 7. Business name — white bold caps, circle centred in bottom half ──
-    // Bottom half = y 148 (bubble tail tip) → 204 (footer): centre ≈ y 170
-    doc.setFillColor(82, 18, 138); // slightly darker purple #52128A
-    doc.circle(W / 2, 170, 32, "F");
+    doc.setFillColor(255, 215, 0); // #FFD700 gold
+    doc.roundedRect(qrFrameX, qrFrameY, qrFrameSize, qrFrameSize, 5, 5, "F");
+
+    // White background inside gold frame for QR
+    doc.setFillColor(255, 255, 255);
+    doc.rect(qrFrameX + goldPad, qrFrameY + goldPad, qrSize, qrSize, "F");
+
+    // ── 6. QR code inside frame ────────────────────────────────
+    doc.addImage(qrDataUrl, "PNG", qrFrameX + goldPad, qrFrameY + goldPad, qrSize, qrSize);
+
+    // ── 7. "Scan to share your feedback" below QR ─────────────
+    const belowQrY = qrFrameY + qrFrameSize + 10;
+    doc.setTextColor(100, 70, 140);
+    doc.setFont("helvetica", "normal");
+    doc.setFontSize(10);
+    doc.text("Scan to share your feedback", W / 2, belowQrY, { align: "center" });
+
+    // ── 8. Business name — purple circle badge ─────────────────
+    const circleY = belowQrY + 22;
+    doc.setFillColor(124, 58, 237); // #7c3aed
+    doc.circle(W / 2, circleY, 22, "F");
 
     const businessNameText = (profile?.business_name || "Your Business").toUpperCase();
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
-    const nameLines = (doc.splitTextToSize(businessNameText, 56) as string[]).slice(0, 4);
-    const lineH = 7;
-    let nameY = 170 - ((nameLines.length - 1) * lineH) / 2;
+    doc.setFontSize(11);
+    const nameLines = (doc.splitTextToSize(businessNameText, 38) as string[]).slice(0, 3);
+    const lineH = 6;
+    let nameY = circleY - ((nameLines.length - 1) * lineH) / 2;
     for (const line of nameLines) {
       doc.text(line, W / 2, nameY, { align: "center" });
       nameY += lineH;
     }
 
-    // ── 8. Footer ─────────────────────────────────────────────
-    doc.setTextColor(210, 185, 255);
+    // ── 9. Footer ─────────────────────────────────────────────
+    doc.setTextColor(160, 150, 180);
     doc.setFont("helvetica", "normal");
     doc.setFontSize(8);
-    doc.text("Powered by The Donna", W / 2, 204, { align: "center" });
+    doc.text("Powered by The Donna", W / 2, H - 6, { align: "center" });
 
     // ── 10. Save ──────────────────────────────────────────────
     const safeName = (profile?.business_name || "business")
