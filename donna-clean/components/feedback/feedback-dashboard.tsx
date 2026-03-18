@@ -158,7 +158,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     // ── 3. Headline in header ─────────────────────────────────
     doc.setTextColor(255, 255, 255);
     doc.setFont("helvetica", "bold");
-    doc.setFontSize(13);
+    doc.setFontSize(16);
     doc.text("Help us know what you think!", W / 2, 20, { align: "center" });
 
     // ── 4. Sub-heading in header ──────────────────────────────
@@ -168,7 +168,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     doc.text("Spare 10 seconds to share", W / 2, 31, { align: "center" });
 
     // ── 5. Thin gold border frame around QR code ──────────────
-    const qrSize = 68;
+    const qrSize = 78;
     const goldPad = 2.5; // thin refined frame
     const qrFrameSize = qrSize + goldPad * 2;
     const qrFrameX = (W - qrFrameSize) / 2;
