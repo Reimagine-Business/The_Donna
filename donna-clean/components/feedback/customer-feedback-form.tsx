@@ -80,14 +80,14 @@ export function CustomerFeedbackForm({
   if (step === "welcome") {
     return (
       <div className="flex flex-col items-center justify-center min-h-full px-6 py-12 text-center">
-        <div className="text-6xl mb-6">👋</div>
+        <div className="text-6xl mb-6">👋✨</div>
         <h1 className="text-3xl font-bold text-gray-800 mb-3">Got 10 seconds?</h1>
         <p className="text-xl text-gray-600 mb-10 leading-relaxed">
-          Tell us how we did today.
+          Tell us how we did today?
         </p>
         <button
           onClick={() => setStep("rating")}
-          className="bg-violet-600 text-white px-10 py-4 rounded-2xl text-lg font-semibold shadow-lg active:scale-95 transition-transform"
+          className="bg-purple-500 hover:bg-purple-400 text-white px-10 py-4 rounded-2xl text-lg font-semibold shadow-[0_0_14px_rgba(168,85,247,0.45)] active:scale-95 transition-transform"
         >
           Sure, let&apos;s go
         </button>
@@ -120,7 +120,7 @@ export function CustomerFeedbackForm({
                   : "bg-gray-50 hover:bg-gray-100"
               }`}
             >
-              <span className="text-5xl leading-none">{emoji}</span>
+              <span className="text-6xl leading-none">{emoji}</span>
               <span className="text-xs text-gray-500 font-medium">{label}</span>
             </button>
           ))}
@@ -164,7 +164,7 @@ export function CustomerFeedbackForm({
         <button
           disabled={selectedCategories.length === 0}
           onClick={() => setStep("comment")}
-          className="bg-violet-600 text-white px-10 py-4 rounded-2xl text-lg font-semibold shadow-lg active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
+          className="bg-purple-500 hover:bg-purple-400 text-white px-10 py-4 rounded-2xl text-lg font-semibold shadow-[0_0_14px_rgba(168,85,247,0.45)] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
           Next
         </button>
@@ -206,7 +206,7 @@ export function CustomerFeedbackForm({
           <button
             onClick={() => handleSubmit(comment)}
             disabled={submitting}
-            className="flex-1 bg-violet-600 text-white py-4 rounded-2xl text-base font-semibold shadow-lg active:scale-95 transition-all disabled:opacity-40"
+            className="flex-1 bg-purple-500 hover:bg-purple-400 text-white py-4 rounded-2xl text-base font-semibold shadow-[0_0_14px_rgba(168,85,247,0.45)] active:scale-95 transition-all disabled:opacity-40"
           >
             {submitting ? "Submitting..." : "Submit"}
           </button>
