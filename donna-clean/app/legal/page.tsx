@@ -19,6 +19,7 @@ export default function LegalHubPage() {
           <p className="text-purple-300 text-lg">
             Your data, your rights. Learn about how we protect your information and our legal commitments.
           </p>
+          <p className="text-purple-400 text-sm mt-2">Effective Date: 31st March 2026</p>
         </div>
 
         {/* Legal Documents Grid */}
@@ -78,7 +79,7 @@ export default function LegalHubPage() {
           <ul className="space-y-2 text-purple-300 text-sm">
             <li className="flex items-start gap-2">
               <span className="text-green-400 mt-1">✓</span>
-              <span><strong>Access:</strong> View all your data at any time</span>
+              <span><strong>Access:</strong> View and correct your data at any time</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-400 mt-1">✓</span>
@@ -86,11 +87,15 @@ export default function LegalHubPage() {
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-400 mt-1">✓</span>
-              <span><strong>Delete:</strong> Remove your account and all data via Settings</span>
+              <span><strong>Delete:</strong> Request full account deletion via support@thedonnaapp.co</span>
             </li>
             <li className="flex items-start gap-2">
               <span className="text-green-400 mt-1">✓</span>
               <span><strong>Portability:</strong> Take your data with you anytime</span>
+            </li>
+            <li className="flex items-start gap-2">
+              <span className="text-green-400 mt-1">✓</span>
+              <span><strong>Consent:</strong> Opt out of Donna AI insights via app settings</span>
             </li>
           </ul>
         </div>
@@ -106,14 +111,8 @@ export default function LegalHubPage() {
           <div className="space-y-2 text-sm">
             <p className="text-purple-200">
               <strong>Email:</strong>{" "}
-              <a href="mailto:support@thedonna.app" className="text-purple-400 hover:underline">
-                support@thedonna.app
-              </a>
-            </p>
-            <p className="text-purple-200">
-              <strong>Data Protection Officer:</strong>{" "}
-              <a href="mailto:privacy@thedonna.app" className="text-purple-400 hover:underline">
-                privacy@thedonna.app
+              <a href="mailto:support@thedonnaapp.co" className="text-purple-400 hover:underline">
+                support@thedonnaapp.co
               </a>
             </p>
           </div>
