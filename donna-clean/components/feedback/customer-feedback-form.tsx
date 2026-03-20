@@ -35,13 +35,20 @@ export function CustomerFeedbackForm({
     categories && categories.length > 0 ? categories : DEFAULT_FEEDBACK_CATEGORIES;
   const [step, setStep] = useState<Step>("welcome");
   const [rating, setRating] = useState<number | null>(null);
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [likedCategories, setLikedCategories] = useState<string[]>([]);
+  const [improveCategories, setImproveCategories] = useState<string[]>([]);
   const [comment, setComment] = useState("");
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  function toggleCategory(cat: string) {
-    setSelectedCategories((prev) =>
+  function toggleLiked(cat: string) {
+    setLikedCategories((prev) =>
+      prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
+    );
+  }
+
+  function toggleImprove(cat: string) {
+    setImproveCategories((prev) =>
       prev.includes(cat) ? prev.filter((c) => c !== cat) : [...prev, cat]
     );
   }
@@ -51,14 +58,13 @@ export function CustomerFeedbackForm({
     setError(null);
 
     const commentToSave = finalComment ?? comment;
-    const isPositive = (rating ?? 0) >= 4;
 
     const result = await submitFeedback({
       businessId,
       businessSlug,
       rating: rating ?? 0,
-      likedCategories: isPositive && selectedCategories.length > 0 ? selectedCategories : null,
-      improveCategories: !isPositive && selectedCategories.length > 0 ? selectedCategories : null,
+      likedCategories: likedCategories.length > 0 ? likedCategories : null,
+      improveCategories: improveCategories.length > 0 ? improveCategories : null,
       comment: commentToSave || null,
       collectionMode,
     });
@@ -111,7 +117,8 @@ export function CustomerFeedbackForm({
               key={score}
               onClick={() => {
                 setRating(score);
-                setSelectedCategories([]);
+                setLikedCategories([]);
+                setImproveCategories([]);
                 setTimeout(() => setStep("chips"), 300);
               }}
               className={`flex flex-col items-center gap-2 p-4 rounded-2xl transition-all active:scale-90 ${
@@ -131,8 +138,7 @@ export function CustomerFeedbackForm({
 
   // ── CHIPS ──────────────────────────────────────────────────
   if (step === "chips") {
-    const isPositive = (rating ?? 0) >= 4;
-    const question = isPositive ? "What did you love?" : "What can we do better?";
+    const hasSelection = likedCategories.length > 0 || improveCategories.length > 0;
 
     return (
       <div className="flex flex-col items-center justify-center min-h-full px-6 py-12 text-center">
@@ -142,16 +148,39 @@ export function CustomerFeedbackForm({
         <div className="text-4xl mb-4">
           {RATING_EMOJIS.find((r) => r.score === rating)?.emoji}
         </div>
-        <h2 className="text-2xl font-bold text-gray-800 mb-2">{question}</h2>
-        <p className="text-gray-500 mb-8 text-sm">Select at least one</p>
 
+        {/* ── Liked section ── */}
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">What did you like?</h2>
+        <p className="text-gray-500 mb-6 text-sm">Select all that apply</p>
+        <div className="flex flex-wrap justify-center gap-3 mb-8 max-w-sm">
+          {feedbackCategories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => toggleLiked(cat)}
+              className={`px-5 py-3 rounded-full text-sm font-semibold border-2 transition-all active:scale-95 ${
+                likedCategories.includes(cat)
+                  ? "bg-violet-600 border-violet-600 text-white shadow-md"
+                  : "bg-white border-gray-200 text-gray-700"
+              }`}
+            >
+              {cat}
+            </button>
+          ))}
+        </div>
+
+        {/* ── Divider ── */}
+        <div className="w-full max-w-sm border-t border-gray-200 mb-8" />
+
+        {/* ── Improve section ── */}
+        <h2 className="text-2xl font-bold text-gray-800 mb-1">What can we do better?</h2>
+        <p className="text-gray-500 mb-6 text-sm">Optional</p>
         <div className="flex flex-wrap justify-center gap-3 mb-10 max-w-sm">
           {feedbackCategories.map((cat) => (
             <button
               key={cat}
-              onClick={() => toggleCategory(cat)}
+              onClick={() => toggleImprove(cat)}
               className={`px-5 py-3 rounded-full text-sm font-semibold border-2 transition-all active:scale-95 ${
-                selectedCategories.includes(cat)
+                improveCategories.includes(cat)
                   ? "bg-violet-600 border-violet-600 text-white shadow-md"
                   : "bg-white border-gray-200 text-gray-700"
               }`}
@@ -162,7 +191,7 @@ export function CustomerFeedbackForm({
         </div>
 
         <button
-          disabled={selectedCategories.length === 0}
+          disabled={!hasSelection}
           onClick={() => setStep("comment")}
           className="bg-purple-500 hover:bg-purple-400 text-white px-10 py-4 rounded-2xl text-lg font-semibold shadow-[0_0_14px_rgba(168,85,247,0.45)] active:scale-95 transition-all disabled:opacity-40 disabled:cursor-not-allowed"
         >
