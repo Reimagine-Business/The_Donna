@@ -1,9 +1,9 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import { ArrowLeft, Sparkles, Save } from "lucide-react";
+import { ArrowLeft, Sparkles, Save, X, Plus } from "lucide-react";
 
 // The 5 editable fields shown in the simplified form
 interface SimpleBioFields {
@@ -77,6 +77,15 @@ export default function BusinessBioPage() {
     main_goal: [],
   });
 
+  // "Other" text inputs (kept separate so they don't pollute bio state)
+  const [otherBusinessType, setOtherBusinessType] = useState("");
+  const [otherCustomersText, setOtherCustomersText] = useState("");
+
+  // Multi-entry state for "What do you sell"
+  const [whatWeSellItems, setWhatWeSellItems] = useState<string[]>([]);
+  const [whatWeSellInput, setWhatWeSellInput] = useState("");
+  const whatWeSellInputRef = useRef<HTMLInputElement>(null);
+
   // Preserve all other existing fields so we don't wipe them on save
   const [preserved, setPreserved] = useState<Omit<FullBioPayload, keyof SimpleBioFields>>({
     business_name: "",
@@ -104,8 +113,31 @@ export default function BusinessBioPage() {
           const data = await res.json();
           if (data?.business_context) {
             const ctx = data.business_context;
+
+            // If saved business_type is not a known chip value, treat as "Other"
+            const isKnownType = BUSINESS_TYPES.includes(ctx.business_type || "");
+            const businessTypeChip = isKnownType ? (ctx.business_type || "") : (ctx.business_type ? "Other" : "");
+            if (!isKnownType && ctx.business_type) {
+              setOtherBusinessType(ctx.business_type);
+            }
+
+            // Parse existing what_we_sell string back into items array
+            if (ctx.what_we_sell) {
+              setWhatWeSellItems(
+                ctx.what_we_sell
+                  .split(",")
+                  .map((s: string) => s.trim())
+                  .filter(Boolean)
+              );
+            }
+
+            // Restore other_customers text
+            if (ctx.other_customers) {
+              setOtherCustomersText(ctx.other_customers);
+            }
+
             setBio({
-              business_type: ctx.business_type || "",
+              business_type: businessTypeChip,
               what_we_sell: ctx.what_we_sell || "",
               main_customers: Array.isArray(ctx.main_customers) ? ctx.main_customers : [],
               city_town: ctx.city_town || "",
@@ -148,9 +180,11 @@ export default function BusinessBioPage() {
   }, []);
 
   // Progress: count how many of the 5 key fields are filled
+  const resolvedBusinessType =
+    bio.business_type === "Other" ? otherBusinessType.trim() : bio.business_type;
   const filledFields = [
-    bio.business_type,
-    bio.what_we_sell,
+    resolvedBusinessType,
+    whatWeSellItems.length > 0,
     bio.main_customers.length > 0,
     bio.city_town,
     bio.main_goal.length > 0,
@@ -169,11 +203,39 @@ export default function BusinessBioPage() {
     }));
   };
 
+  // Add a "What do you sell" item on Enter or "+" click
+  const addWhatWeSellItem = () => {
+    const trimmed = whatWeSellInput.trim().slice(0, 50);
+    if (!trimmed || whatWeSellItems.length >= 10 || whatWeSellItems.includes(trimmed)) return;
+    setWhatWeSellItems((prev) => [...prev, trimmed]);
+    setWhatWeSellInput("");
+    whatWeSellInputRef.current?.focus();
+  };
+
+  const removeWhatWeSellItem = (item: string) => {
+    setWhatWeSellItems((prev) => prev.filter((v) => v !== item));
+  };
+
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Merge edited fields with preserved fields so we don't overwrite existing data
-      const payload: FullBioPayload = { ...preserved, ...bio };
+      // Resolve business_type: if "Other" was selected, use the typed value
+      const finalBusinessType =
+        bio.business_type === "Other"
+          ? otherBusinessType.trim() || "Other"
+          : bio.business_type;
+
+      // Join items array into comma-separated string for what_we_sell
+      const finalWhatWeSell = whatWeSellItems.join(", ");
+
+      const payload: FullBioPayload = {
+        ...preserved,
+        ...bio,
+        business_type: finalBusinessType,
+        what_we_sell: finalWhatWeSell,
+        other_customers: otherCustomersText.trim(),
+      };
+
       const res = await fetch("/api/business-profile", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
@@ -254,23 +316,73 @@ export default function BusinessBioPage() {
               />
             ))}
           </div>
-        </FormCard>
-
-        {/* Field 2 — What do you sell? */}
-        <FormCard>
-          <label className="block">
-            <p className="text-white font-medium mb-1">What do you sell?</p>
+          {bio.business_type === "Other" && (
             <input
               type="text"
-              value={bio.what_we_sell}
-              onChange={(e) =>
-                setBio((p) => ({ ...p, what_we_sell: e.target.value.slice(0, 150) }))
-              }
-              placeholder="e.g. Coffee, pastries, rooms for rent, tailoring services"
-              maxLength={150}
-              className="w-full bg-white/5 border border-white/10 focus:border-purple-500/50 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none transition-colors"
+              value={otherBusinessType}
+              onChange={(e) => setOtherBusinessType(e.target.value.slice(0, 100))}
+              placeholder="What type of business do you run?"
+              maxLength={100}
+              autoFocus
+              className="w-full mt-3 bg-white/5 border border-white/10 focus:border-purple-500/50 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none transition-colors text-sm"
             />
-          </label>
+          )}
+        </FormCard>
+
+        {/* Field 2 — What do you sell? (multi-entry) */}
+        <FormCard>
+          <p className="text-white font-medium mb-1">What do you sell?</p>
+          <p className="text-white/40 text-xs mb-3">Type an item and press Enter to add (max 10)</p>
+
+          {/* Existing items as removable pills */}
+          {whatWeSellItems.length > 0 && (
+            <div className="flex flex-wrap gap-2 mb-3">
+              {whatWeSellItems.map((item) => (
+                <span
+                  key={item}
+                  className="flex items-center gap-1.5 px-3 py-1.5 bg-[#8b5cf6]/30 border border-purple-500/60 rounded-xl text-white text-sm"
+                >
+                  {item}
+                  <button
+                    onClick={() => removeWhatWeSellItem(item)}
+                    className="text-purple-300 hover:text-white transition-colors ml-0.5"
+                    aria-label={`Remove ${item}`}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </span>
+              ))}
+            </div>
+          )}
+
+          {/* Input + add button */}
+          {whatWeSellItems.length < 10 && (
+            <div className="flex gap-2">
+              <input
+                ref={whatWeSellInputRef}
+                type="text"
+                value={whatWeSellInput}
+                onChange={(e) => setWhatWeSellInput(e.target.value.slice(0, 50))}
+                onKeyDown={(e) => {
+                  if (e.key === "Enter") {
+                    e.preventDefault();
+                    addWhatWeSellItem();
+                  }
+                }}
+                placeholder="Type and press Enter to add"
+                maxLength={50}
+                className="flex-1 bg-white/5 border border-white/10 focus:border-purple-500/50 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none transition-colors text-sm"
+              />
+              <button
+                onClick={addWhatWeSellItem}
+                disabled={!whatWeSellInput.trim()}
+                className="w-12 h-12 flex items-center justify-center bg-purple-600/30 hover:bg-purple-600/50 disabled:opacity-30 disabled:cursor-not-allowed border border-purple-500/40 rounded-xl transition-all flex-shrink-0"
+                aria-label="Add item"
+              >
+                <Plus className="w-4 h-4 text-purple-300" />
+              </button>
+            </div>
+          )}
         </FormCard>
 
         {/* Field 3 — Who are your main customers? */}
@@ -292,6 +404,16 @@ export default function BusinessBioPage() {
               onClick={() => toggleMultiSelect("main_customers", "Other")}
             />
           </div>
+          {bio.main_customers.includes("Other") && (
+            <input
+              type="text"
+              value={otherCustomersText}
+              onChange={(e) => setOtherCustomersText(e.target.value.slice(0, 100))}
+              placeholder="Describe your other customers"
+              maxLength={100}
+              className="w-full mt-3 bg-white/5 border border-white/10 focus:border-purple-500/50 rounded-xl px-4 py-3 text-white placeholder-white/30 focus:outline-none transition-colors text-sm"
+            />
+          )}
         </FormCard>
 
         {/* Field 4 — Where is your business? */}
