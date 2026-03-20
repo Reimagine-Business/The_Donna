@@ -116,6 +116,22 @@ export async function createUserDirect(userData: CreateUserData) {
       // User created but profile failed - don't fail completely
     }
 
+    // Create business_profiles row so business name is available immediately
+    // (e.g. for the QR feedback card PDF) without waiting for the user to complete their bio
+    const { error: businessProfileError } = await supabaseAdmin
+      .from('business_profiles')
+      .insert({
+        user_id: authData.user.id,
+        business_name: userData.businessName,
+        business_context: {},
+        profile_completed: false,
+      });
+
+    if (businessProfileError) {
+      console.error('Business profile creation error:', businessProfileError);
+      // Non-fatal: user and profile already created
+    }
+
     // Revalidate admin pages
     revalidatePath('/admin/users/manage');
     revalidatePath('/admin/users/monitor');
