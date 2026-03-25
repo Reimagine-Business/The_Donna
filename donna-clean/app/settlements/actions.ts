@@ -192,7 +192,7 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
       for (const pattern of patterns) {
         const { data, error: deleteError } = await supabase
           .from("entries")
-          .delete()
+          .update({ deleted_at: new Date().toISOString() })
           .eq("user_id", user.id)
           .eq("notes", pattern)
           .select();
@@ -208,7 +208,7 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
         // Try one more approach: search by notes containing the entry ID
         const { error: deleteError } = await supabase
           .from("entries")
-          .delete()
+          .update({ deleted_at: new Date().toISOString() })
           .eq("user_id", user.id)
           .like("notes", `%${entryId}%`)
           .like("notes", `%Settlement%`)
