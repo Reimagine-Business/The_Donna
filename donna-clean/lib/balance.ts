@@ -85,6 +85,7 @@ export async function recalculateBalance(
     .from('entries')
     .select('entry_type, category, amount')
     .eq('user_id', userId)
+    .is('deleted_at', null)
 
   if (error || !entries) {
     console.error('[RECALCULATE_BALANCE] Failed:', error)

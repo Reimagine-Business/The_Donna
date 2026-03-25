@@ -114,6 +114,7 @@ async function generateAlertsForEntry(
       .from('entries')
       .select('entry_type, category, amount')
       .eq('user_id', userId)
+      .is('deleted_at', null)
       .gte('entry_date', monthStart)
 
     if (monthlyEntries && monthlyEntries.length > 0) {
@@ -209,6 +210,7 @@ export async function getEntries(options: {
         party:parties(name)
       `, { count: 'exact' })
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false })
       .range(from, to)
@@ -268,6 +270,7 @@ export async function getAllEntries(options: { page?: number; limit?: number } =
         party:parties(name)
       `, { count: 'exact' })
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false })
       .range(from, to)
@@ -312,6 +315,7 @@ export async function getRecentEntries() {
         party:parties(name)
       `)
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .gte('entry_date', startDate)
       .order('entry_date', { ascending: false })
       .order('created_at', { ascending: false })
@@ -353,6 +357,7 @@ export async function getEntriesByDateRange(startDate: string, endDate: string) 
         party:parties(name)
       `)
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .gte('entry_date', startDate)
       .lte('entry_date', endDate)
       .order('entry_date', { ascending: false })
@@ -404,6 +409,7 @@ export async function getEntriesForAnalytics(startDateOverride?: string) {
         party:parties(name)
       `)
       .eq('user_id', user.id)
+      .is('deleted_at', null)
       .gte('entry_date', startDate)
       .order('entry_date', { ascending: false })
       .limit(5000)
@@ -769,7 +775,7 @@ export async function deleteEntry(id: string) {
 
       const { error: deleteSettlementError } = await supabase
         .from('entries')
-        .delete()
+        .update({ deleted_at: new Date().toISOString() })
         .eq('user_id', user.id)
         .eq('notes', settlementNotePattern);
 
@@ -787,10 +793,10 @@ export async function deleteEntry(id: string) {
     // So we only need to delete the original entry
   }
 
-  // Now delete the original entry
+  // Now soft-delete the original entry
   const { error } = await supabase
     .from('entries')
-    .delete()
+    .update({ deleted_at: new Date().toISOString() })
     .eq('id', id)
     .eq('user_id', user.id)
 

@@ -32,6 +32,7 @@ export async function buildFinancialSummary(
     .from("entries")
     .select("entry_type, amount, category, party:parties(name), entry_date")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("entry_date", monthStart)
     .lte("entry_date", monthEnd);
 
@@ -40,6 +41,7 @@ export async function buildFinancialSummary(
     .from("entries")
     .select("entry_type, amount, entry_date")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("entry_date", weekStart)
     .lte("entry_date", today);
 
@@ -48,6 +50,7 @@ export async function buildFinancialSummary(
     .from("entries")
     .select("entry_type, amount")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("entry_date", lastMonthStart)
     .lte("entry_date", lastMonthEnd);
 
@@ -56,6 +59,7 @@ export async function buildFinancialSummary(
     .from("entries")
     .select("entry_type, amount, remaining_amount, category")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .eq("settled", false)
     .in("entry_type", ["Credit", "Advance"]);
 
@@ -208,6 +212,7 @@ export async function buildChatFinancialContext(
     .from("entries")
     .select("entry_type, amount, entry_date")
     .eq("user_id", userId)
+    .is("deleted_at", null)
     .gte("entry_date", threeMonthsAgo)
     .order("entry_date", { ascending: false })
     .limit(100);
