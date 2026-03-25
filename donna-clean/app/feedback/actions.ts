@@ -303,15 +303,21 @@ export async function getBusinessBySlug(slug: string): Promise<{
   business_slug: string;
   feedback_categories: string[] | null;
 } | null> {
-  // Use the anon client + SECURITY DEFINER RPC — no service role needed.
-  // get_business_public_profile() is granted to anon and only exposes
-  // the 4 safe columns (id, business_name, business_slug, feedback_categories).
-  const supabaseAnon = createClient(
+  // Use service-role client to bypass RLS and query business_profiles directly.
+  // This guarantees feedback_categories is always returned (the RPC may be an
+  // older version in production that pre-dates the feedback_categories column).
+  const supabaseAdmin = createClient(
     process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_PUBLISHABLE_KEY!
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
   );
 
-  const { data } = await supabaseAnon.rpc("get_business_public_profile", { p_slug: slug });
+  const { data } = await supabaseAdmin
+    .from("business_profiles")
+    .select("id, business_name, business_slug, feedback_categories")
+    .eq("business_slug", slug)
+    .not("business_slug", "is", null)
+    .maybeSingle();
 
-  return (data as { id: string; business_name: string; business_slug: string; feedback_categories: string[] | null }[] | null)?.[0] ?? null;
+  return data ?? null;
 }
