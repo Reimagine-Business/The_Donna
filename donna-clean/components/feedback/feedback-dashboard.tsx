@@ -20,6 +20,16 @@ import {
 } from "@/components/ui/popover";
 import { Calendar } from "@/components/ui/calendar";
 
+// Maps qr_theme_color value → [header RGB, badge RGB] for PDF generation
+const QR_THEME_COLOR_MAP: Record<string, { h: [number, number, number]; b: [number, number, number] }> = {
+  purple: { h: [88, 28, 135],  b: [88, 28, 135]  }, // current default — no change for existing users
+  red:    { h: [185, 28, 28],  b: [220, 38, 38]  },
+  blue:   { h: [30, 64, 175],  b: [37, 99, 235]  },
+  green:  { h: [22, 101, 52],  b: [22, 163, 74]  },
+  black:  { h: [31, 41, 55],   b: [55, 65, 81]   },
+  gold:   { h: [146, 64, 14],  b: [217, 119, 6]  },
+};
+
 const PERIOD_OPTIONS: { value: FeedbackPeriod; label: string }[] = [
   { value: "this-month", label: "This Month" },
   { value: "last-month", label: "Last Month" },
@@ -138,14 +148,16 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     const W = 148;
     const H = 210;
 
+    // Resolve theme colors (default to purple for null / unknown values)
+    const theme = QR_THEME_COLOR_MAP[profile?.qr_theme_color ?? "purple"] ?? QR_THEME_COLOR_MAP.purple;
+
     // ── 1. White / very faint lavender background ───────────────
     doc.setFillColor(252, 250, 255); // near-white lavender
     doc.rect(0, 0, W, H, "F");
 
-    // ── 2. Compact purple header with soft bottom fade ─────────
+    // ── 2. Compact header with soft bottom fade ─────────────────
     const headerH = 44;
-    // Deeper purple base
-    doc.setFillColor(88, 28, 135); // #581C87
+    doc.setFillColor(...theme.h);
     doc.roundedRect(0, 0, W, headerH, 6, 6, "F");
     // Square off bottom corners
     doc.rect(0, headerH - 8, W, 8, "F");
@@ -204,7 +216,7 @@ export function FeedbackDashboard({ initialProfile }: Props) {
     const badgeW = 60;
     const badgeX = (W - badgeW) / 2;
 
-    doc.setFillColor(88, 28, 135); // match header purple
+    doc.setFillColor(...theme.b);
     doc.roundedRect(badgeX, badgeY, badgeW, badgeH, badgeH / 2, badgeH / 2, "F");
 
     doc.setTextColor(255, 255, 255);
@@ -570,10 +582,11 @@ export function FeedbackDashboard({ initialProfile }: Props) {
       {showSettings && (
         <FeedbackSettingsPanel
           currentCategories={profile?.feedback_categories ?? null}
+          currentThemeColor={profile?.qr_theme_color ?? null}
           onClose={() => setShowSettings(false)}
-          onSaved={(cats) => {
+          onSaved={(cats, themeColor) => {
             setProfile((prev) =>
-              prev ? { ...prev, feedback_categories: cats } : prev
+              prev ? { ...prev, feedback_categories: cats, qr_theme_color: themeColor } : prev
             );
           }}
         />

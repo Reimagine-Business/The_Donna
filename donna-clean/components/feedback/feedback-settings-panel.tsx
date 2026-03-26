@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { X, Plus, Check } from "lucide-react";
-import { saveFeedbackCategories } from "@/app/feedback/actions";
+import { saveFeedbackCategories, saveQrThemeColor } from "@/app/feedback/actions";
 import { DEFAULT_FEEDBACK_CATEGORIES } from "@/lib/feedback-constants";
 
 const PRESET_CATEGORIES = [
@@ -23,17 +23,27 @@ const PRESET_CATEGORIES = [
   "Delivery",
 ];
 
+const THEME_COLOR_OPTIONS = [
+  { name: "purple", label: "Purple", swatch: "#7c3aed" },
+  { name: "red",    label: "Red",    swatch: "#DC2626" },
+  { name: "blue",   label: "Blue",   swatch: "#2563EB" },
+  { name: "green",  label: "Green",  swatch: "#16A34A" },
+  { name: "black",  label: "Black",  swatch: "#374151" },
+  { name: "gold",   label: "Gold",   swatch: "#D97706" },
+] as const;
+
 const MAX_SELECTED = 8;
 const MIN_SELECTED = 2;
 const MAX_CUSTOM = 3;
 
 interface Props {
   currentCategories: string[] | null;
+  currentThemeColor: string | null;
   onClose: () => void;
-  onSaved: (categories: string[]) => void;
+  onSaved: (categories: string[], themeColor: string) => void;
 }
 
-export function FeedbackSettingsPanel({ currentCategories, onClose, onSaved }: Props) {
+export function FeedbackSettingsPanel({ currentCategories, currentThemeColor, onClose, onSaved }: Props) {
   const initial = currentCategories && currentCategories.length > 0
     ? currentCategories
     : DEFAULT_FEEDBACK_CATEGORIES;
@@ -44,6 +54,7 @@ export function FeedbackSettingsPanel({ currentCategories, onClose, onSaved }: P
   const [selected, setSelected] = useState<string[]>(initial);
   const [customCategories, setCustomCategories] = useState<string[]>(initialCustom);
   const [newCustom, setNewCustom] = useState("");
+  const [selectedColor, setSelectedColor] = useState<string>(currentThemeColor ?? "purple");
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,14 +95,21 @@ export function FeedbackSettingsPanel({ currentCategories, onClose, onSaved }: P
     }
     setSaving(true);
     setError(null);
-    const result = await saveFeedbackCategories(selected);
+    const [catResult, colorResult] = await Promise.all([
+      saveFeedbackCategories(selected),
+      saveQrThemeColor(selectedColor),
+    ]);
     setSaving(false);
-    if (!result.success) {
-      setError(result.error || "Failed to save. Please try again.");
+    if (!catResult.success) {
+      setError(catResult.error || "Failed to save. Please try again.");
+      return;
+    }
+    if (!colorResult.success) {
+      setError(colorResult.error || "Failed to save theme color. Please try again.");
       return;
     }
     setSaved(true);
-    onSaved(selected);
+    onSaved(selected, selectedColor);
     setTimeout(() => {
       setSaved(false);
       onClose();
@@ -228,6 +246,44 @@ export function FeedbackSettingsPanel({ currentCategories, onClose, onSaved }: P
                 Maximum {MAX_CUSTOM} custom categories reached.
               </p>
             )}
+          </div>
+
+          {/* Section 3 — Card Theme Color */}
+          <div>
+            <p className="text-white font-semibold text-base mb-1">Card Theme Color</p>
+            <p className="text-[#94a3b8] text-sm mb-4">
+              Choose the color for your downloadable QR feedback card.
+            </p>
+            <div className="flex gap-3 flex-wrap">
+              {THEME_COLOR_OPTIONS.map(({ name, label, swatch }) => {
+                const isActive = selectedColor === name;
+                return (
+                  <button
+                    key={name}
+                    onClick={() => setSelectedColor(name)}
+                    title={label}
+                    className="flex flex-col items-center gap-1.5 group"
+                  >
+                    <span
+                      className="w-9 h-9 rounded-full flex items-center justify-center transition-all"
+                      style={{
+                        backgroundColor: swatch,
+                        boxShadow: isActive ? `0 0 0 3px #fff, 0 0 0 5px ${swatch}` : "none",
+                        transform: isActive ? "scale(1.15)" : "scale(1)",
+                      }}
+                    >
+                      {isActive && <Check size={14} color="#fff" strokeWidth={3} />}
+                    </span>
+                    <span
+                      className="text-[10px] font-semibold"
+                      style={{ color: isActive ? "#e9d5ff" : "#64748b" }}
+                    >
+                      {label}
+                    </span>
+                  </button>
+                );
+              })}
+            </div>
           </div>
 
           {error && (

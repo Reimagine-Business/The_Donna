@@ -23,6 +23,7 @@ export interface BusinessProfile {
   business_name: string;
   business_slug: string;
   feedback_categories: string[] | null;
+  qr_theme_color: string | null;
 }
 
 export type FeedbackPeriod =
@@ -148,7 +149,7 @@ export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null>
 
   const { data, error } = await supabase
     .from("business_profiles")
-    .select("id, business_name, business_slug, feedback_categories")
+    .select("id, business_name, business_slug, feedback_categories, qr_theme_color")
     .eq("user_id", user.id)
     .maybeSingle();
 
@@ -161,7 +162,7 @@ export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null>
       .eq("user_id", user.id)
       .maybeSingle();
     if (fbErr) console.error("[getOwnerBusinessProfile] fallback error:", fbErr.message);
-    return fallback ? { ...fallback, feedback_categories: null } : null;
+    return fallback ? { ...fallback, feedback_categories: null, qr_theme_color: null } : null;
   }
 
   // No profile row yet — create a minimal one so the QR code works immediately
@@ -177,7 +178,7 @@ export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null>
     const { data: inserted, error: insertErr } = await supabase
       .from("business_profiles")
       .insert({ user_id: user.id, business_name: realName, business_slug: autoSlug })
-      .select("id, business_name, business_slug, feedback_categories")
+      .select("id, business_name, business_slug, feedback_categories, qr_theme_color")
       .single();
     if (insertErr) {
       console.error("[getOwnerBusinessProfile] insert error:", insertErr.message);
@@ -193,7 +194,7 @@ export async function getOwnerBusinessProfile(): Promise<BusinessProfile | null>
       .from("business_profiles")
       .update({ business_slug: autoSlug })
       .eq("user_id", user.id)
-      .select("id, business_name, business_slug, feedback_categories")
+      .select("id, business_name, business_slug, feedback_categories, qr_theme_color")
       .single();
     if (updateErr) {
       console.error("[getOwnerBusinessProfile] slug update error:", updateErr.message);
@@ -232,6 +233,29 @@ export async function saveFeedbackCategories(
   return { success: true };
 }
 
+export async function saveQrThemeColor(
+  color: string
+): Promise<{ success: boolean; error?: string }> {
+  const supabase = await createSupabaseServerClient();
+  const { user } = await getOrRefreshUser(supabase);
+  if (!user) return { success: false, error: "Unauthorized" };
+
+  const supabaseAdmin = createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!,
+    process.env.SUPABASE_SERVICE_ROLE_KEY!,
+    { auth: { autoRefreshToken: false, persistSession: false } }
+  );
+
+  const { error, count } = await supabaseAdmin
+    .from("business_profiles")
+    .update({ qr_theme_color: color }, { count: "exact" })
+    .eq("user_id", user.id);
+
+  if (error) return { success: false, error: error.message };
+  if (count === 0) return { success: false, error: "Business profile not found" };
+  return { success: true };
+}
+
 export async function getFeedbackResponses(
   period: FeedbackPeriod,
   customStart?: string,
@@ -245,7 +269,7 @@ export async function getFeedbackResponses(
   {
     const { data, error } = await supabase
       .from("business_profiles")
-      .select("id, business_name, business_slug, feedback_categories")
+      .select("id, business_name, business_slug, feedback_categories, qr_theme_color")
       .eq("user_id", user.id)
       .maybeSingle();
 
@@ -258,7 +282,7 @@ export async function getFeedbackResponses(
         .eq("user_id", user.id)
         .maybeSingle();
       if (fbErr) console.error("[getFeedbackResponses] profile fallback error:", fbErr.message);
-      profile = fallback ? { ...fallback, feedback_categories: null } : null;
+      profile = fallback ? { ...fallback, feedback_categories: null, qr_theme_color: null } : null;
     } else {
       profile = data ?? null;
     }
@@ -314,7 +338,7 @@ export async function getBusinessBySlug(slug: string): Promise<{
 
   const { data } = await supabaseAdmin
     .from("business_profiles")
-    .select("id, business_name, business_slug, feedback_categories")
+    .select("id, business_name, business_slug, feedback_categories, qr_theme_color")
     .eq("business_slug", slug)
     .not("business_slug", "is", null)
     .maybeSingle();
