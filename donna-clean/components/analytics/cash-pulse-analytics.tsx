@@ -156,9 +156,15 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
   // Calculate previous balance for breakdown
   const previousBalance = useMemo(() => cashBalance - periodChange, [cashBalance, periodChange])
 
-  // Calculate Cash vs Bank breakdown
+  // Calculate Cash vs Bank breakdown (period-aware)
   const { cashAmount, bankAmount } = useMemo(() => {
-    const cash = entries
+    const periodEntries = entries.filter(e => {
+      const parts = e.entry_date.split('T')[0].split('-')
+      const entryDate = new Date(Number(parts[0]), Number(parts[1]) - 1, Number(parts[2]))
+      return entryDate >= startDate && entryDate <= endDate
+    })
+
+    const cash = periodEntries
       .filter(e => e.payment_method === 'Cash')
       .reduce((sum, e) => {
         if (
@@ -179,7 +185,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         return sum
       }, 0)
 
-    const bank = entries
+    const bank = periodEntries
       .filter(e => e.payment_method === 'Bank')
       .reduce((sum, e) => {
         if (
@@ -201,7 +207,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
       }, 0)
 
     return { cashAmount: cash, bankAmount: bank }
-  }, [entries])
+  }, [entries, startDate, endDate])
 
   // Calculate percentages for breakdown
   const totalPayment = cashAmount + bankAmount
@@ -438,25 +444,6 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         </div>
       </div>
 
-      {/* Total cash balance - DEMOTED SECONDARY CARD */}
-      <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500 p-5 rounded-xl">
-        <div className="flex items-center gap-3 mb-3">
-          <DonnaIcon icon={DonnaIcons.totalCashBalance} size="md" />
-          <div className="text-xs uppercase tracking-wide opacity-70 font-semibold">
-            Total cash balance
-          </div>
-        </div>
-        <div className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-purple-200 bg-clip-text text-transparent">
-          {formatCurrency(cashBalance)}
-        </div>
-        <div className="text-xs opacity-50 mb-1">
-          {formatCurrency(previousBalance)} previous + {formatCurrency(periodChange)} {getPeriodLabel(dateRange).toLowerCase()}
-        </div>
-        <div className="text-xs opacity-40">
-          As of {format(new Date(), 'dd MMM yyyy')}
-        </div>
-      </div>
-
       {/* Balances */}
       <div className="rounded-2xl p-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
         <h3 className="text-sm font-semibold text-white mb-2">Balances</h3>
@@ -487,6 +474,25 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
           <div className="w-full bg-white/[0.08] rounded-full h-2 overflow-hidden">
             <div className="bg-white h-2 rounded-full transition-all" style={{ width: `${Math.min(bankPercentage, 100)}%` }}></div>
           </div>
+        </div>
+      </div>
+
+      {/* Total cash balance - DEMOTED SECONDARY CARD */}
+      <div className="bg-gradient-to-br from-[#2d1b4e] to-[#1e1538] border border-purple-500 p-5 rounded-xl">
+        <div className="flex items-center gap-3 mb-3">
+          <DonnaIcon icon={DonnaIcons.totalCashBalance} size="md" />
+          <div className="text-xs uppercase tracking-wide opacity-70 font-semibold">
+            Total cash balance
+          </div>
+        </div>
+        <div className="text-3xl md:text-4xl font-bold mb-2 bg-gradient-to-r from-purple-400 to-purple-200 bg-clip-text text-transparent">
+          {formatCurrency(cashBalance)}
+        </div>
+        <div className="text-xs opacity-50 mb-1">
+          {formatCurrency(previousBalance)} previous + {formatCurrency(periodChange)} {getPeriodLabel(dateRange).toLowerCase()}
+        </div>
+        <div className="text-xs opacity-40">
+          As of {format(new Date(), 'dd MMM yyyy')}
         </div>
       </div>
 
