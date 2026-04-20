@@ -2,7 +2,7 @@ import { requireAdmin } from "@/lib/admin/check-admin";
 import { createClient } from "@supabase/supabase-js";
 import { Users, UserPlus } from "lucide-react";
 import Link from "next/link";
-import { CreateUserDirect } from "@/components/admin/create-user-direct";
+import { CreateUserTabs } from "@/components/admin/create-user-tabs";
 import { UserActionsPanel } from "@/components/admin/user-actions-panel";
 
 export default async function UserManagementPage() {
@@ -97,13 +97,7 @@ export default async function UserManagementPage() {
         </div>
 
         <div className="p-6 border border-purple-500/30 rounded-xl bg-purple-900/10">
-          <div className="p-3 bg-purple-500/10 border border-purple-500/20 rounded-lg mb-4">
-            <p className="text-sm text-white/80">
-              Creates account instantly. Users can login immediately and change
-              their password. Standard user access (no admin privileges).
-            </p>
-          </div>
-          <CreateUserDirect />
+          <CreateUserTabs />
         </div>
       </div>
     </div>
