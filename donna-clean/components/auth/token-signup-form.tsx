@@ -2,17 +2,10 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { createClient } from '@supabase/supabase-js';
+import { createClient } from '@/lib/supabase/client';
 import { Mail, Lock, Building2, User, Eye, EyeOff, CheckCircle, XCircle, Loader2 } from 'lucide-react';
 import { completeSignupWithToken } from '@/app/admin/users/signup-link-actions';
 import { checkUsernameAvailability } from '@/app/auth/sign-up/actions';
-
-function makeBrowserClient() {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
-  );
-}
 
 interface TokenSignupFormProps {
   email: string;
@@ -87,15 +80,15 @@ export function TokenSignupForm({ email, token }: TokenSignupFormProps) {
     }
 
     // Auto-login with the password the user just set
-    const supabase = makeBrowserClient();
+    const supabase = createClient();
     const { error: signInError } = await supabase.auth.signInWithPassword({
       email,
       password: formData.password,
     });
 
     if (signInError) {
-      // Account was created; just redirect to login
-      router.push('/auth/login?signed-up=1');
+      // Account created but auto-login failed — send to login page
+      router.push('/auth/login');
       return;
     }
 
