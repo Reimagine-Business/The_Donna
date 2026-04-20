@@ -2,12 +2,13 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { Home, Users, Server } from "lucide-react";
+import { Home, UserCog, Activity, Server } from "lucide-react";
 
 const tabs = [
-  { label: "Home",           href: "/admin/home",           icon: Home   },
-  { label: "Users",          href: "/admin/users/monitor",  icon: Users  },
-  { label: "Infrastructure", href: "/admin/infrastructure", icon: Server },
+  { label: "Home",           href: "/admin/home",           icon: Home     },
+  { label: "Manage Users",   href: "/admin/users/manage",   icon: UserCog  },
+  { label: "Monitor Users",  href: "/admin/users/monitor",  icon: Activity },
+  { label: "Infrastructure", href: "/admin/infrastructure", icon: Server   },
 ];
 
 export function AdminNav() {

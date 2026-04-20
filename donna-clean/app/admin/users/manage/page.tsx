@@ -91,7 +91,7 @@ export default async function UserManagementPage() {
               Create New User
             </h2>
             <p className="text-sm text-white/60">
-              Create a user account directly with a temporary password
+              Send a signup link or create an account directly
             </p>
           </div>
         </div>
