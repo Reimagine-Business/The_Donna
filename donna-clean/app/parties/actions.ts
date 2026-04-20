@@ -304,6 +304,7 @@ export async function getPartiesWithBalance(): Promise<{
       .select("party_id, remaining_amount")
       .eq("user_id", user.id)
       .eq("settled", false)
+      .is("deleted_at", null)
       .not("party_id", "is", null);
 
     if (entriesError) {
