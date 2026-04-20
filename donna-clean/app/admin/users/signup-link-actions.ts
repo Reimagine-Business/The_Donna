@@ -35,7 +35,10 @@ export async function generateSignupLink(email: string): Promise<{
     const supabaseAdmin = makeAdminClient();
 
     // Refuse if email already has an account
-    const { data: existingUsers } = await supabaseAdmin.auth.admin.listUsers();
+    const { data: existingUsers, error: listError } = await supabaseAdmin.auth.admin.listUsers();
+    if (listError) {
+      console.error('[generateSignupLink] listUsers error:', listError);
+    }
     const alreadyExists = (existingUsers?.users ?? []).some(
       (u: { email?: string }) => u.email?.toLowerCase() === trimmedEmail
     );
@@ -56,8 +59,12 @@ export async function generateSignupLink(email: string): Promise<{
       });
 
     if (insertError) {
-      console.error('[generateSignupLink] Insert error:', insertError);
-      return { success: false, error: 'Failed to generate link. Please try again.' };
+      console.error('[generateSignupLink] Insert error — code:', insertError.code, '| message:', insertError.message, '| details:', insertError.details);
+      // 42P01 = relation (table) does not exist — migration not yet applied
+      if (insertError.code === '42P01') {
+        return { success: false, error: 'signup_tokens table not found — run the migration in Supabase Dashboard first.' };
+      }
+      return { success: false, error: `DB error (${insertError.code}): ${insertError.message}` };
     }
 
     const baseUrl = process.env.NEXT_PUBLIC_APP_URL ?? 'https://thedonnaapp.co';
