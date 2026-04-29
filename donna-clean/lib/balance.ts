@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 type EntryType = string
-type CategoryType = string
+type CategoryType = string | null
 
 /**
  * Determines the cash-flow direction of an entry.
@@ -10,6 +10,8 @@ type CategoryType = string
  * Plain Credit and Advance Settlement types do NOT affect cash balance.
  */
 function getCashDelta(entryType: EntryType, category: CategoryType, amount: number): number {
+  // Transfers move money between Cash and Bank — net total is unchanged
+  if (entryType === 'transfer') return 0
   if (entryType === 'Cash IN') return amount
   if (entryType === 'Cash OUT') return -amount
   if (entryType === 'Credit Settlement (Collections)') return amount

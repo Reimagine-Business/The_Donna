@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from "react";
 import { format } from "date-fns";
-import { MoreVertical, Edit2, Trash2, Eye } from "lucide-react";
+import { MoreVertical, Edit2, Trash2, Eye, ArrowLeftRight } from "lucide-react";
 import { type Entry, type Category } from "@/app/entries/actions";
 import { EditEntryModal } from "./edit-entry-modal";
 import { DeleteEntryDialog } from "./delete-entry-dialog";
@@ -113,6 +113,8 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
         return "text-[#2dd4bf] bg-[rgba(45,212,191,0.15)] border-transparent";
       case "Advance Settlement (Paid)":
         return "text-[#fbbf24] bg-[rgba(251,191,36,0.15)] border-transparent";
+      case "transfer":
+        return "text-[#8b5cf6] bg-[rgba(139,92,246,0.15)] border-transparent";
       default:
         return "text-white/70 bg-white/[0.08] border-transparent";
     }
@@ -133,12 +135,18 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
       {/* Mobile Card Layout */}
       <div className="md:hidden flex flex-col gap-2">
         {entries.map((entry) => {
+          const isTransfer = entry.entry_type === "transfer";
           const isIncome =
-            entry.entry_type === "Cash IN" ||
-            (entry.entry_type === "Credit" && entry.category === "Sales") ||
-            (entry.entry_type === "Advance" && entry.category === "Sales");
+            !isTransfer && (
+              entry.entry_type === "Cash IN" ||
+              (entry.entry_type === "Credit" && entry.category === "Sales") ||
+              (entry.entry_type === "Advance" && entry.category === "Sales")
+            );
           const isMenuOpen = openMenuId === entry.id;
           const formattedAmount = entry.amount.toLocaleString("en-IN");
+          const transferLabel = isTransfer && entry.transfer_to
+            ? `${entry.payment_method} → ${entry.transfer_to}`
+            : null;
 
           return (
             <div
@@ -157,11 +165,12 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 </span>
 
                 <span
-                  className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-[12px] font-medium border shrink-0 ${getEntryTypeColor(
+                  className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-[12px] font-medium border shrink-0 ${getEntryTypeColor(
                     entry.entry_type
                   )}`}
                 >
-                  {entry.entry_type}
+                  {isTransfer && <ArrowLeftRight className="w-3 h-3" />}
+                  {isTransfer ? "Transfer" : entry.entry_type}
                   {entry.is_settlement && (
                     <span className="ml-1 text-[11px] text-white/50" title="Settlement">⚡</span>
                   )}
@@ -169,19 +178,20 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
 
                 <span
                   className={`text-[16px] font-bold whitespace-nowrap ${
-                    isIncome ? "text-green-400" : "text-red-400"
+                    isTransfer ? "text-[#8b5cf6]" : isIncome ? "text-green-400" : "text-red-400"
                   }`}
                 >
-                  {isIncome ? "₹" : "-₹"}{formattedAmount}
+                  {isTransfer ? "₹" : isIncome ? "₹" : "-₹"}{formattedAmount}
                 </span>
               </div>
 
               {/* Bottom row: Category • Payment • Party | Action button */}
               <div className="flex items-center justify-between mt-1.5">
                 <span className="text-[12px] text-white/60 truncate">
-                  {entry.category}
-                  {entry.payment_method ? ` · ${entry.payment_method}` : ""}
-                  {entry.party?.name ? ` · ${entry.party.name}` : ""}
+                  {isTransfer
+                    ? transferLabel
+                    : [entry.category, entry.payment_method, entry.party?.name].filter(Boolean).join(" · ")
+                  }
                 </span>
 
                 <button
@@ -216,11 +226,17 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
         {/* Table Body - Matching Column Widths */}
         <div className="divide-y divide-white/[0.06]">
           {entries.map((entry) => {
+            const isTransfer = entry.entry_type === "transfer";
             const isIncome =
-              entry.entry_type === "Cash IN" ||
-              (entry.entry_type === "Credit" && entry.category === "Sales") ||
-              (entry.entry_type === "Advance" && entry.category === "Sales");
+              !isTransfer && (
+                entry.entry_type === "Cash IN" ||
+                (entry.entry_type === "Credit" && entry.category === "Sales") ||
+                (entry.entry_type === "Advance" && entry.category === "Sales")
+              );
             const isMenuOpen = openMenuId === entry.id;
+            const transferLabel = isTransfer && entry.transfer_to
+              ? `${entry.payment_method} → ${entry.transfer_to}`
+              : null;
 
             return (
               <div
@@ -240,11 +256,12 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
                 {/* Entry Type - Fixed 120px */}
                 <div className="flex items-center gap-2">
                   <span
-                    className={`inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${getEntryTypeColor(
+                    className={`inline-flex items-center gap-1 px-2.5 py-0.5 rounded-full text-xs font-medium border whitespace-nowrap ${getEntryTypeColor(
                       entry.entry_type
                     )}`}
                   >
-                    {entry.entry_type}
+                    {isTransfer && <ArrowLeftRight className="w-3 h-3" />}
+                    {isTransfer ? "Transfer" : entry.entry_type}
                   </span>
                   {entry.is_settlement && (
                     <span className="text-xs text-white/50" title="Settlement Entry">
@@ -255,29 +272,36 @@ export function EntryList({ entries, categories, onRefresh }: EntryListProps) {
 
                 {/* Party - Fixed 140px */}
                 <div className="text-sm text-white/50 truncate">
-                  {entry.party?.name || "-"}
+                  {isTransfer ? "-" : (entry.party?.name || "-")}
                 </div>
 
                 {/* Category - Fixed 110px */}
-                <div className="text-sm text-white">{entry.category}</div>
+                <div className="text-sm text-white">
+                  {isTransfer ? "-" : (entry.category ?? "-")}
+                </div>
 
                 {/* Amount - Flex (takes remaining space, right-aligned) */}
                 <div
                   className={`text-right font-medium text-base ${
-                    isIncome ? "text-green-400" : "text-red-400"
+                    isTransfer ? "text-[#8b5cf6]" : isIncome ? "text-green-400" : "text-red-400"
                   }`}
                 >
-                  {isIncome ? "+ " : "- "}
+                  {isTransfer ? "" : isIncome ? "+ " : "- "}
                   {formatCurrency(entry.amount)}
                 </div>
 
-                {/* Payment Method - Fixed 110px */}
+                {/* Payment Method / Transfer direction - Fixed 110px */}
                 <div className="text-sm">
-                  {entry.payment_method && (
+                  {isTransfer && transferLabel ? (
+                    <span className="inline-flex items-center gap-1 px-3 py-1 rounded-lg bg-purple-500/10 text-purple-300 text-xs border border-purple-500/20 whitespace-nowrap">
+                      <ArrowLeftRight className="w-3 h-3" />
+                      {transferLabel}
+                    </span>
+                  ) : entry.payment_method ? (
                     <span className="inline-flex items-center px-3 py-1 rounded-lg bg-white/[0.08] text-white/70 text-xs border border-white/[0.15] whitespace-nowrap">
                       {entry.payment_method}
                     </span>
-                  )}
+                  ) : null}
                 </div>
 
                 {/* Actions Menu - Fixed 50px */}

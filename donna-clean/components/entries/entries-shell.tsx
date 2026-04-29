@@ -284,7 +284,7 @@ export function EntriesShell({ initialEntries, initialTotalCount, initialTotalPa
     const rows = exportEntries.map(entry => [
       format(new Date(entry.entry_date), 'dd/MM/yyyy'),
       entry.entry_type,
-      entry.category,
+      entry.category ?? '',
       entry.amount.toString(),
       entry.payment_method || '',
       entry.notes || ''

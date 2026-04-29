@@ -106,7 +106,7 @@ export function ProfitLensAnalytics({ entries }: ProfitLensAnalyticsProps) {
   const topExpenses = useMemo(() => {
     // Filter for expense entries only (COGS, Opex, Assets)
     let expenseEntries = entries.filter(e =>
-      ['COGS', 'Opex', 'Assets'].includes(e.category)
+      e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category)
     )
 
     // Filter by date range if specified

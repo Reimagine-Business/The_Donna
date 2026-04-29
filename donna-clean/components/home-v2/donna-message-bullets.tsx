@@ -87,7 +87,7 @@ export function DonnaMessageBullets({ entries, reminders = [] }: DonnaMessageBul
       .filter(
         (e) =>
           e.entry_type === "Credit" &&
-          ["COGS", "Opex"].includes(e.category) &&
+          e.category != null && ["COGS", "Opex"].includes(e.category) &&
           !e.settled
       )
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount ?? 0), 0);

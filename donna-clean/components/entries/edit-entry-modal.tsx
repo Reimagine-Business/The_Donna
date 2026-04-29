@@ -47,7 +47,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
   const [entryType, setEntryType] = useState<EntryType>(
     entry.is_settlement ? 'Cash IN' : entry.entry_type as EntryType
   )
-  const [category, setCategory] = useState<CategoryType>(entry.category)
+  const [category, setCategory] = useState<CategoryType>(entry.category ?? 'Sales')
   const [amount, setAmount] = useState(entry.amount.toString())
   const [entryDate, setEntryDate] = useState(entry.entry_date)
   const [paymentMethod, setPaymentMethod] = useState<PaymentMethodType>(entry.payment_method)

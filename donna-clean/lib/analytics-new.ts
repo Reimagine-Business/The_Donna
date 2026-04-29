@@ -61,7 +61,7 @@ export function calculateCashBalance(entries: Entry[]): number {
     .filter(e =>
       e.entry_type === 'Cash OUT' ||
       e.entry_type === 'Credit Settlement (Bills)' ||
-      (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+      (e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category))
     )
     .reduce((sum, e) => sum + e.amount, 0)
 
@@ -92,7 +92,7 @@ export function getTotalCashOut(entries: Entry[], startDate?: Date, endDate?: Da
   let filtered = entries.filter(e =>
     e.entry_type === 'Cash OUT' ||
     e.entry_type === 'Credit Settlement (Bills)' ||
-    (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+    (e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category))
     // ❌ Excludes: Advance Settlement (Paid) - no cash movement
   )
 
@@ -125,8 +125,9 @@ export function getCashInByCategory(entries: Entry[], startDate?: Date, endDate?
   const categoryMap = new Map<string, { amount: number; count: number }>()
 
   filtered.forEach(entry => {
-    const existing = categoryMap.get(entry.category) || { amount: 0, count: 0 }
-    categoryMap.set(entry.category, {
+    const cat = entry.category ?? 'Uncategorized'
+    const existing = categoryMap.get(cat) || { amount: 0, count: 0 }
+    categoryMap.set(cat, {
       amount: existing.amount + entry.amount,
       count: existing.count + 1,
     })
@@ -147,9 +148,10 @@ export function getCashInByCategory(entries: Entry[], startDate?: Date, endDate?
 // Get cash outflows breakdown by category
 export function getCashOutByCategory(entries: Entry[], startDate?: Date, endDate?: Date): CategoryBreakdown[] {
   let filtered = entries.filter(e =>
+    e.entry_type !== 'transfer' && (
     e.entry_type === 'Cash OUT' ||
     e.entry_type === 'Credit Settlement (Bills)' ||
-    (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+    (e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category)))
     // ❌ Excludes: Advance Settlement (Paid)
   )
 
@@ -163,8 +165,9 @@ export function getCashOutByCategory(entries: Entry[], startDate?: Date, endDate
   const categoryMap = new Map<string, { amount: number; count: number }>()
 
   filtered.forEach(entry => {
-    const existing = categoryMap.get(entry.category) || { amount: 0, count: 0 }
-    categoryMap.set(entry.category, {
+    const cat = entry.category ?? 'Uncategorized'
+    const existing = categoryMap.get(cat) || { amount: 0, count: 0 }
+    categoryMap.set(cat, {
       amount: existing.amount + entry.amount,
       count: existing.count + 1,
     })
@@ -200,18 +203,20 @@ export function getCashFlowTrend(entries: Entry[], days: number = 30): CashFlowD
 
     const cashIn = dayEntries
       .filter(e =>
+        e.entry_type !== 'transfer' && (  // transfers are not cash in/out
         e.entry_type === 'Cash IN' ||
         e.entry_type === 'Credit Settlement (Collections)' ||
-        (e.entry_type === 'Advance' && e.category === 'Sales')
+        (e.entry_type === 'Advance' && e.category === 'Sales'))
         // ❌ Excludes: Advance Settlement (Received)
       )
       .reduce((sum, e) => sum + e.amount, 0)
 
     const cashOut = dayEntries
       .filter(e =>
+        e.entry_type !== 'transfer' && (  // transfers are not cash in/out
         e.entry_type === 'Cash OUT' ||
         e.entry_type === 'Credit Settlement (Bills)' ||
-        (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+        (e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category)))
         // ❌ Excludes: Advance Settlement (Paid)
       )
       .reduce((sum, e) => sum + e.amount, 0)
@@ -282,16 +287,17 @@ export function getCashEntryCount(entries: Entry[], type?: 'in' | 'out', startDa
     filtered = entries.filter(e =>
       e.entry_type === 'Cash OUT' ||
       e.entry_type === 'Credit Settlement (Bills)' ||
-      (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+      (e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category))
       // ❌ Excludes: Advance Settlement (Paid)
     )
   } else {
     filtered = entries.filter(e =>
+      e.entry_type !== 'transfer' && (  // transfers are not cash flow entries
       e.entry_type === 'Cash IN' ||
       e.entry_type === 'Cash OUT' ||
       e.entry_type === 'Credit Settlement (Collections)' ||
       e.entry_type === 'Credit Settlement (Bills)' ||
-      e.entry_type === 'Advance'
+      e.entry_type === 'Advance')
       // ❌ Excludes: Advance Settlement (Received/Paid)
     )
   }

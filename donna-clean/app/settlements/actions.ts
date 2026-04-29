@@ -183,9 +183,9 @@ export async function deleteSettlement(entryId: string): Promise<SettleEntryResu
       // Pattern 1: "Settlement of credit sales (uuid)" (older migrations)
       // Pattern 2: "Settlement of Credit Sales (ID: uuid)" (newer migration)
       const patterns = [
-        `Settlement of credit ${entry.category.toLowerCase()} (${entryId})`,
-        `Settlement of Credit ${entry.category} (ID: ${entryId})`,
-        `Settlement of credit ${entry.category} (${entryId})`, // mixed case fallback
+        `Settlement of credit ${entry.category?.toLowerCase() ?? ''} (${entryId})`,
+        `Settlement of Credit ${entry.category ?? ''} (ID: ${entryId})`,
+        `Settlement of credit ${entry.category ?? ''} (${entryId})`, // mixed case fallback
       ];
 
       let deleted = false;

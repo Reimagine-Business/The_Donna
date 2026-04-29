@@ -32,7 +32,7 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
 
     // Pending bills
     const pendingBills = entries
-      .filter(e => e.entry_type === 'Credit' && ['COGS', 'Opex'].includes(e.category) && !e.settled)
+      .filter(e => e.entry_type === 'Credit' && e.category != null && ['COGS', 'Opex'].includes(e.category) && !e.settled)
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
 
     // Calculate oldest collection/bill days
@@ -41,7 +41,7 @@ export function FinancialHealthDashboard({ entries }: FinancialHealthDashboardPr
       e.entry_type === 'Credit' && e.category === 'Sales' && !e.settled
     );
     const billEntries = entries.filter(e =>
-      e.entry_type === 'Credit' && ['COGS', 'Opex'].includes(e.category) && !e.settled
+      e.entry_type === 'Credit' && e.category != null && ['COGS', 'Opex'].includes(e.category) && !e.settled
     );
 
     const oldestCollectionDays = collectionEntries.length > 0

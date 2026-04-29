@@ -58,7 +58,7 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
       .filter(
         (e) =>
           e.entry_type === "Advance" &&
-          ["COGS", "Opex", "Assets"].includes(e.category) &&
+          e.category != null && ["COGS", "Opex", "Assets"].includes(e.category) &&
           !e.settled
       )
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
@@ -78,7 +78,7 @@ export function BusinessCards({ entries }: BusinessCardsProps) {
       .filter(
         (e) =>
           e.entry_type === "Credit" &&
-          ["COGS", "Opex", "Assets"].includes(e.category) &&
+          e.category != null && ["COGS", "Opex", "Assets"].includes(e.category) &&
           !e.settled
       )
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);

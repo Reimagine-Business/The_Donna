@@ -132,7 +132,7 @@ export async function buildFinancialSummary(
 
   // Pending Bills = Credit COGS/Opex/Assets (money YOU owe)
   const pendingBills = (pendingEntries || [])
-    .filter((e) => e.entry_type === "Credit" && ["COGS", "Opex", "Assets"].includes(e.category))
+    .filter((e) => e.entry_type === "Credit" && e.category != null && ["COGS", "Opex", "Assets"].includes(e.category))
     .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount ?? 0), 0);
 
   // Pending Advance Payments = Advance entries (money committed either way)

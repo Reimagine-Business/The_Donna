@@ -3,7 +3,7 @@
 import { revalidatePath } from "next/cache"
 import { createSupabaseServerClient } from "@/utils/supabase/server"
 import { getOrRefreshUser } from "@/lib/supabase/get-user"
-import { validateEntry } from "@/lib/validation"
+import { validateEntry, validateAmount, validateDate, validateNotes } from "@/lib/validation"
 import {
   sanitizeString,
   sanitizeAmount,
@@ -16,13 +16,14 @@ import { updateRunningBalance } from "@/lib/balance"
 // Re-export Entry type from canonical location
 import type { Entry as LibEntry } from "@/lib/entries"
 
-export type EntryType = 'Cash IN' | 'Cash OUT' | 'Credit' | 'Advance'
+export type EntryType = 'Cash IN' | 'Cash OUT' | 'Credit' | 'Advance' | 'transfer'
 export type CategoryType = 'Sales' | 'COGS' | 'Opex' | 'Assets'
 export type PaymentMethodType = 'Cash' | 'Bank' | 'None'
+export type TransferAccount = 'Cash' | 'Bank'
 
 export type CreateEntryInput = {
   entry_type: EntryType
-  category: CategoryType
+  category?: CategoryType | null  // null/undefined for transfer entries
   amount: number
   entry_date: string
   payment_method?: PaymentMethodType
@@ -30,6 +31,7 @@ export type CreateEntryInput = {
   notes?: string
   settled?: boolean
   image_url?: string
+  transfer_to?: TransferAccount | null  // only for transfer entries
 }
 
 export type UpdateEntryInput = Partial<CreateEntryInput>
@@ -58,9 +60,12 @@ export type Category = {
 async function generateAlertsForEntry(
   supabase: SupabaseClient,
   userId: string,
-  entry: { entry_type: EntryType; category: CategoryType; amount: number; entry_date: string },
+  entry: { entry_type: EntryType; category: CategoryType | null; amount: number; entry_date: string },
   currentBalance: number
 ) {
+  // Transfers don't affect profit or expense totals — no alerts needed
+  if (entry.entry_type === 'transfer') return
+
   try {
     const alerts: Array<{
       user_id: string
@@ -72,7 +77,7 @@ async function generateAlertsForEntry(
     }> = []
 
     // Alert 1: High single expense (> ₹50,000)
-    if (['COGS', 'Opex', 'Assets'].includes(entry.category) && entry.amount > 50000) {
+    if (entry.category && ['COGS', 'Opex', 'Assets'].includes(entry.category) && entry.amount > 50000) {
       alerts.push({
         user_id: userId,
         type: 'warning',
@@ -503,10 +508,64 @@ export async function createEntry(input: CreateEntryInput) {
     })
   }
 
+  // ── Transfer path ──────────────────────────────────────────────────────────
+  if (input.entry_type === 'transfer') {
+    const amount = sanitizeAmount(input.amount)
+    const entryDate = sanitizeDate(input.entry_date)
+    const from = input.payment_method
+    const to = input.transfer_to
+
+    if (!from || !['Cash', 'Bank'].includes(from)) {
+      return { success: false, error: 'Transfer source must be Cash or Bank' }
+    }
+    if (!to || !['Cash', 'Bank'].includes(to)) {
+      return { success: false, error: 'Transfer destination must be Cash or Bank' }
+    }
+    if (from === to) {
+      return { success: false, error: 'Transfer source and destination cannot be the same account' }
+    }
+    const amountCheck = validateAmount(amount)
+    if (!amountCheck.isValid) return { success: false, error: amountCheck.error }
+    const dateCheck = validateDate(entryDate)
+    if (!dateCheck.isValid) return { success: false, error: dateCheck.error }
+    const notes = input.notes ? sanitizeString(input.notes, 500) : null
+    const notesCheck = validateNotes(notes ?? undefined)
+    if (!notesCheck.isValid) return { success: false, error: notesCheck.error }
+
+    const { error: insertError } = await supabase.from('entries').insert({
+      user_id: user.id,
+      entry_type: 'transfer',
+      category: null,
+      amount,
+      entry_date: entryDate,
+      payment_method: from,
+      transfer_to: to,
+      party_id: null,
+      notes,
+      settled: false,
+      image_url: null,
+    })
+
+    if (insertError) {
+      console.error('Failed to create transfer:', insertError)
+      Sentry.captureException(insertError, { tags: { action: 'create-transfer', userId: user.id }, level: 'error' })
+      return { success: false, error: 'Something went wrong. Please try again.' }
+    }
+
+    // updateRunningBalance is a no-op for transfers (getCashDelta returns 0)
+    await updateRunningBalance(supabase, user.id, 'transfer', 'Sales', amount, 'create')
+
+    revalidatePath('/entries')
+    revalidatePath('/analytics/cashpulse')
+    revalidatePath('/home')
+    return { success: true, error: null }
+  }
+  // ── End transfer path ───────────────────────────────────────────────────────
+
   // Sanitize inputs
   const sanitizedData = {
     entry_type: input.entry_type,
-    category: input.category,
+    category: input.category as CategoryType,
     amount: sanitizeAmount(input.amount),
     entry_date: sanitizeDate(input.entry_date),
     payment_method: input.payment_method || 'Cash',
@@ -638,6 +697,10 @@ export async function updateEntry(id: string, input: UpdateEntryInput) {
     payload.image_url = input.image_url || null
   }
 
+  if (input.transfer_to !== undefined) {
+    payload.transfer_to = input.transfer_to ?? null
+  }
+
   // Fetch current entry for validation and balance tracking
   const { data: currentEntry } = await supabase
     .from('entries')
@@ -646,13 +709,42 @@ export async function updateEntry(id: string, input: UpdateEntryInput) {
     .eq('user_id', user.id)
     .single()
 
-  // Validate the update data (if we have enough fields)
-  if (Object.keys(payload).length > 0 && currentEntry) {
-    const mergedData = { ...currentEntry, ...payload }
-    const validation = validateEntry(mergedData)
-    if (!validation.isValid) {
-      console.error('Validation failed:', validation.error)
-      return { success: false, error: validation.error }
+  if (currentEntry) {
+    const isCurrentlyTransfer = currentEntry.entry_type === 'transfer'
+    const isBecomingTransfer = payload.entry_type === 'transfer'
+
+    // Block type changes between transfer and non-transfer
+    if (payload.entry_type && isCurrentlyTransfer !== isBecomingTransfer) {
+      return { success: false, error: 'Cannot change entry type to or from Transfer' }
+    }
+
+    if (isCurrentlyTransfer) {
+      // Validate transfer-specific fields on update
+      const newFrom = (payload.payment_method ?? currentEntry.payment_method) as string
+      const newTo = ((payload as { transfer_to?: string }).transfer_to ?? currentEntry.transfer_to) as string | null
+      if (newTo && newFrom === newTo) {
+        return { success: false, error: 'Transfer source and destination cannot be the same account' }
+      }
+      if (payload.amount !== undefined) {
+        const amountCheck = validateAmount(payload.amount as number)
+        if (!amountCheck.isValid) return { success: false, error: amountCheck.error }
+      }
+      if (payload.entry_date) {
+        const dateCheck = validateDate(payload.entry_date as string)
+        if (!dateCheck.isValid) return { success: false, error: dateCheck.error }
+      }
+      // Include transfer_to in payload if provided
+      if ((input as CreateEntryInput & { transfer_to?: string }).transfer_to !== undefined) {
+        payload.transfer_to = (input as CreateEntryInput & { transfer_to?: string }).transfer_to
+      }
+    } else if (Object.keys(payload).length > 0) {
+      // Validate the update data for non-transfer entries
+      const mergedData = { ...currentEntry, ...payload }
+      const validation = validateEntry(mergedData)
+      if (!validation.isValid) {
+        console.error('Validation failed:', validation.error)
+        return { success: false, error: validation.error }
+      }
     }
   }
 
@@ -771,7 +863,7 @@ export async function deleteEntry(id: string) {
     if (entry.entry_type === 'Credit') {
       // Find and delete the settlement Cash entry
       // It will have notes like "Settlement of credit sales (original_entry_id)"
-      const settlementNotePattern = `Settlement of credit ${entry.category.toLowerCase()} (${id})`;
+      const settlementNotePattern = `Settlement of credit ${entry.category?.toLowerCase() ?? ''} (${id})`;
 
       const { error: deleteSettlementError } = await supabase
         .from('entries')
