@@ -131,12 +131,9 @@ export function TransferModal({ cashBalance, onClose, onSuccess }: TransferModal
                       key={account}
                       type="button"
                       onClick={() => handleFromChange(account)}
-                      disabled={account === to}
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
                         from === account
                           ? 'bg-[#8b5cf6] text-white'
-                          : account === to
-                          ? 'bg-white/[0.03] text-white/20 cursor-not-allowed'
                           : 'bg-white/[0.08] text-white/70 hover:bg-white/[0.12]'
                       }`}
                     >
@@ -157,12 +154,9 @@ export function TransferModal({ cashBalance, onClose, onSuccess }: TransferModal
                       key={account}
                       type="button"
                       onClick={() => handleToChange(account)}
-                      disabled={account === from}
                       className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors text-left ${
                         to === account
                           ? 'bg-[#8b5cf6] text-white'
-                          : account === from
-                          ? 'bg-white/[0.03] text-white/20 cursor-not-allowed'
                           : 'bg-white/[0.08] text-white/70 hover:bg-white/[0.12]'
                       }`}
                     >
