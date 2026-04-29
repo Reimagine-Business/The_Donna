@@ -53,6 +53,7 @@ export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: D
   let skipped = 0
 
   for (const entry of entries) {
+    if (entry.entry_type === 'transfer') continue  // transfers are not income
     // Only process Sales category
     if (entry.category !== 'Sales') {
       continue
@@ -113,6 +114,7 @@ export function calculateRevenue(entries: Entry[], startDate?: Date, endDate?: D
 // Calculate COGS (Cost of Goods Sold from Cash OUT + Credit + Advance Settlement)
 export function calculateCOGS(entries: Entry[], startDate?: Date, endDate?: Date): number {
   let filtered = entries.filter(e =>
+    e.entry_type !== 'transfer' &&  // transfers are not expenses
     e.category === 'COGS' &&
     (
       // Cash OUT COGS (excluding Credit settlements)
@@ -145,6 +147,7 @@ export function calculateGrossProfit(revenue: number, cogs: number): number {
 // Calculate Operating Expenses (Opex from Cash OUT + Credit + Advance Settlement, NO Assets)
 export function calculateOperatingExpenses(entries: Entry[], startDate?: Date, endDate?: Date): number {
   let filtered = entries.filter(e =>
+    e.entry_type !== 'transfer' &&  // transfers are not expenses
     e.category === 'Opex' &&
     (
       // Cash OUT Opex (excluding Credit settlements)

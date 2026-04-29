@@ -16,6 +16,7 @@ import {
   getEntryCount,
 } from '@/lib/analytics-new'
 import { showSuccess, showError } from '@/lib/toast'
+import { TransferModal } from '@/components/entries/transfer-modal'
 import { type SettlementHistoryRecord } from '@/app/settlements/settlement-history-actions'
 import { SettlementModal } from '@/components/settlements/settlement-modal'
 import { PendingCollectionsDashboard, type CustomerGroup } from '@/components/settlements/pending-collections-dashboard'
@@ -84,6 +85,8 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
   const [showCustomDatePickers, setShowCustomDatePickers] = useState(false)
   const [customFromDate, setCustomFromDate] = useState<Date | undefined>()
   const [customToDate, setCustomToDate] = useState<Date | undefined>()
+  // Transfer modal state
+  const [transferModalOpen, setTransferModalOpen] = useState(false)
   // New two-stage settlement flow state
   const [dashboardOpen, setDashboardOpen] = useState(false)
   const [selectedCustomer, setSelectedCustomer] = useState<CustomerGroup | null>(null)
@@ -156,7 +159,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
   // Calculate previous balance for breakdown
   const previousBalance = useMemo(() => cashBalance - periodChange, [cashBalance, periodChange])
 
-  // Calculate Cash vs Bank breakdown (period-aware)
+  // Calculate Cash vs Bank breakdown (period-aware, includes transfer movements)
   const { cashAmount, bankAmount } = useMemo(() => {
     const periodEntries = entries.filter(e => {
       const parts = e.entry_date.split('T')[0].split('-')
@@ -164,21 +167,20 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
       return entryDate >= startDate && entryDate <= endDate
     })
 
+    // Income/expense entries only (transfers handled separately below)
     const cash = periodEntries
-      .filter(e => e.payment_method === 'Cash')
+      .filter(e => e.payment_method === 'Cash' && e.entry_type !== 'transfer')
       .reduce((sum, e) => {
         if (
           e.entry_type === 'Cash IN' ||
           e.entry_type === 'Credit Settlement (Collections)' ||
           (e.entry_type === 'Advance' && e.category === 'Sales')
-          // ❌ Excludes: Advance Settlement (Received) - no cash movement
         ) {
           return sum + e.amount
         } else if (
           e.entry_type === 'Cash OUT' ||
           e.entry_type === 'Credit Settlement (Bills)' ||
-          (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
-          // ❌ Excludes: Advance Settlement (Paid) - no cash movement
+          (e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category))
         ) {
           return sum - e.amount
         }
@@ -186,27 +188,43 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
       }, 0)
 
     const bank = periodEntries
-      .filter(e => e.payment_method === 'Bank')
+      .filter(e => e.payment_method === 'Bank' && e.entry_type !== 'transfer')
       .reduce((sum, e) => {
         if (
           e.entry_type === 'Cash IN' ||
           e.entry_type === 'Credit Settlement (Collections)' ||
           (e.entry_type === 'Advance' && e.category === 'Sales')
-          // ❌ Excludes: Advance Settlement (Received) - no cash movement
         ) {
           return sum + e.amount
         } else if (
           e.entry_type === 'Cash OUT' ||
           e.entry_type === 'Credit Settlement (Bills)' ||
-          (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
-          // ❌ Excludes: Advance Settlement (Paid) - no cash movement
+          (e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category))
         ) {
           return sum - e.amount
         }
         return sum
       }, 0)
 
-    return { cashAmount: cash, bankAmount: bank }
+    // Apply transfer movements:
+    // Cash → Bank: decreases cash, increases bank
+    // Bank → Cash: decreases bank, increases cash
+    const transferDelta = periodEntries
+      .filter(e => e.entry_type === 'transfer' && e.transfer_to != null)
+      .reduce(
+        (acc, e) => {
+          if (e.payment_method === 'Cash' && e.transfer_to === 'Bank') {
+            return { cash: acc.cash - e.amount, bank: acc.bank + e.amount }
+          }
+          if (e.payment_method === 'Bank' && e.transfer_to === 'Cash') {
+            return { cash: acc.cash + e.amount, bank: acc.bank - e.amount }
+          }
+          return acc
+        },
+        { cash: 0, bank: 0 }
+      )
+
+    return { cashAmount: cash + transferDelta.cash, bankAmount: bank + transferDelta.bank }
   }, [entries, startDate, endDate])
 
   // Calculate percentages for breakdown
@@ -232,7 +250,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
   const pendingBills = useMemo(() => {
     const pending = entries.filter(e =>
       e.entry_type === 'Credit' &&
-      ['COGS', 'Opex', 'Assets'].includes(e.category) &&
+      e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category) &&
       !e.settled
     )
     return {
@@ -251,7 +269,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
     )
     const paid = entries.filter(e =>
       e.entry_type === 'Advance' &&
-      ['COGS', 'Opex', 'Assets'].includes(e.category) &&
+      e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category) &&
       !e.settled
     )
     return {
@@ -446,7 +464,15 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
 
       {/* Balances */}
       <div className="rounded-2xl p-4 overflow-hidden" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
-        <h3 className="text-sm font-semibold text-white mb-2">Balances</h3>
+        <div className="flex items-center justify-between mb-2">
+          <h3 className="text-sm font-semibold text-white">Balances</h3>
+          <button
+            onClick={() => setTransferModalOpen(true)}
+            className="px-3 py-1 text-xs font-medium bg-purple-500/20 hover:bg-purple-500/30 text-purple-300 border border-purple-500/30 rounded-lg transition-colors"
+          >
+            ⇄ Transfer
+          </button>
+        </div>
 
         {/* Cash */}
         <div className="space-y-1 mb-2">
@@ -710,6 +736,18 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
           }}
           onSuccess={() => {
             setSelectedAdvance(null)
+            router.refresh()
+          }}
+        />
+      )}
+
+      {/* Transfer Modal */}
+      {transferModalOpen && (
+        <TransferModal
+          cashBalance={cashBalance}
+          onClose={() => setTransferModalOpen(false)}
+          onSuccess={() => {
+            setTransferModalOpen(false)
             router.refresh()
           }}
         />

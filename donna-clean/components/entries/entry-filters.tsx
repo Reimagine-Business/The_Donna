@@ -4,7 +4,7 @@ import { X } from 'lucide-react'
 import { type Category } from '@/app/entries/actions'
 
 export type EntryFilters = {
-  type: 'all' | 'in' | 'out'
+  type: 'all' | 'in' | 'out' | 'transfer'
   category: string
   dateFrom: string
   dateTo: string
@@ -26,13 +26,7 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
     filters.search !== ''
 
   const handleClearFilters = () => {
-    onFiltersChange({
-      type: 'all',
-      category: '',
-      dateFrom: '',
-      dateTo: '',
-      search: '',
-    })
+    onFiltersChange({ type: 'all', category: '', dateFrom: '', dateTo: '', search: '' })
   }
 
   return (
@@ -73,10 +67,21 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
           >
             Cash Out
           </button>
+          <button
+            onClick={() => onFiltersChange({ ...filters, type: 'transfer', category: '' })}
+            className={`flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+              filters.type === 'transfer'
+                ? 'bg-[#8b5cf6] text-white'
+                : 'bg-white/[0.08] text-white/70 hover:bg-white/[0.12]'
+            }`}
+          >
+            Transfer
+          </button>
         </div>
       </div>
 
-      {/* Category Dropdown */}
+      {/* Category Dropdown — hidden for Transfer filter (transfers have no category) */}
+      {filters.type !== 'transfer' && (
       <div>
         <label htmlFor="category-filter" className="block text-sm font-medium text-white/70 mb-2">
           Category
@@ -102,6 +107,7 @@ export function EntryFiltersBar({ filters, categories, onFiltersChange }: EntryF
             ))}
         </select>
       </div>
+      )}
 
       {/* Date Range */}
       <div className="grid grid-cols-2 gap-3">

@@ -1,6 +1,7 @@
 import { format } from "date-fns";
 
-export const ENTRY_TYPES = ["Cash IN", "Cash OUT", "Credit", "Advance"] as const;
+export const ENTRY_TYPES = ["Cash IN", "Cash OUT", "Credit", "Advance", "transfer"] as const;
+export const TRANSFER_ACCOUNTS = ["Cash", "Bank"] as const;
 export const SETTLEMENT_TYPES = [
   "Credit Settlement (Collections)",
   "Credit Settlement (Bills)",
@@ -21,6 +22,7 @@ export type CategoryType = (typeof CATEGORIES)[number];
 export type CashPaymentMethod = (typeof PAYMENT_METHODS)[number];
 export type PaymentMethod = (typeof PAYMENT_METHOD_OPTIONS)[number];
 export type CashFlowEntryType = (typeof CASH_FLOW_ENTRY_TYPES)[number];
+export type TransferAccount = (typeof TRANSFER_ACCOUNTS)[number];
 
 export const deriveEntryTypeFromCategory = (category: CategoryType): EntryType =>
   category === "Sales" ? "Cash IN" : "Cash OUT";
@@ -38,12 +40,12 @@ export const resolveEntryType = (entryType: EntryType, category: CategoryType): 
 export type Entry = {
   id: string;
   user_id: string;
-  entry_type: AllEntryTypes;  // ✅ Now includes settlement types
-  category: CategoryType;
+  entry_type: AllEntryTypes;
+  category: CategoryType | null;  // null for transfer entries
   payment_method: PaymentMethod;
   amount: number;
   remaining_amount: number;
-  settled_amount: number | null;  // ➕ ADDED: Track settlement amounts
+  settled_amount: number | null;
   entry_date: string;
   notes: string | null;
   image_url: string | null;
@@ -54,6 +56,7 @@ export type Entry = {
   is_settlement?: boolean;
   settlement_type?: string | null;
   original_entry_id?: string | null;
+  transfer_to?: TransferAccount | null;  // destination account for transfer entries
   created_at: string;
   updated_at: string;
 };
@@ -61,25 +64,27 @@ export type Entry = {
 export type EntryRecord = Omit<Entry, "amount" | "remaining_amount" | "settled_amount" | "settled" | "settled_at" | "party"> & {
   amount: number | string;
   remaining_amount: number | string | null;
-  settled_amount: number | string | null;  // ➕ ADDED
+  settled_amount: number | string | null;
   settled: boolean;
   settled_at: string | null;
   party?: { name: string } | null;
-  is_settlement?: boolean;  // ➕ ADDED
-  settlement_type?: string | null;  // ➕ ADDED
-  original_entry_id?: string | null;  // ➕ ADDED
+  is_settlement?: boolean;
+  settlement_type?: string | null;
+  original_entry_id?: string | null;
+  transfer_to?: TransferAccount | null;
 };
 
 export type SupabaseEntry = Partial<EntryRecord> & {
   amount?: number | string | null;
   remaining_amount?: number | string | null;
-  settled_amount?: number | string | null;  // ➕ ADDED
+  settled_amount?: number | string | null;
   settled?: boolean | null;
   settled_at?: string | null;
   party?: { name: string } | { name: string }[] | null;
-  is_settlement?: boolean | null;  // ➕ ADDED
-  settlement_type?: string | null;  // ➕ ADDED
-  original_entry_id?: string | null;  // ➕ ADDED
+  is_settlement?: boolean | null;
+  settlement_type?: string | null;
+  original_entry_id?: string | null;
+  transfer_to?: TransferAccount | string | null;
 };
 
 const ensureOption = <const T extends readonly string[]>(
@@ -118,17 +123,29 @@ export const normalizeEntry = (entry: SupabaseEntry): Entry => {
     ? (partyData.length > 0 ? partyData[0] : null)
     : partyData;
 
-  // ✅ For settlements, allow the descriptive entry_type to pass through
+  // Allow settlement types and 'transfer' to pass through
   const allEntryTypes = [...ENTRY_TYPES, ...SETTLEMENT_TYPES];
   const entryType = allEntryTypes.includes(entry.entry_type as AllEntryTypes)
     ? (entry.entry_type as AllEntryTypes)
     : ensureOption(entry.entry_type, ENTRY_TYPES, ENTRY_TYPES[0]);
 
+  // Transfers have no category — preserve null; all other entries normalize to a valid category
+  const category: CategoryType | null = entryType === 'transfer'
+    ? null
+    : ensureOption(entry.category, CATEGORIES, CATEGORIES[0]);
+
+  // transfer_to is only meaningful for transfer entries
+  const rawTransferTo = (entry as SupabaseEntry).transfer_to;
+  const transferTo: TransferAccount | null =
+    entryType === 'transfer' && TRANSFER_ACCOUNTS.includes(rawTransferTo as TransferAccount)
+      ? (rawTransferTo as TransferAccount)
+      : null;
+
   return {
     id: safeId,
     user_id: entry.user_id ?? "",
     entry_type: entryType,
-    category: ensureOption(entry.category, CATEGORIES, CATEGORIES[0]),
+    category,
     payment_method: ensureOption(
       entry.payment_method,
       PAYMENT_METHOD_OPTIONS,
@@ -136,7 +153,7 @@ export const normalizeEntry = (entry: SupabaseEntry): Entry => {
     ),
     amount: Number.isFinite(amount) ? amount : 0,
     remaining_amount: Number.isFinite(remaining) ? remaining : Number.isFinite(amount) ? amount : 0,
-    settled_amount: settledAmount !== null && Number.isFinite(settledAmount) ? settledAmount : null,  // ➕ ADDED
+    settled_amount: settledAmount !== null && Number.isFinite(settledAmount) ? settledAmount : null,
     entry_date: entry.entry_date ?? fallbackDate,
     notes: entry.notes ?? null,
     image_url: entry.image_url ?? null,
@@ -147,6 +164,7 @@ export const normalizeEntry = (entry: SupabaseEntry): Entry => {
     is_settlement: (entry as SupabaseEntry).is_settlement ?? false,
     settlement_type: entry.settlement_type ?? null,
     original_entry_id: entry.original_entry_id ?? null,
+    transfer_to: transferTo,
     created_at: entry.created_at ?? new Date().toISOString(),
     updated_at: entry.updated_at ?? new Date().toISOString(),
   };
