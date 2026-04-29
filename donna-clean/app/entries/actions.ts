@@ -863,7 +863,7 @@ export async function deleteEntry(id: string) {
     if (entry.entry_type === 'Credit') {
       // Find and delete the settlement Cash entry
       // It will have notes like "Settlement of credit sales (original_entry_id)"
-      const settlementNotePattern = `Settlement of credit ${entry.category.toLowerCase()} (${id})`;
+      const settlementNotePattern = `Settlement of credit ${entry.category?.toLowerCase() ?? ''} (${id})`;
 
       const { error: deleteSettlementError } = await supabase
         .from('entries')

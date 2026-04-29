@@ -1,7 +1,7 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
 
 type EntryType = string
-type CategoryType = string
+type CategoryType = string | null
 
 /**
  * Determines the cash-flow direction of an entry.

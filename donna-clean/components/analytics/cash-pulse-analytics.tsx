@@ -305,7 +305,7 @@ export function CashPulseAnalytics({ entries, settlementHistory }: CashPulseAnal
         [
           entry.entry_date,
           entry.entry_type,
-          entry.category,
+          entry.category ?? '',
           entry.amount,
           entry.payment_method || '',
           `"${(entry.notes || '').replace(/"/g, '""')}"`,

@@ -26,7 +26,8 @@ function formatIndianCurrency(amount: number): string {
 }
 
 // Get category details
-function getCategoryDetails(categoryName: string, categories: Category[]) {
+function getCategoryDetails(categoryName: string | null, categories: Category[]) {
+  if (!categoryName) return { color: '#6b7280', icon: '↔️' }
   const category = categories.find(cat => cat.name === categoryName)
   return {
     color: category?.color || '#7c3aed',

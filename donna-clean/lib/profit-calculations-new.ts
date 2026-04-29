@@ -272,6 +272,7 @@ export function getExpenseBreakdown(entries: Entry[], startDate?: Date, endDate?
   const categoryMap = new Map<string, number>()
 
   filtered.forEach(entry => {
+    if (!entry.category) return
     const existing = categoryMap.get(entry.category) || 0
     categoryMap.set(entry.category, existing + entry.amount)
   })
