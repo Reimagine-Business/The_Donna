@@ -61,7 +61,7 @@ export function calculateCashBalance(entries: Entry[]): number {
     .filter(e =>
       e.entry_type === 'Cash OUT' ||
       e.entry_type === 'Credit Settlement (Bills)' ||
-      (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+      (e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category))
     )
     .reduce((sum, e) => sum + e.amount, 0)
 
@@ -92,7 +92,7 @@ export function getTotalCashOut(entries: Entry[], startDate?: Date, endDate?: Da
   let filtered = entries.filter(e =>
     e.entry_type === 'Cash OUT' ||
     e.entry_type === 'Credit Settlement (Bills)' ||
-    (e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category))
+    (e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category))
     // ❌ Excludes: Advance Settlement (Paid) - no cash movement
   )
 

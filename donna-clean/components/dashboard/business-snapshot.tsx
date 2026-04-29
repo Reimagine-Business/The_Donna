@@ -43,7 +43,7 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
 
     // 3. Prepaid - advances paid to suppliers (Advance COGS/Opex/Assets not settled)
     const prepaid = entries
-      .filter(e => e.entry_type === 'Advance' && ['COGS', 'Opex', 'Assets'].includes(e.category) && !e.settled)
+      .filter(e => e.entry_type === 'Advance' && e.category != null && ['COGS', 'Opex', 'Assets'].includes(e.category) && !e.settled)
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
 
     // 4. Fixed Assets - total of all asset entries
@@ -56,7 +56,7 @@ export function BusinessSnapshot({ entries }: BusinessSnapshotProps) {
     // WHAT YOU OWE (Liabilities)
     // 1. Credit Bills - goods/services received on credit (Credit COGS/Opex not settled)
     const creditBills = entries
-      .filter(e => e.entry_type === 'Credit' && ['COGS', 'Opex'].includes(e.category) && !e.settled)
+      .filter(e => e.entry_type === 'Credit' && e.category != null && ['COGS', 'Opex'].includes(e.category) && !e.settled)
       .reduce((sum, e) => sum + (e.remaining_amount ?? e.amount), 0);
 
     // 2. Customer Advances - advances received from customers (Advance Sales not settled)

@@ -216,7 +216,7 @@ export function getProfitTrend(entries: Entry[], months: number = 6): ProfitTren
     // Total expenses = COGS + Opex
     const totalExpenses = entries
       .filter(e =>
-        ['COGS', 'Opex'].includes(e.category) &&
+        e.category != null && ['COGS', 'Opex'].includes(e.category) &&
         (
           // Cash OUT (excluding Credit settlements)
           (e.entry_type === 'Cash OUT' && !(e.is_settlement && e.settlement_type === 'credit')) ||
@@ -250,7 +250,7 @@ export function getProfitTrend(entries: Entry[], months: number = 6): ProfitTren
 export function getExpenseBreakdown(entries: Entry[], startDate?: Date, endDate?: Date): CategoryExpense[] {
   // Only include COGS and Opex, NEVER Sales or Assets
   let filtered = entries.filter(e =>
-    ['COGS', 'Opex'].includes(e.category) &&
+    e.category != null && ['COGS', 'Opex'].includes(e.category) &&
     (
       // Cash OUT (excluding Credit settlements)
       (e.entry_type === 'Cash OUT' && !(e.is_settlement && e.settlement_type === 'credit')) ||
