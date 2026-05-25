@@ -92,32 +92,35 @@ export function TransferModal({ cashBalance, onClose, onSuccess }: TransferModal
       {/* Modal */}
       <div className="fixed inset-0 z-50 flex items-center justify-center p-4 pointer-events-none">
         <div
-          className="w-full max-w-md rounded-2xl p-6 pointer-events-auto"
+          className="w-full max-w-md rounded-2xl flex flex-col max-h-[calc(100vh-2rem)] pointer-events-auto"
           style={{
             background: 'linear-gradient(135deg, rgba(59,7,100,0.95), rgba(15,15,35,0.98))',
             border: '1px solid rgba(192,132,252,0.3)',
           }}
           onClick={e => e.stopPropagation()}
         >
-          {/* Header */}
-          <div className="flex items-center justify-between mb-5">
-            <div className="flex items-center gap-2">
-              <ArrowLeftRight className="w-5 h-5 text-[#8b5cf6]" />
-              <h2 className="text-lg font-semibold text-white">Record Transfer</h2>
+          {/* Header — not scrollable */}
+          <div className="px-6 pt-6">
+            <div className="flex items-center justify-between mb-5">
+              <div className="flex items-center gap-2">
+                <ArrowLeftRight className="w-5 h-5 text-[#8b5cf6]" />
+                <h2 className="text-lg font-semibold text-white">Record Transfer</h2>
+              </div>
+              <button
+                onClick={onClose}
+                className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/[0.08] transition-colors"
+              >
+                <X className="w-5 h-5" />
+              </button>
             </div>
-            <button
-              onClick={onClose}
-              className="p-1.5 rounded-lg text-white/50 hover:text-white hover:bg-white/[0.08] transition-colors"
-            >
-              <X className="w-5 h-5" />
-            </button>
+
+            <p className="text-sm text-white/50 mb-5">
+              Move money between your Cash and Bank accounts. Transfers don't affect profit or income totals.
+            </p>
           </div>
 
-          <p className="text-sm text-white/50 mb-5">
-            Move money between your Cash and Bank accounts. Transfers don't affect profit or income totals.
-          </p>
-
-          <form onSubmit={handleSubmit} className="space-y-4">
+          {/* Scrollable form body */}
+          <form id="transfer-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto px-6 space-y-4 pb-4">
             {/* Transfer From / To */}
             <div className="grid grid-cols-2 gap-3">
               {/* From */}
@@ -247,32 +250,37 @@ export function TransferModal({ cashBalance, onClose, onSuccess }: TransferModal
               </div>
             )}
 
-            {/* Actions */}
-            <div className="flex gap-3 pt-1">
-              <button
-                type="button"
-                onClick={onClose}
-                disabled={loading}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-white/[0.08] text-white/70 hover:bg-white/[0.12] transition-colors disabled:opacity-50"
-              >
-                Cancel
-              </button>
-              <button
-                type="submit"
-                disabled={loading}
-                className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-[#8b5cf6] hover:bg-[#7c3aed] text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
-              >
-                {loading ? (
-                  <>
-                    <Loader2 className="w-4 h-4 animate-spin" />
-                    Saving…
-                  </>
-                ) : (
-                  'Record Transfer'
-                )}
-              </button>
-            </div>
           </form>
+
+          {/* Footer — outside scroll area, clears bottom nav on mobile */}
+          <div
+            className="flex gap-3 px-6 pt-3 pb-20 sm:pb-4"
+            style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.95), rgba(15,15,35,0.98))', borderTop: '1px solid rgba(192,132,252,0.3)' }}
+          >
+            <button
+              type="button"
+              onClick={onClose}
+              disabled={loading}
+              className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-white/[0.08] text-white/70 hover:bg-white/[0.12] transition-colors disabled:opacity-50"
+            >
+              Cancel
+            </button>
+            <button
+              type="submit"
+              form="transfer-form"
+              disabled={loading}
+              className="flex-1 py-2.5 rounded-lg text-sm font-medium bg-[#8b5cf6] hover:bg-[#7c3aed] text-white transition-colors disabled:opacity-50 flex items-center justify-center gap-2"
+            >
+              {loading ? (
+                <>
+                  <Loader2 className="w-4 h-4 animate-spin" />
+                  Saving…
+                </>
+              ) : (
+                'Record Transfer'
+              )}
+            </button>
+          </div>
         </div>
       </div>
     </>

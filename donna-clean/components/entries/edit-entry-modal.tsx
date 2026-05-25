@@ -225,7 +225,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)', borderRadius: '16px' }}>
+      <div className="w-full max-w-md max-h-[90vh] flex flex-col rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)' }}>
         <div className="sticky top-0 p-4 flex justify-between items-center" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.6), rgba(15,15,35,0.9))', borderBottom: '1px solid rgba(192,132,252,0.15)' }}>
           <div>
             <h2 className="text-xl font-semibold text-white">Edit Entry</h2>
@@ -243,7 +243,7 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="p-6 space-y-4">
+        <form id="edit-entry-form" onSubmit={handleSubmit} className="flex-1 overflow-y-auto p-6 space-y-4">
           {/* Entry Type */}
           <div>
             <label htmlFor="entry-type" className="block text-sm font-medium text-white/70 mb-2">
@@ -402,25 +402,30 @@ export function EditEntryModal({ entry, categories, onSuccess, onClose }: EditEn
             )}
           </div>
 
-          {/* Action Buttons */}
-          <div className="flex gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="flex-1 px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] border border-white/[0.15] text-white rounded-lg transition-colors"
-              disabled={loading}
-            >
-              Cancel
-            </button>
-            <button
-              type="submit"
-              disabled={!isFormValid() || loading}
-              className="flex-1 px-4 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] disabled:bg-white/[0.08] disabled:cursor-not-allowed text-white rounded-lg transition-colors"
-            >
-              {loading ? 'Updating...' : 'Update Entry'}
-            </button>
-          </div>
         </form>
+
+        {/* Footer — outside scroll area, clears bottom nav on mobile */}
+        <div
+          className="flex gap-3 px-6 pt-3 pb-20 sm:pb-4"
+          style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.6), rgba(15,15,35,0.9))', borderTop: '1px solid rgba(192,132,252,0.15)' }}
+        >
+          <button
+            type="button"
+            onClick={onClose}
+            className="flex-1 px-4 py-2 bg-white/[0.08] hover:bg-white/[0.12] border border-white/[0.15] text-white rounded-lg transition-colors"
+            disabled={loading}
+          >
+            Cancel
+          </button>
+          <button
+            type="submit"
+            form="edit-entry-form"
+            disabled={!isFormValid() || loading}
+            className="flex-1 px-4 py-2 bg-[#8b5cf6] hover:bg-[#7c3aed] disabled:bg-white/[0.08] disabled:cursor-not-allowed text-white rounded-lg transition-colors"
+          >
+            {loading ? 'Updating...' : 'Update Entry'}
+          </button>
+        </div>
       </div>
     </div>
   )
