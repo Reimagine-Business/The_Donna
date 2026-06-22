@@ -233,8 +233,8 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="w-full max-w-md max-h-[90vh] flex flex-col rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.5), rgba(15,15,35,0.8))', border: '1px solid rgba(192,132,252,0.15)' }}>
-        <div className="sticky top-0 p-4 flex justify-between items-center" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.6), rgba(15,15,35,0.9))', borderBottom: '1px solid rgba(192,132,252,0.15)' }}>
+      <div className="w-full max-w-md max-h-[90vh] flex flex-col rounded-2xl" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.95), rgba(15,15,35,0.98))', border: '1px solid rgba(192,132,252,0.15)' }}>
+        <div className="sticky top-0 p-4 flex justify-between items-center" style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.95), rgba(15,15,35,0.98))', borderBottom: '1px solid rgba(192,132,252,0.15)' }}>
           <h2 className="text-xl font-semibold text-white">Add New Entry</h2>
           <button
             onClick={onClose}
@@ -255,7 +255,7 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
               id="entry-type"
               value={entryType}
               onChange={(e) => handleEntryTypeChange(e.target.value as EntryType)}
-              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
+              className="w-full px-3 py-2.5 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               disabled={loading}
             >
               {ENTRY_TYPES.map((type) => (
@@ -278,7 +278,7 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
               id="category"
               value={category}
               onChange={(e) => handleCategoryChange(e.target.value as CategoryType)}
-              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
+              className="w-full px-3 py-2.5 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               disabled={loading}
             >
               {CATEGORIES.map((cat) => (
@@ -305,7 +305,7 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
               value={amount}
               onChange={(e) => handleAmountChange(e.target.value)}
               placeholder="0.00"
-              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
+              className="w-full px-3 py-2.5 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               disabled={loading}
             />
             {errors.amount && (
@@ -324,7 +324,7 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
               value={entryDate}
               onChange={(e) => handleDateChange(e.target.value)}
               max={format(new Date(), 'yyyy-MM-dd')}
-              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
+              className="w-full px-3 py-2.5 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30"
               disabled={loading}
             />
             {errors.entryDate && (
@@ -341,7 +341,7 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
               id="payment-method"
               value={paymentMethod}
               onChange={(e) => handlePaymentMethodChange(e.target.value as PaymentMethodType)}
-              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full px-3 py-2.5 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 disabled:opacity-50 disabled:cursor-not-allowed"
               disabled={loading || entryType === 'Credit'}
             >
               {getPaymentMethodOptions().map((method) => (
@@ -396,7 +396,7 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
               onChange={(e) => handleNotesChange(e.target.value)}
               rows={3}
               placeholder="Additional notes (optional)"
-              className="w-full px-3 py-2 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 resize-none"
+              className="w-full px-3 py-2.5 bg-white/[0.08] border border-white/[0.15] rounded-lg text-white focus:border-[#8b5cf6] focus:outline-none focus:ring-1 focus:ring-[#8b5cf6]/30 resize-none"
               disabled={loading}
             />
             {errors.notes && (
@@ -409,7 +409,7 @@ export function CreateEntryModal({ categories, onSuccess, onClose }: CreateEntry
         {/* Footer — outside scroll area, clears bottom nav on mobile */}
         <div
           className="flex gap-3 px-6 pt-3 pb-20 sm:pb-4"
-          style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.6), rgba(15,15,35,0.9))', borderTop: '1px solid rgba(192,132,252,0.15)' }}
+          style={{ background: 'linear-gradient(135deg, rgba(59,7,100,0.95), rgba(15,15,35,0.98))', borderTop: '1px solid rgba(192,132,252,0.15)' }}
         >
           <button
             type="button"
